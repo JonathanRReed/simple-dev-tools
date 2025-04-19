@@ -43,8 +43,10 @@ export default function Sidebar() {
     >
       {/* Logo and Site Title (only when open) */}
       <div className={`flex items-center gap-2 mb-4 ${open ? 'self-start' : 'justify-center w-full'}`}>
-        <Image src="/logo.avif" alt="Logo" width={36} height={36} className="rounded-full" />
-        {open && <span className="text-2xl font-bold text-[#3399ff]">Hello.World</span>}
+        <Image src="/logo.avif" alt="Logo" width={40} height={40} className="rounded-full" unoptimized />
+        {open && (
+          <span className="text-2xl font-bold text-white tracking-tight select-none">Simple-Dev-Tools</span>
+        )}
       </div>
       <div className={`flex flex-col gap-4 mt-2 w-full ${open ? '' : 'items-center'}`}>
         {navItems.map((item) => (
