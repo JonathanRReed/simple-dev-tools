@@ -1,0 +1,53 @@
+# Node
+node_modules/
+
+# Next.js
+.next/
+out/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Editor directories and files
+.vscode/
+.idea/
+.DS_Store
+*.swp
+
+# OS generated
+Thumbs.db
+
+# Build output
+build/
+dist/
+coverage/
+
+# Environment variables
+.env
+.env.*
+
+# Misc
+*.local
+*.sublime-workspace
+*.sublime-project
+
+# SQLite/wasm artifacts
+*.sqlite
+*.db
+*.db-wal
+*.db-shm
+*.wasm
+
+# Static export
+out/
+
+# Miscellaneous
+*.log
+
+# Ignore design docs and markdown backups
+*~
+*.bak
+*.tmp
