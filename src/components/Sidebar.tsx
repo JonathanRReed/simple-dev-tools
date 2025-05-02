@@ -43,7 +43,7 @@ export default function Sidebar() {
     >
       {/* Logo and Site Title (only when open) */}
       <div className={`flex items-center gap-2 mb-4 ${open ? 'self-start' : 'justify-center w-full'}`}>
-        <Image src="/logo.avif" alt="Logo" width={40} height={40} className="rounded-full" unoptimized />
+        <Image src="/logo.avif" alt="Logo" width={40} height={40} className="rounded-full logo-img-strict" unoptimized />
         {open && (
           <span className="text-2xl font-bold text-white tracking-tight select-none">Simple-Dev-Tools</span>
         )}

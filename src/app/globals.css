@@ -136,6 +136,29 @@ body {
   filter: blur(80px);
 }
 
+/* Robust fix for logo.avif aspect ratio warning */
+.logo-img-strict {
+  width: 40px !important;
+  height: 40px !important;
+  object-fit: cover !important;
+  min-width: 40px !important;
+  min-height: 40px !important;
+  max-width: 40px !important;
+  max-height: 40px !important;
+}
+
+/* Robust fix for JonathanRReed profile image aspect ratio */
+.profile-img-strict {
+  width: 28px !important;
+  height: 28px !important;
+  object-fit: cover !important;
+  border-radius: 50% !important;
+  min-width: 28px !important;
+  min-height: 28px !important;
+  max-width: 28px !important;
+  max-height: 28px !important;
+}
+
 /* --- Footer Glassmorphic Styles --- */
 .footer-glass {
   position: relative;
