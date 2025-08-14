@@ -53,6 +53,14 @@ function buildFlags(state: FlagsState): string {
   return FLAG_LIST.map(f => (state[f.key] ? f.key : "")).join("");
 }
 
+export default function RegexLab() {
+  return (
+    <React.Suspense fallback={<div className="p-8 text-gray-300">Loading…</div>}>
+      <RegexLabInner />
+    </React.Suspense>
+  );
+}
+
 function safeRegExp(pattern: string, flags: string): { re: RegExp | null; error: string | null } {
   try {
     return { re: new RegExp(pattern, flags), error: null };
@@ -69,7 +77,7 @@ function parseFlags(str: string): FlagsState {
   return base;
 }
 
-export default function RegexLab() {
+function RegexLabInner() {
   const [pattern, setPattern] = useState<string>(DEFAULT_PATTERN);
   const [text, setText] = useState<string>(DEFAULT_TEXT);
   const [replacement, setReplacement] = useState<string>("$&");
