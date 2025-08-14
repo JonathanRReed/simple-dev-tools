@@ -8,6 +8,11 @@ const navItems = [
   { name: 'API Snippet Generator', href: '/api-snippet' },
   { name: 'Mermaid Editor', href: '/mermaid' },
   { name: 'SQLite Playground', href: '/sqlite' },
+  { name: 'Regex Lab', href: '/tools/regex' },
+  { name: 'IDs & Scheduling', href: '/tools/ids-cron' },
+  { name: 'Encoders & QR', href: '/tools/encode-qr' },
+  { name: 'Schema & Types Studio', href: '/studio/schema' },
+  { name: 'Security & Tokens', href: '/studio/security' },
 ];
 
 function ChevronIcon({ left = true }: { left?: boolean }) {

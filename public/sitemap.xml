@@ -12,4 +12,19 @@
   <url>
     <loc>https://dev.hellworldfirm.com/sqlite</loc>
   </url>
+  <url>
+    <loc>https://dev.hellworldfirm.com/tools/regex</loc>
+  </url>
+  <url>
+    <loc>https://dev.hellworldfirm.com/studio/schema</loc>
+  </url>
+  <url>
+    <loc>https://dev.hellworldfirm.com/studio/security</loc>
+  </url>
+  <url>
+    <loc>https://dev.hellworldfirm.com/tools/ids-cron</loc>
+  </url>
+  <url>
+    <loc>https://dev.hellworldfirm.com/tools/encode-qr</loc>
+  </url>
 </urlset>
