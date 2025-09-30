@@ -7,6 +7,8 @@ import "prismjs/components/prism-javascript";
 import "prismjs/components/prism-markup";
 import "prismjs/themes/prism-tomorrow.css";
 
+import ToolPage from '@/components/layout/ToolPage';
+
 const DEFAULT_CODE = `graph TD\n  A[Client] -->|Request| B[API]\n  B -->|Response| A`;
 const TEMPLATES = [
   {
@@ -111,10 +113,13 @@ export default function MermaidPage() {
   };
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center min-h-screen p-8">
-      <div className="bg-rp-surface/80 rounded-3xl shadow-2xl px-8 py-10 max-w-3xl w-full flex flex-col items-center gap-6 relative border border-rp-highlight-high" style={{backdropFilter:'blur(24px)', WebkitBackdropFilter:'blur(24px)'}}>
-        <h2 className="text-3xl font-bold text-rp-iris mb-2 text-center drop-shadow">Mermaid Diagram Generator</h2>
-        <div className="flex flex-wrap gap-3 w-full justify-center mb-2">
+    <ToolPage contentClassName="mx-auto max-w-5xl">
+      <div className="bg-rp-surface/80 rounded-3xl shadow-2xl px-6 sm:px-8 py-8 flex flex-col gap-6 relative border border-rp-highlight-high" style={{backdropFilter:'blur(24px)', WebkitBackdropFilter:'blur(24px)'}}>
+        <div className="flex flex-col gap-2">
+          <h2 className="text-3xl font-bold text-rp-iris drop-shadow">Mermaid Diagram Generator</h2>
+          <p className="text-sm text-rp-subtle max-w-3xl">Sketch sequence diagrams, flowcharts, and more. Edit Mermaid syntax on the left and preview instantly on the right.</p>
+        </div>
+        <div className="flex flex-wrap gap-3 w-full justify-start mb-2">
           <select
             className="rounded-xl px-4 py-2 bg-rp-surface/70 border border-rp-highlight-high text-rp-text focus:outline-none focus:ring-2 focus:ring-rp-iris"
             onChange={e => handleTemplate(e.target.value)}
@@ -144,8 +149,8 @@ export default function MermaidPage() {
             Copy Mermaid Code
           </button>
         </div>
-        <div className="w-full flex flex-col md:flex-row gap-6">
-          <div className="flex-1">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,0.55fr)_minmax(0,0.45fr)]">
+          <div className="flex flex-col gap-3 min-w-[280px]">
             <Editor
               value={code}
               onValueChange={setCode}
@@ -158,12 +163,12 @@ export default function MermaidPage() {
               spellCheck={false}
             />
           </div>
-          <div className="flex-1 bg-rp-overlay/70 border border-rp-highlight-high rounded-xl p-4 min-h-[180px] flex flex-col items-center justify-center relative">
-            <div ref={diagramRef} className="w-full overflow-auto" />
-            {error && <div className="text-rp-love text-xs mt-2">{error}</div>}
+          <div className="min-w-[280px] rounded-xl border border-rp-highlight-high bg-rp-overlay/70 p-4 min-h-[180px] flex flex-col gap-3">
+            <div ref={diagramRef} className="w-full flex-1 overflow-auto" />
+            {error && <div className="text-rp-love text-xs">{error}</div>}
           </div>
         </div>
       </div>
-    </div>
+    </ToolPage>
   );
 }

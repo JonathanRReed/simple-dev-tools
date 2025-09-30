@@ -1,26 +1,21 @@
 "use client";
-import React, { useMemo, useState, useCallback } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
-import YAML from "js-yaml";
+import YAML from "yaml";
 import Ajv from "ajv";
 import addFormats from "ajv-formats";
 
-// Load Swagger UI on the client only
-const SwaggerUI: any = dynamic(() => import("swagger-ui-react"), { ssr: false });
+import ToolPage from "@/components/layout/ToolPage";
 
-type ParseResult = {
-  value: any | null;
-  error: string | null;
-  isOpenAPI: boolean;
-};
+const SwaggerUI = dynamic(() => import("swagger-ui-react"), { ssr: false });
 
-function parseInput(source: string, format: "json" | "yaml"): ParseResult {
+function parseInput(source: string, format: "json" | "yaml") {
   try {
     let value: any;
     if (format === "json") {
       value = JSON.parse(source);
     } else {
-      value = YAML.load(source);
+      value = YAML.parse(source);
     }
     const isOpenAPI = !!(
       value &&
@@ -334,16 +329,18 @@ export default function SchemaStudio() {
   }, [source, format]);
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center min-h-screen p-8">
+    <ToolPage contentClassName="mx-auto max-w-6xl">
       <div
-        className="bg-rp-surface/80 rounded-3xl shadow-2xl px-6 md:px-8 py-8 max-w-6xl w-full flex flex-col gap-6 border border-rp-highlight-high"
+        className="bg-rp-surface/80 rounded-3xl shadow-2xl px-6 md:px-8 py-8 flex flex-col gap-6 border border-rp-highlight-high"
         style={{ backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)" }}
       >
-        <h2 className="text-3xl font-bold text-rp-iris text-center drop-shadow">Schema & Types Studio</h2>
-        <p className="text-rp-subtle text-center">Paste JSON/YAML or OpenAPI. Parse, preview docs, validate data, and generate TypeScript types.</p>
+        <div className="flex flex-col gap-2">
+          <h2 className="text-3xl font-bold text-rp-iris drop-shadow">Schema & Types Studio</h2>
+          <p className="text-sm text-rp-subtle max-w-3xl">Paste JSON/YAML or OpenAPI to parse, preview documentation, validate data, and generate TypeScript or Zod types entirely in-browser.</p>
+        </div>
 
         {/* Tabs */}
-        <div className="flex flex-wrap gap-2 justify-center">
+        <div className="flex flex-wrap gap-2">
           {[
             { k: "source", label: "Source" },
             { k: "docs", label: "Docs" },
@@ -603,6 +600,6 @@ export default function SchemaStudio() {
           </div>
         )}
       </div>
-    </div>
+    </ToolPage>
   );
 }

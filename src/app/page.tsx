@@ -1,45 +1,138 @@
+import Link from 'next/link';
+import {
+  ArrowUpRight,
+  CalendarClock,
+  Code2,
+  Database,
+  QrCode,
+  SearchCode,
+  ShieldCheck,
+  Workflow,
+} from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+
+const toolGroups = [
+  {
+    title: 'Developer accelerators',
+    description: 'Ship faster with guardrails and reusable snippets.',
+    tools: [
+      {
+        title: 'API Snippet Generator',
+        href: '/api-snippet',
+        description: 'Draft OpenAPI-driven snippets for any stack on the fly.',
+        icon: Code2,
+        tags: ['REST', 'Swagger', 'Docs'],
+      },
+      {
+        title: 'Mermaid Editor',
+        href: '/mermaid',
+        description: 'Sketch sequence diagrams, flows, and architecture quickly.',
+        icon: Workflow,
+        tags: ['Diagrams', 'Planning'],
+      },
+      {
+        title: 'SQLite Playground',
+        href: '/sqlite',
+        description: 'Run SQL experiments with instant preview and persistence.',
+        icon: Database,
+        tags: ['SQL', 'Data'],
+      },
+      {
+        title: 'Regex Lab',
+        href: '/tools/regex',
+        description: 'Iterate on patterns with explainers, tests, and sharing.',
+        icon: SearchCode,
+        tags: ['Regex', 'Testing'],
+      },
+      {
+        title: 'IDs & Scheduling',
+        href: '/tools/ids-cron',
+        description: 'Generate ULIDs, UUIDs, and human-friendly CRON helpers.',
+        icon: CalendarClock,
+        tags: ['Scheduling', 'Automation'],
+      },
+      {
+        title: 'Encoders & QR',
+        href: '/tools/encode-qr',
+        description: 'Encode payloads, produce QR assets, and inspect metadata.',
+        icon: QrCode,
+        tags: ['Security', 'Utilities'],
+      },
+    ],
+  },
+  {
+    title: 'Studios',
+    description: 'Opinionated workspaces for deeper problems.',
+    tools: [
+      {
+        title: 'Schema & Types Studio',
+        href: '/studio/schema',
+        description: 'Convert sources between JSON Schema, TypeScript, and more.',
+        icon: Code2,
+        tags: ['Types', 'Validation'],
+      },
+      {
+        title: 'Security & Tokens',
+        href: '/studio/security',
+        description: 'Inspect JWTs, secrets, and verify signatures confidently.',
+        icon: ShieldCheck,
+        tags: ['Security', 'Identity'],
+      },
+    ],
+  },
+] as const;
+
 export default function Home() {
   return (
-    <div className="relative flex-1 flex flex-col items-center justify-center min-h-screen w-full overflow-hidden">
-      {/* Large SVG Blob Glow behind hero text */}
-      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[90vw] h-[70vh] z-0 pointer-events-none">
-        <svg
-          width="1600"
-          height="900"
-          viewBox="0 0 1600 900"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          className="w-full h-full object-cover"
-          style={{ filter: 'blur(120px)', opacity: 0.5 }}
-        >
-          <style>{`
-            :root {
-              --color1: var(--rp-iris);
-              --color2: var(--rp-rose);
-            }
-            @keyframes colorChange1 {
-              0%, 100% { fill: var(--color1); }
-              50% { fill: var(--color2); }
-            }
-            .blob-path {
-              animation: colorChange1 8s infinite linear;
-            }
-          `}</style>
-          <ellipse
-            className="blob-path"
-            cx="800"
-            cy="450"
-            rx="700"
-            ry="350"
-            fill="var(--color1)"
-          />
-        </svg>
-      </div>
-      <div className="relative z-10 flex flex-col items-center w-full max-w-3xl">
-        <h1 className="text-3xl md:text-6xl font-extrabold text-rp-text mb-3 text-center drop-shadow-[0_1px_0_rgba(0,0,0,0.3)]">Simple-Dev-Tools</h1>
-        <p className="mb-10 text-lg md:text-xl text-rp-foam text-center max-w-2xl">Simple dev tools by Hello.World Consulting</p>
-        {/* Tool cards/links will go here */}
-      </div>
+    <div className="flex flex-1 flex-col">
+      <section className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6">
+        <div className="space-y-10">
+          {toolGroups.map((group) => (
+            <div key={group.title} className="space-y-6">
+              <header className="space-y-1">
+                <h3 className="text-xl font-semibold text-foreground">{group.title}</h3>
+                <p className="text-sm text-muted-foreground">{group.description}</p>
+              </header>
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {group.tools.map((tool) => (
+                  <Card key={tool.href} className="group h-full border-border/60 transition hover:border-primary/40 hover:shadow-md">
+                    <CardHeader className="flex flex-row items-start justify-between gap-3 pb-2">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                          <tool.icon className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-base">{tool.title}</CardTitle>
+                          <CardDescription className="text-xs text-muted-foreground">{tool.description}</CardDescription>
+                        </div>
+                      </div>
+                      <ArrowUpRight className="h-4 w-4 text-muted-foreground/70 transition group-hover:text-primary" />
+                    </CardHeader>
+                    <CardContent className="flex flex-col gap-4 pt-0 text-sm">
+                      <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                        {tool.tags.map((tag) => (
+                          <Badge key={tag} variant="secondary" className="bg-secondary/60 text-[11px] uppercase tracking-tight">
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                      <Button asChild variant="ghost" className="justify-start gap-2 px-0 text-sm text-primary">
+                        <Link href={tool.href}>
+                          Open tool
+                          <ArrowUpRight className="h-4 w-4" />
+                        </Link>
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }
