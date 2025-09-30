@@ -32,6 +32,7 @@ import {
   SidebarSeparator,
 } from '@/components/ui/sidebar';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { cn } from '@/lib/utils';
 
 const navSections = [
   {
@@ -111,26 +112,34 @@ export default function AppSidebar() {
               </SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {section.items.map((item) => (
-                    <SidebarMenuItem key={item.href}>
-                      <SidebarMenuButton
-                        asChild
-                        isActive={isActive(item.href)}
-                        tooltip={item.title}
-                        className="text-sm"
-                      >
-                        <Link
-                          href={item.href}
-                          className="flex items-center gap-3 group-data-[collapsible=icon]:size-full group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0"
+                  {section.items.map((item) => {
+                    const active = isActive(item.href);
+                    return (
+                      <SidebarMenuItem key={item.href}>
+                        <SidebarMenuButton
+                          asChild
+                          isActive={active}
+                          tooltip={item.title}
+                          className={cn(
+                            'text-sm transition-colors duration-150 data-[state=open]:bg-primary/15',
+                            'hover:bg-primary/10 hover:text-primary',
+                            active && 'bg-primary/20 text-primary shadow-[inset_0_0_0_1px_rgba(196,167,231,0.35)]'
+                          )}
                         >
-                          <item.icon className="h-4 w-4" />
-                          <span className="group-data-[collapsible=icon]:sr-only">
-                            {item.title}
-                          </span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
+                          <Link
+                            href={item.href}
+                            aria-current={active ? 'page' : undefined}
+                            className="flex items-center gap-3 group-data-[collapsible=icon]:size-full group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0"
+                          >
+                            <item.icon className="h-4 w-4" />
+                            <span className="group-data-[collapsible=icon]:sr-only">
+                              {item.title}
+                            </span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
                 </SidebarMenu>
               </SidebarGroupContent>
               <SidebarSeparator className="last:hidden" />
