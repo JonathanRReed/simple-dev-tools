@@ -1,7 +1,8 @@
 "use client";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import cronstrue from "cronstrue";
-import { ulid as makeUlid } from "ulid";
+import { ulid } from "ulid";
+import ToolPage from "@/components/layout/ToolPage";
 
 // Crockford's Base32 used by ULID (no I, L, O, U)
 const CROCK32 = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
@@ -60,19 +61,26 @@ export default function IDsCronTool() {
   const [tab, setTab] = useState<"ids" | "cron">("ids");
 
   // IDs tab state
-  const [uuid, setUuid] = useState<string>(randomUUIDv4());
-  const [ulid, setUlid] = useState<string>(makeUlid());
+  const [uuid, setUuid] = useState<string>("");
+  const [ulidValue, setUlidValue] = useState<string>("");
+
+  useEffect(() => {
+    setUuid(randomUUIDv4());
+    setUlidValue(ulid());
+  }, []);
+
   const ulidInfo = useMemo(() => {
     try {
-      const ms = decodeUlidTimestamp(ulid);
+      if (!ulidValue) return { ok: false as const, error: "Enter a ULID to inspect." };
+      const ms = decodeUlidTimestamp(ulidValue);
       const date = new Date(ms);
-      const tsPart = ulid.slice(0, 10);
-      const randPart = ulid.slice(10);
+      const tsPart = ulidValue.slice(0, 10);
+      const randPart = ulidValue.slice(10);
       return { ok: true as const, ms, iso: date.toISOString(), tsPart, randPart };
     } catch (e: any) {
       return { ok: false as const, error: e?.message || "Invalid ULID" };
     }
-  }, [ulid]);
+  }, [ulidValue]);
 
   // Cron tab state
   const [cron, setCron] = useState<string>("*/5 * * * *");
@@ -100,16 +108,18 @@ export default function IDsCronTool() {
   ];
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center min-h-screen p-8">
+    <ToolPage contentClassName="mx-auto max-w-5xl">
       <div
-        className="bg-rp-surface/80 rounded-3xl shadow-2xl px-6 md:px-8 py-8 max-w-5xl w-full flex flex-col gap-6 border border-rp-highlight-high"
+        className="bg-rp-surface/80 rounded-3xl shadow-2xl px-6 md:px-8 py-8 flex flex-col gap-6 border border-rp-highlight-high"
         style={{ backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)" }}
       >
-        <h2 className="text-3xl font-bold text-rp-iris text-center drop-shadow">IDs & Scheduling</h2>
-        <p className="text-rp-subtle text-center">Generate UUIDv4 and ULID; describe cron expressions with cRonstrue.</p>
+        <div className="flex flex-col gap-2">
+          <h2 className="text-3xl font-bold text-rp-iris drop-shadow">IDs & Scheduling</h2>
+          <p className="text-sm text-rp-subtle max-w-3xl">Generate UUIDv4 and ULID identifiers, then humanize cron expressions using cRonstrue — all running locally.</p>
+        </div>
 
         {/* Tabs */}
-        <div className="flex flex-wrap gap-2 justify-center">
+        <div className="flex flex-wrap gap-2">
           {[
             { k: "ids", label: "IDs" },
             { k: "cron", label: "Cron" },
@@ -130,7 +140,7 @@ export default function IDsCronTool() {
 
         {/* IDs tab */}
         {tab === "ids" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* UUID */}
             <div>
               <h3 className="text-rp-iris font-semibold mb-2">UUID v4</h3>
@@ -148,7 +158,7 @@ export default function IDsCronTool() {
                 </button>
                 <button
                   className="px-3 py-2 rounded-xl border border-rp-iris text-rp-text bg-rp-overlay/80"
-                  onClick={() => copy(uuid)}
+                  onClick={() => uuid && copy(uuid)}
                 >
                   Copy
                 </button>
@@ -161,19 +171,19 @@ export default function IDsCronTool() {
               <div className="flex items-center gap-2">
                 <input
                   className="flex-1 rounded-xl px-4 py-2 bg-rp-surface/70 border border-rp-highlight-high text-rp-text"
-                  value={ulid}
-                  onChange={(e) => setUlid(e.target.value.trim())}
+                  value={ulidValue}
+                  onChange={(e) => setUlidValue(e.target.value.trim())}
                   placeholder="01HZX..."
                 />
                 <button
                   className="px-3 py-2 rounded-xl border border-rp-iris text-rp-text bg-rp-overlay/80"
-                  onClick={() => setUlid(makeUlid())}
+                  onClick={() => setUlidValue(ulid())}
                 >
                   New
                 </button>
                 <button
                   className="px-3 py-2 rounded-xl border border-rp-iris text-rp-text bg-rp-overlay/80"
-                  onClick={() => copy(ulid)}
+                  onClick={() => ulidValue && copy(ulidValue)}
                 >
                   Copy
                 </button>
@@ -235,6 +245,6 @@ export default function IDsCronTool() {
           </div>
         )}
       </div>
-    </div>
+    </ToolPage>
   );
 }

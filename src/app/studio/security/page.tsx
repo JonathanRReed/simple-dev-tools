@@ -1,6 +1,8 @@
 "use client";
 import React, { useMemo, useState } from "react";
 
+import ToolPage from "@/components/layout/ToolPage";
+
 // --- Helpers: encoding/decoding ---
 const te = new TextEncoder();
 const td = new TextDecoder();
@@ -292,20 +294,22 @@ export default function SecurityTokens() {
   }
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center min-h-screen p-8">
+    <ToolPage contentClassName="mx-auto max-w-6xl">
       <div
-        className="bg-[#181926]/80 rounded-3xl shadow-2xl px-6 md:px-8 py-8 max-w-5xl w-full flex flex-col gap-6 border border-[#a78bfa]"
+        className="bg-[#181926]/80 rounded-3xl shadow-2xl px-6 md:px-8 py-8 flex flex-col gap-6 border border-[#a78bfa]"
         style={{ backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)" }}
       >
-        <h2 className="text-3xl font-bold text-[#a78bfa] text-center drop-shadow">Security & Tokens</h2>
-        <p className="text-bodyText text-center">Decode and verify JWTs (HS256/RS256/ES256), compute hashes and HMACs in the browser using Web Crypto.</p>
+        <div className="flex flex-col gap-2">
+          <h2 className="text-3xl font-bold text-[#a78bfa] drop-shadow">Security & Tokens</h2>
+          <p className="text-sm text-bodyText max-w-3xl">Decode and verify JWTs (HS256/RS256/ES256), compute hashes, and generate HMACs using Web Crypto — no secrets leave the browser.</p>
+        </div>
 
         <div className="rounded-xl border border-yellow-400/40 bg-yellow-500/10 text-yellow-200 text-sm p-3">
           All operations run locally in your browser. Do not paste production secrets or private keys.
         </div>
 
         {/* Tabs */}
-        <div className="flex flex-wrap gap-2 justify-center">
+        <div className="flex flex-wrap gap-2">
           {[
             { k: "jwt", label: "JWT" },
             { k: "hash", label: "Hash" },
@@ -327,7 +331,7 @@ export default function SecurityTokens() {
 
         {/* JWT */}
         {tab === "jwt" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <h3 className="text-rp-iris font-semibold mb-2">JWT</h3>
               <textarea
@@ -442,7 +446,7 @@ export default function SecurityTokens() {
 
         {/* Hash */}
         {tab === "hash" && (
-          <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <h3 className="text-rp-iris font-semibold mb-2">Hash</h3>
               <textarea
@@ -479,7 +483,7 @@ export default function SecurityTokens() {
 
         {/* HMAC */}
         {tab === "hmac" && (
-          <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <h3 className="text-rp-iris font-semibold mb-2">HMAC</h3>
               <textarea
@@ -522,6 +526,6 @@ export default function SecurityTokens() {
           </div>
         )}
       </div>
-    </div>
+    </ToolPage>
   );
 }

@@ -2,6 +2,8 @@
 import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
+import ToolPage from '@/components/layout/ToolPage';
+
 const FLAG_LIST = [
   { key: "g", label: "g" },
   { key: "i", label: "i" },
@@ -176,12 +178,14 @@ function RegexLabInner() {
   };
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center min-h-screen p-8">
-      <div className="bg-rp-surface/80 rounded-3xl shadow-2xl px-8 py-10 max-w-5xl w-full flex flex-col gap-6 relative border border-rp-highlight-high" style={{backdropFilter:'blur(24px)', WebkitBackdropFilter:'blur(24px)'}}>
-        <h2 className="text-3xl font-bold text-rp-iris text-center drop-shadow">Regex Lab</h2>
-        <p className="text-rp-subtle text-center">Live test patterns with flags, groups, and replacement preview.</p>
+    <ToolPage contentClassName="mx-auto max-w-5xl">
+      <div className="bg-rp-surface/80 rounded-3xl shadow-2xl px-6 sm:px-8 py-8 flex flex-col gap-6 relative border border-rp-highlight-high" style={{backdropFilter:'blur(24px)', WebkitBackdropFilter:'blur(24px)'}}>
+        <div className="flex flex-col gap-2">
+          <h2 className="text-3xl font-bold text-rp-iris drop-shadow">Regex Lab</h2>
+          <p className="text-sm text-rp-subtle max-w-3xl">Live-test regular expressions with instant matches, replacement previews, and quick flag toggles. Everything runs in your browser.</p>
+        </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="w-full flex flex-wrap items-center gap-3">
           <label className="text-rp-subtle">Pattern</label>
           <input
             className="flex-1 rounded-xl px-4 py-2 bg-rp-surface/70 border border-rp-highlight-high text-rp-text focus:outline-none focus:ring-2 focus:ring-rp-iris"
@@ -358,6 +362,6 @@ function RegexLabInner() {
           </p>
         </div>
       </div>
-    </div>
+    </ToolPage>
   );
 }

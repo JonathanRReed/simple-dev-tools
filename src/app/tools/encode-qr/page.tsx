@@ -2,6 +2,8 @@
 import React, { useMemo, useState } from "react";
 import QRCode from "qrcode";
 
+import ToolPage from "@/components/layout/ToolPage";
+
 const te = new TextEncoder();
 const td = new TextDecoder();
 
@@ -146,16 +148,18 @@ export default function EncodeQR() {
   }
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center min-h-screen p-8">
+    <ToolPage contentClassName="mx-auto max-w-5xl">
       <div
-        className="bg-rp-surface/80 rounded-3xl shadow-2xl px-6 md:px-8 py-8 max-w-5xl w-full flex flex-col gap-6 border border-rp-highlight-high"
+        className="bg-rp-surface/80 rounded-3xl shadow-2xl px-6 md:px-8 py-8 flex flex-col gap-6 border border-rp-highlight-high"
         style={{ backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)" }}
       >
-        <h2 className="text-3xl font-bold text-rp-iris text-center drop-shadow">Encoders & QR</h2>
-        <p className="text-rp-subtle text-center">URL and Base64 encode/decode plus a QR generator (PNG/SVG) — all client-side.</p>
+        <div className="flex flex-col gap-2">
+          <h2 className="text-3xl font-bold text-rp-iris drop-shadow">Encoders & QR</h2>
+          <p className="text-sm text-rp-subtle max-w-3xl">Encode/decode URLs and Base64 strings, then generate QR codes (PNG/SVG) without leaving the browser.</p>
+        </div>
 
         {/* Tabs */}
-        <div className="flex flex-wrap gap-2 justify-center">
+        <div className="flex flex-wrap gap-2">
           {[
             { k: "url", label: "URL" },
             { k: "base64", label: "Base64" },
@@ -177,7 +181,7 @@ export default function EncodeQR() {
 
         {/* URL */}
         {tab === "url" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <h3 className="text-rp-iris font-semibold mb-2">Input</h3>
               <textarea
@@ -208,7 +212,7 @@ export default function EncodeQR() {
 
         {/* Base64 */}
         {tab === "base64" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <h3 className="text-rp-iris font-semibold mb-2">Input</h3>
               <textarea
@@ -243,7 +247,7 @@ export default function EncodeQR() {
 
         {/* QR */}
         {tab === "qr" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,0.55fr)_minmax(0,0.45fr)] gap-6">
             <div>
               <h3 className="text-rp-iris font-semibold mb-2">Text</h3>
               <textarea
@@ -320,6 +324,6 @@ export default function EncodeQR() {
           </div>
         )}
       </div>
-    </div>
+    </ToolPage>
   );
 }

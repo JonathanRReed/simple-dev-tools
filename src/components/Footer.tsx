@@ -1,25 +1,62 @@
 import Image from 'next/image';
+import Link from 'next/link';
+import { ExternalLink, Sparkles } from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
 
 export default function Footer() {
   return (
-    <footer className="w-full flex justify-center items-end p-8 pb-12 bg-transparent mt-32">
-      <div className="footer-card bg-rp-surface/90 rounded-3xl shadow-2xl px-8 py-10 max-w-xl w-full flex flex-col items-start gap-6 relative border border-rp-highlight-high" style={{backdropFilter:'blur(24px)', WebkitBackdropFilter:'blur(24px)'}}>
-        <div className="flex items-center gap-3">
-          <Image src="/logo.avif" alt="Hello.World Consulting Logo" width={40} height={40} className="rounded-full logo-img-strict" style={{width: 40, height: 40}} unoptimized />
-          <span className="text-2xl text-rp-text font-normal">A product of <span className="font-bold text-rp-iris">Hello.World Consulting</span></span>
-        </div>
-        <span className="italic text-rp-iris text-lg">Made by Jonathan Reed</span>
-        <div className="flex flex-col gap-2 mt-2 w-full">
-          <a href="https://helloworldfirm.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-rp-iris text-lg font-medium hover:underline">
-            <Image src="/logo.avif" alt="Hello.World Consulting Logo" width={28} height={28} className="rounded-full logo-img-strict" style={{width: 28, height: 28}} unoptimized />
-            helloworldfirm.com
-          </a>
-          <a href="https://JonathanRReed.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-rp-iris text-lg font-medium hover:underline">
-            <Image src="/jonathan.avif" alt="Jonathan Reed" width={28} height={28} className="rounded-full border-2 border-rp-iris profile-img-strict" style={{width: 28, height: 28}} unoptimized />
-            JonathanRReed.com
-          </a>
-        </div>
-        <span className="text-rp-subtle text-sm mt-4">2025 &copy; All Rights Reserved</span>
+    <footer className="mt-6 border-t border-border/60 bg-background/60 px-6 py-6 backdrop-blur">
+      <div className="mx-auto flex w-full max-w-4xl flex-col gap-5 text-sm">
+        <Card className="border-border/60 bg-card/70 backdrop-blur">
+          <CardHeader className="flex flex-row items-center gap-3 pb-2">
+            <Image src="/logo.avif" alt="Hello.World Consulting" width={42} height={42} className="rounded-full logo-img-strict" unoptimized />
+            <div>
+              <CardTitle className="text-xl">Hello.World Consulting</CardTitle>
+              <CardDescription className="text-muted-foreground">Simple dev tools for teams that ship.</CardDescription>
+            </div>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4">
+            <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+              <Badge variant="secondary" className="flex items-center gap-1 bg-secondary/60 text-secondary-foreground">
+                <Sparkles className="h-3.5 w-3.5" />
+                Crafted by Jonathan Reed
+              </Badge>
+              <span className="text-xs">2025 © All Rights Reserved</span>
+            </div>
+            <Separator className="bg-border/40" />
+            <div className="grid gap-3 md:grid-cols-2">
+              <Link
+                href="https://helloworldfirm.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-between rounded-lg border border-border/60 bg-card/40 px-4 py-3 text-sm transition hover:border-primary/60 hover:bg-primary/10"
+              >
+                <span className="font-semibold text-primary">helloworldfirm.com</span>
+                <ExternalLink className="h-4 w-4 text-primary" />
+              </Link>
+              <Link
+                href="https://JonathanRReed.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-between rounded-lg border border-border/60 bg-card/40 px-4 py-3 text-sm transition hover:border-primary/60 hover:bg-primary/10"
+              >
+                <span className="font-semibold text-primary">JonathanRReed.com</span>
+                <ExternalLink className="h-4 w-4 text-primary" />
+              </Link>
+            </div>
+            <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+              <Image src="/jonathan.avif" alt="Jonathan Reed" width={28} height={28} className="rounded-full border border-primary/50 profile-img-strict" unoptimized />
+              <span>Built with care for the developer community.</span>
+              <Button asChild variant="ghost" size="sm" className="h-7 px-2 text-xs text-primary hover:text-primary">
+                <Link href="/api-snippet">Explore tools</Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </footer>
   );
