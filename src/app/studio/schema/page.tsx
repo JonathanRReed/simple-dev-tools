@@ -1,13 +1,22 @@
 "use client";
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import YAML from "yaml";
-import Ajv from "ajv";
-import addFormats from "ajv-formats";
 
 import ToolPage from "@/components/layout/ToolPage";
 
-const SwaggerUI = dynamic(() => import("swagger-ui-react"), { ssr: false });
+interface SwaggerUIProps {
+  spec?: unknown;
+  url?: string;
+  docExpansion?: "list" | "full" | "none";
+  defaultModelsExpandDepth?: number;
+  defaultModelExpandDepth?: number;
+  [key: string]: unknown;
+}
+
+const SwaggerUI = dynamic(() => import("swagger-ui-react"), { ssr: false }) as React.ComponentType<SwaggerUIProps>;
+
+type AjvInstance = import("ajv").default;
 
 function parseInput(source: string, format: "json" | "yaml") {
   try {
@@ -55,12 +64,60 @@ export default function SchemaStudio() {
     '{"type":"object","properties":{"name":{"type":"string"}},"required":["name"]}'
   );
   const [dataText, setDataText] = useState<string>('{"name":"Alice"}');
+  const [ajv, setAjv] = useState<AjvInstance | null>(null);
+  const [validatorError, setValidatorError] = useState<string | null>(null);
+  const [validateResult, setValidateResult] = useState<{ ok: boolean; errors: any[] | null } | null>(null);
 
-  const ajv = useMemo(() => {
-    const a = new Ajv({ allErrors: true });
-    addFormats(a);
-    return a;
-  }, []);
+  const ensureValidator = useCallback(async () => {
+    if (ajv) return ajv;
+    try {
+      setValidatorError(null);
+      const [{ default: AjvCtor }, { default: addFormatsFn }] = await Promise.all([
+        import("ajv"),
+        import("ajv-formats"),
+      ]);
+      const instance = new AjvCtor({ allErrors: true });
+      addFormatsFn(instance);
+      setAjv(instance);
+      return instance;
+    } catch (error: any) {
+      const message = error?.message || "Failed to load validator";
+      setValidatorError(message);
+      return null;
+    }
+  }, [ajv]);
+
+  useEffect(() => {
+    if (tab !== "validate") return;
+
+    let cancelled = false;
+    setValidateResult(null);
+
+    (async () => {
+      const validator = await ensureValidator();
+      if (!validator || cancelled) return;
+      try {
+        const schema = JSON.parse(schemaText);
+        const data = JSON.parse(dataText);
+        const compiled = validator.compile(schema);
+        const valid = compiled(data);
+        if (!cancelled) {
+          setValidateResult({ ok: !!valid, errors: compiled.errors || null });
+        }
+      } catch (error: any) {
+        if (!cancelled) {
+          setValidateResult({
+            ok: false,
+            errors: [{ message: error?.message || "Invalid JSON" }] as any,
+          });
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [tab, schemaText, dataText, ensureValidator]);
 
   // Emit 'interface' only when the generated type is an object literal; otherwise emit a 'type' alias.
   const emitTsDeclaration = useCallback((name: string, typeExpr: string) => {
@@ -68,21 +125,6 @@ export default function SchemaStudio() {
     if (trimmed.startsWith("{")) return `export interface ${name} ${trimmed}`;
     return `export type ${name} = ${trimmed}`;
   }, []);
-
-  const validateResult = useMemo(() => {
-    try {
-      const schema = JSON.parse(schemaText);
-      const data = JSON.parse(dataText);
-      const validate = ajv.compile(schema);
-      const valid = validate(data);
-      return {
-        ok: !!valid,
-        errors: validate.errors || null,
-      };
-    } catch (e: any) {
-      return { ok: false, errors: [{ message: e?.message || "Invalid JSON" }] } as any;
-    }
-  }, [schemaText, dataText, ajv]);
 
   // --- JSON Schema helpers ----
   type JSONSchema = any;
@@ -473,7 +515,11 @@ export default function SchemaStudio() {
                 onChange={(e) => setDataText(e.target.value)}
               />
               <div className="mt-3 rounded-xl border border-rp-highlight-high bg-rp-overlay/80 p-3">
-                {validateResult.ok ? (
+                {validatorError ? (
+                  <div className="text-rp-love">{validatorError}</div>
+                ) : !validateResult ? (
+                  <div className="text-rp-subtle">Validating…</div>
+                ) : validateResult.ok ? (
                   <div className="text-rp-foam">Valid ✓</div>
                 ) : (
                   <div>

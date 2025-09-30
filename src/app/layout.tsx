@@ -1,4 +1,5 @@
 import './globals.css';
+import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 
 import Footer from '@/components/Footer';
@@ -7,14 +8,28 @@ import ThemeToggle from '@/components/ThemeToggle';
 import { ThemeProvider } from '@/components/theme-provider';
 import { SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 
-export const metadata = {
+export const metadata: Metadata = {
   title: 'Simple-Dev-Tools',
   description: 'Simple dev tools by Hello.World Consulting',
+  icons: {
+    icon: [
+      { url: '/favicon.ico' },
+      { url: '/Favicon/favicon.svg', type: 'image/svg+xml' },
+      { url: '/Favicon/favicon-96x96.avif', type: 'image/avif', sizes: '96x96' },
+    ],
+    apple: [{ url: '/Favicon/apple-touch-icon.avif', type: 'image/avif', sizes: '180x180' }],
+    shortcut: '/favicon.ico',
+  },
+  manifest: '/Favicon/site.webmanifest',
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
+        <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com" />
+      </head>
       <body className="bg-background text-foreground font-sans antialiased">
         <ThemeProvider>
           <AppSidebarProvider>
