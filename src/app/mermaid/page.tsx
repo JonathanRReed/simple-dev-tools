@@ -112,11 +112,11 @@ export default function MermaidPage() {
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center min-h-screen p-8">
-      <div className="bg-[#181926]/80 rounded-3xl shadow-2xl px-8 py-10 max-w-3xl w-full flex flex-col items-center gap-6 relative border border-[#a78bfa]" style={{backdropFilter:'blur(24px)', WebkitBackdropFilter:'blur(24px)'}}>
-        <h2 className="text-3xl font-bold text-[#a78bfa] mb-2 text-center drop-shadow">Mermaid Diagram Generator</h2>
+      <div className="bg-rp-surface/80 rounded-3xl shadow-2xl px-8 py-10 max-w-3xl w-full flex flex-col items-center gap-6 relative border border-rp-highlight-high" style={{backdropFilter:'blur(24px)', WebkitBackdropFilter:'blur(24px)'}}>
+        <h2 className="text-3xl font-bold text-rp-iris mb-2 text-center drop-shadow">Mermaid Diagram Generator</h2>
         <div className="flex flex-wrap gap-3 w-full justify-center mb-2">
           <select
-            className="rounded-xl px-4 py-2 bg-[#23243a]/80 border border-[#a78bfa66] text-gray-200 focus:outline-none focus:ring-2 focus:ring-[#a78bfa]"
+            className="rounded-xl px-4 py-2 bg-rp-surface/70 border border-rp-highlight-high text-rp-text focus:outline-none focus:ring-2 focus:ring-rp-iris"
             onChange={e => handleTemplate(e.target.value)}
             defaultValue=""
           >
@@ -126,19 +126,19 @@ export default function MermaidPage() {
             ))}
           </select>
           <button
-            className="bg-gradient-to-r from-[#a78bfa] to-[#ff4dc4] text-white font-bold py-2 px-4 rounded-xl shadow hover:opacity-80 transition"
+            className="px-4 py-2 rounded-xl border border-rp-iris text-rp-text bg-rp-overlay/80 font-semibold shadow hover:bg-rp-overlay/60 transition"
             onClick={handleExportSVG}
           >
             Export SVG
           </button>
           <button
-            className="bg-gradient-to-r from-[#a78bfa] to-[#ff4dc4] text-white font-bold py-2 px-4 rounded-xl shadow hover:opacity-80 transition"
+            className="px-4 py-2 rounded-xl border border-rp-iris text-rp-text bg-rp-overlay/80 font-semibold shadow hover:bg-rp-overlay/60 transition"
             onClick={handleExportPNG}
           >
             Export PNG
           </button>
           <button
-            className="bg-gradient-to-r from-[#a78bfa] to-[#ff4dc4] text-white font-bold py-2 px-4 rounded-xl shadow hover:opacity-80 transition"
+            className="px-4 py-2 rounded-xl border border-rp-iris text-rp-text bg-rp-overlay/80 font-semibold shadow hover:bg-rp-overlay/60 transition"
             onClick={() => navigator.clipboard.writeText(code)}
           >
             Copy Mermaid Code
@@ -151,16 +151,16 @@ export default function MermaidPage() {
               onValueChange={setCode}
               highlight={highlight}
               padding={12}
-              className="rounded-xl bg-[#23243a]/70 border border-[#a78bfa66] text-gray-200 font-mono text-sm min-h-[180px] focus:outline-none focus:ring-2 focus:ring-[#a78bfa]"
+              className="rounded-xl bg-rp-surface/70 border border-rp-highlight-high text-rp-text font-mono text-sm min-h-[180px] focus:outline-none focus:ring-2 focus:ring-rp-iris"
               style={{ minHeight: 180, background: "none" }}
               textareaId="mermaid-editor"
               textareaClassName="hidden"
               spellCheck={false}
             />
           </div>
-          <div className="flex-1 bg-[#23243a]/80 border border-[#a78bfa99] rounded-xl p-4 min-h-[180px] flex flex-col items-center justify-center relative">
+          <div className="flex-1 bg-rp-overlay/70 border border-rp-highlight-high rounded-xl p-4 min-h-[180px] flex flex-col items-center justify-center relative">
             <div ref={diagramRef} className="w-full overflow-auto" />
-            {error && <div className="text-red-400 text-xs mt-2">{error}</div>}
+            {error && <div className="text-rp-love text-xs mt-2">{error}</div>}
           </div>
         </div>
       </div>

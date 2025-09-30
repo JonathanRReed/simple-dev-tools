@@ -10,12 +10,12 @@ export default function Home() {
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
           className="w-full h-full object-cover"
-          style={{ filter: 'blur(120px)', opacity: 0.8 }}
+          style={{ filter: 'blur(120px)', opacity: 0.5 }}
         >
           <style>{`
             :root {
-              --color1: #a78bfa;
-              --color2: #ff4dc4;
+              --color1: var(--rp-iris);
+              --color2: var(--rp-rose);
             }
             @keyframes colorChange1 {
               0%, 100% { fill: var(--color1); }
@@ -31,13 +31,13 @@ export default function Home() {
             cy="450"
             rx="700"
             ry="350"
-            fill="#a78bfa"
+            fill="var(--color1)"
           />
         </svg>
       </div>
       <div className="relative z-10 flex flex-col items-center w-full max-w-3xl">
-        <h1 className="text-3xl md:text-6xl font-extrabold text-gray-200 mb-4 text-center">Simple-Dev-Tools</h1>
-        <p className="mb-8 text-lg md:text-xl text-gray-400 text-center max-w-2xl">Simple dev tools by Hello.World Consulting</p>
+        <h1 className="text-3xl md:text-6xl font-extrabold text-rp-text mb-3 text-center drop-shadow-[0_1px_0_rgba(0,0,0,0.3)]">Simple-Dev-Tools</h1>
+        <p className="mb-10 text-lg md:text-xl text-rp-foam text-center max-w-2xl">Simple dev tools by Hello.World Consulting</p>
         {/* Tool cards/links will go here */}
       </div>
     </div>

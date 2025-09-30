@@ -55,7 +55,7 @@ function buildFlags(state: FlagsState): string {
 
 export default function RegexLab() {
   return (
-    <React.Suspense fallback={<div className="p-8 text-gray-300">Loading…</div>}>
+    <React.Suspense fallback={<div className="p-8 text-rp-subtle">Loading…</div>}>
       <RegexLabInner />
     </React.Suspense>
   );
@@ -177,24 +177,24 @@ function RegexLabInner() {
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center min-h-screen p-8">
-      <div className="bg-[#181926]/80 rounded-3xl shadow-2xl px-8 py-10 max-w-5xl w-full flex flex-col gap-6 relative border border-[#a78bfa]" style={{backdropFilter:'blur(24px)', WebkitBackdropFilter:'blur(24px)'}}>
-        <h2 className="text-3xl font-bold text-[#a78bfa] text-center drop-shadow">Regex Lab</h2>
-        <p className="text-bodyText text-center">Live test patterns with flags, groups, and replacement preview.</p>
+      <div className="bg-rp-surface/80 rounded-3xl shadow-2xl px-8 py-10 max-w-5xl w-full flex flex-col gap-6 relative border border-rp-highlight-high" style={{backdropFilter:'blur(24px)', WebkitBackdropFilter:'blur(24px)'}}>
+        <h2 className="text-3xl font-bold text-rp-iris text-center drop-shadow">Regex Lab</h2>
+        <p className="text-rp-subtle text-center">Live test patterns with flags, groups, and replacement preview.</p>
 
         <div className="flex flex-wrap items-center gap-3">
-          <label className="text-gray-300">Pattern</label>
+          <label className="text-rp-subtle">Pattern</label>
           <input
-            className="flex-1 rounded-xl px-4 py-2 bg-[#23243a]/70 border border-[#a78bfa66] text-gray-200 focus:outline-none focus:ring-2 focus:ring-[#a78bfa]"
+            className="flex-1 rounded-xl px-4 py-2 bg-rp-surface/70 border border-rp-highlight-high text-rp-text focus:outline-none focus:ring-2 focus:ring-rp-iris"
             value={pattern}
             onChange={(e) => setPattern(e.target.value)}
             placeholder="Enter regex pattern (without / /)"
           />
           <div className="flex items-center gap-2">
             {FLAG_LIST.map(({ key, label }) => (
-              <label key={key} className="flex items-center gap-1 text-gray-300 border border-[#a78bfa33] rounded-lg px-2 py-1">
+              <label key={key} className="flex items-center gap-1 text-rp-subtle border border-rp-highlight-low rounded-lg px-2 py-1">
                 <input
                   type="checkbox"
-                  className="accent-[#a78bfa]"
+                  className="accent-[var(--rp-iris)]"
                   checked={flags[key]}
                   onChange={(e) => setFlags((f) => ({ ...f, [key]: e.target.checked }))}
                 />
@@ -204,7 +204,7 @@ function RegexLabInner() {
           </div>
           <button
             onClick={handleCopyLink}
-            className="ml-auto text-sm bg-[#a78bfa]/20 hover:bg-[#a78bfa]/30 border border-[#a78bfa66] text-[#e9d5ff] rounded-lg px-3 py-1"
+            className="ml-auto text-sm bg-rp-overlay/40 hover:bg-rp-overlay/50 border border-rp-highlight-high text-rp-text rounded-lg px-3 py-1"
             title="Copy shareable link"
           >
             {copied ? "Copied ✓" : "Copy Link"}
@@ -213,16 +213,16 @@ function RegexLabInner() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-gray-300 mb-2">Test String</label>
+            <label className="block text-rp-subtle mb-2">Test String</label>
             <textarea
-              className="w-full min-h-[140px] rounded-xl px-4 py-3 bg-[#23243a]/70 border border-[#a78bfa66] text-gray-200 focus:outline-none focus:ring-2 focus:ring-[#a78bfa]"
+              className="w-full min-h-[140px] rounded-xl px-4 py-3 bg-rp-surface/70 border border-rp-highlight-high text-rp-text focus:outline-none focus:ring-2 focus:ring-rp-iris"
               value={text}
               onChange={(e) => setText(e.target.value)}
             />
             <div className="mt-3">
-              <label className="block text-gray-300 mb-2">Replacement</label>
+              <label className="block text-rp-subtle mb-2">Replacement</label>
               <input
-                className="w-full rounded-xl px-4 py-2 bg-[#23243a]/70 border border-[#a78bfa66] text-gray-200 focus:outline-none focus:ring-2 focus:ring-[#a78bfa]"
+                className="w-full rounded-xl px-4 py-2 bg-rp-surface/70 border border-rp-highlight-high text-rp-text focus:outline-none focus:ring-2 focus:ring-rp-iris"
                 value={replacement}
                 onChange={(e) => setReplacement(e.target.value)}
                 placeholder="$&, $1, $<name> etc."
@@ -231,7 +231,7 @@ function RegexLabInner() {
           </div>
           <div>
             <div className="flex items-center justify-between mb-2">
-              <h3 className="text-[#a78bfa] font-semibold">Matches</h3>
+              <h3 className="text-rp-iris font-semibold">Matches</h3>
               <div className="flex items-center gap-2">
                 <select
                   onChange={(e) => {
@@ -239,7 +239,7 @@ function RegexLabInner() {
                     if (s) handleSample(s);
                   }}
                   defaultValue=""
-                  className="rounded-lg bg-[#23243a]/70 border border-[#a78bfa66] text-gray-200 px-3 py-1"
+                  className="rounded-lg bg-rp-surface/70 border border-rp-highlight-high text-rp-text px-3 py-1"
                 >
                   <option value="" disabled>
                     Choose sample…
@@ -251,7 +251,7 @@ function RegexLabInner() {
                   ))}
                 </select>
                 <a
-                  className="text-sm text-[#a78bfa] hover:underline"
+                  className="text-sm text-rp-iris hover:text-rp-rose"
                   href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions"
                   target="_blank"
                   rel="noreferrer noopener"
@@ -261,21 +261,21 @@ function RegexLabInner() {
               </div>
             </div>
 
-            <div className="rounded-xl border border-[#a78bfa99] bg-[#23243a]/80 p-3 max-h-[220px] overflow-auto">
-              {!re && error && <div className="text-red-400 text-sm">{error}</div>}
-              {re && matches.length === 0 && <div className="text-gray-400 text-sm">No matches.</div>}
+            <div className="rounded-xl border border-rp-highlight-high bg-rp-overlay/70 p-3 max-h-[220px] overflow-auto">
+              {!re && error && <div className="text-rp-love text-sm">{error}</div>}
+              {re && matches.length === 0 && <div className="text-rp-muted text-sm">No matches.</div>}
               {re && matches.length > 0 && (
-                <table className="w-full text-sm text-gray-200">
+                <table className="w-full text-sm text-rp-text">
                   <thead>
                     <tr>
-                      <th className="text-left px-2 py-1">Index</th>
-                      <th className="text-left px-2 py-1">Match</th>
-                      <th className="text-left px-2 py-1">Groups</th>
+                      <th className="text-left px-2 py-1 text-rp-subtle">Index</th>
+                      <th className="text-left px-2 py-1 text-rp-subtle">Match</th>
+                      <th className="text-left px-2 py-1 text-rp-subtle">Groups</th>
                     </tr>
                   </thead>
                   <tbody>
                     {matches.map((m, i) => (
-                      <tr key={i} className="even:bg-[#a78bfa11]">
+                      <tr key={i} className="even:bg-rp-highlight-low/40">
                         <td className="px-2 py-1 align-top">{m.index}</td>
                         <td className="px-2 py-1 align-top whitespace-pre-wrap break-words">{m.match}</td>
                         <td className="px-2 py-1 align-top">
@@ -283,12 +283,12 @@ function RegexLabInner() {
                             <ul className="list-disc pl-5">
                               {m.groups.map((g, j) => (
                                 <li key={j} className="break-words">
-                                  <span className="text-gray-300">Group {j + 1}:</span> {g ?? "<empty>"}
+                                  <span className="text-rp-subtle">Group {j + 1}:</span> {g ?? "<empty>"}
                                 </li>
                               ))}
                             </ul>
                           ) : (
-                            <span className="text-gray-400">(none)</span>
+                            <span className="text-rp-muted">(none)</span>
                           )}
                         </td>
                       </tr>
@@ -299,20 +299,20 @@ function RegexLabInner() {
             </div>
 
             <div className="mt-4">
-              <h3 className="text-[#a78bfa] font-semibold mb-2">Replace Preview</h3>
-              <div className="rounded-xl border border-[#a78bfa99] bg-[#23243a]/80 p-3 whitespace-pre-wrap break-words max-h-[180px] overflow-auto">
+              <h3 className="text-rp-iris font-semibold mb-2">Replace Preview</h3>
+              <div className="rounded-xl border border-rp-highlight-high bg-rp-overlay/70 p-3 whitespace-pre-wrap break-words max-h-[180px] overflow-auto text-rp-text">
                 {replaced}
               </div>
             </div>
           </div>
         </div>
 
-        <div className="rounded-2xl border border-[#a78bfa66] bg-[#23243a]/60 p-4">
+        <div className="rounded-2xl border border-rp-highlight-high bg-rp-overlay/60 p-4">
           <details>
-            <summary className="cursor-pointer text-[#a78bfa] font-semibold">Regex Cheat Sheet</summary>
-            <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-gray-200">
+            <summary className="cursor-pointer text-rp-iris font-semibold">Regex Cheat Sheet</summary>
+            <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-rp-text">
               <div>
-                <div className="font-medium text-gray-300 mb-1">Basics</div>
+                <div className="font-medium text-rp-subtle mb-1">Basics</div>
                 <ul className="list-disc pl-5 space-y-0.5">
                   <li><code>.</code> any char (except newline unless <code>s</code>)</li>
                   <li><code>^</code> start, <code>$</code> end</li>
@@ -321,14 +321,14 @@ function RegexLabInner() {
                 </ul>
               </div>
               <div>
-                <div className="font-medium text-gray-300 mb-1">Quantifiers</div>
+                <div className="font-medium text-rp-subtle mb-1">Quantifiers</div>
                 <ul className="list-disc pl-5 space-y-0.5">
                   <li><code>*</code> 0+, <code>+</code> 1+, <code>?</code> 0/1, <code>{`{n}`}</code>, <code>{`{n,}`}</code>, <code>{`{n,m}`}</code></li>
                   <li>Lazy: append <code>?</code> e.g. <code>.*?</code></li>
                 </ul>
               </div>
               <div>
-                <div className="font-medium text-gray-300 mb-1">Groups & Alternation</div>
+                <div className="font-medium text-rp-subtle mb-1">Groups & Alternation</div>
                 <ul className="list-disc pl-5 space-y-0.5">
                   <li><code>(...)</code> capture, <code>(?:...)</code> non-capture</li>
                   <li><code>(?&lt;name&gt;...)</code> named capture, backref <code>\k&lt;name&gt;</code></li>
@@ -336,7 +336,7 @@ function RegexLabInner() {
                 </ul>
               </div>
               <div>
-                <div className="font-medium text-gray-300 mb-1">Flags</div>
+                <div className="font-medium text-rp-subtle mb-1">Flags</div>
                 <ul className="list-disc pl-5 space-y-0.5">
                   <li><code>g</code> global, <code>i</code> ignoreCase, <code>m</code> multiline</li>
                   <li><code>s</code> dotAll, <code>u</code> unicode, <code>y</code> sticky</li>
@@ -346,15 +346,15 @@ function RegexLabInner() {
           </details>
         </div>
 
-        <div className="text-xs text-gray-400 mt-2">
+        <div className="text-xs text-rp-muted mt-2">
           <p>
             Flags: <code>g</code> global, <code>i</code> ignoreCase, <code>m</code> multiline,
             <code> s</code> dotAll, <code>u</code> unicode, <code>y</code> sticky
           </p>
           <p>
             Useful links: {" "}
-            <a className="text-[#a78bfa] hover:underline" href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp" target="_blank" rel="noreferrer noopener">MDN RegExp</a>{" • "}
-            <a className="text-[#a78bfa] hover:underline" href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replace" target="_blank" rel="noreferrer noopener">MDN String.replace</a>
+            <a className="text-rp-iris hover:text-rp-rose" href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp" target="_blank" rel="noreferrer noopener">MDN RegExp</a>{" • "}
+            <a className="text-rp-iris hover:text-rp-rose" href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replace" target="_blank" rel="noreferrer noopener">MDN String.replace</a>
           </p>
         </div>
       </div>

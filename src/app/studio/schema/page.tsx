@@ -336,11 +336,11 @@ export default function SchemaStudio() {
   return (
     <div className="flex-1 flex flex-col items-center justify-center min-h-screen p-8">
       <div
-        className="bg-[#181926]/80 rounded-3xl shadow-2xl px-6 md:px-8 py-8 max-w-6xl w-full flex flex-col gap-6 border border-[#a78bfa]"
+        className="bg-rp-surface/80 rounded-3xl shadow-2xl px-6 md:px-8 py-8 max-w-6xl w-full flex flex-col gap-6 border border-rp-highlight-high"
         style={{ backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)" }}
       >
-        <h2 className="text-3xl font-bold text-[#a78bfa] text-center drop-shadow">Schema & Types Studio</h2>
-        <p className="text-bodyText text-center">Paste JSON/YAML or OpenAPI. Parse, preview docs, validate data, and generate TypeScript types.</p>
+        <h2 className="text-3xl font-bold text-rp-iris text-center drop-shadow">Schema & Types Studio</h2>
+        <p className="text-rp-subtle text-center">Paste JSON/YAML or OpenAPI. Parse, preview docs, validate data, and generate TypeScript types.</p>
 
         {/* Tabs */}
         <div className="flex flex-wrap gap-2 justify-center">
@@ -354,8 +354,8 @@ export default function SchemaStudio() {
               key={t.k}
               className={`px-4 py-2 rounded-xl border ${
                 tab === (t.k as any)
-                  ? "border-[#a78bfa] text-white bg-[#23243a]/80"
-                  : "border-[#a78bfa33] text-gray-300 bg-[#23243a]/50"
+                  ? "border-rp-iris text-rp-text bg-rp-overlay/80"
+                  : "border-rp-highlight-high text-rp-subtle bg-rp-surface/40"
               }`}
               onClick={() => setTab(t.k as any)}
             >
@@ -368,21 +368,21 @@ export default function SchemaStudio() {
         {tab === "source" && (
           <div className="grid grid-cols-1 md:grid-cols-[140px_1fr] gap-4 w-full">
             <div className="flex md:flex-col gap-2">
-              <label className="text-gray-300">Format</label>
+              <label className="text-rp-subtle">Format</label>
               <div className="flex md:flex-col gap-2">
-                <label className="flex items-center gap-2 text-gray-300">
+                <label className="flex items-center gap-2 text-rp-subtle">
                   <input
                     type="radio"
-                    className="accent-[#a78bfa]"
+                    className="accent-[var(--rp-iris)]"
                     checked={format === "yaml"}
                     onChange={() => setFormat("yaml")}
                   />
                   YAML
                 </label>
-                <label className="flex items-center gap-2 text-gray-300">
+                <label className="flex items-center gap-2 text-rp-subtle">
                   <input
                     type="radio"
-                    className="accent-[#a78bfa]"
+                    className="accent-[var(--rp-iris)]"
                     checked={format === "json"}
                     onChange={() => setFormat("json")}
                   />
@@ -393,7 +393,7 @@ export default function SchemaStudio() {
             <div>
               <div className="flex flex-wrap items-center gap-2 mb-2">
                 <input
-                  className="flex-1 rounded-xl px-3 py-2 bg-[#23243a]/70 border border-[#a78bfa66] text-gray-200 focus:outline-none focus:ring-2 focus:ring-[#a78bfa]"
+                  className="flex-1 rounded-xl px-3 py-2 bg-rp-surface/70 border border-rp-highlight-high text-rp-text focus:outline-none focus:ring-2 focus:ring-rp-iris"
                   placeholder="Import from URL (https://... .yaml or .json)"
                   value={importUrl}
                   onChange={(e) => setImportUrl(e.target.value)}
@@ -401,7 +401,7 @@ export default function SchemaStudio() {
                 <button
                   onClick={handleImport}
                   disabled={!importUrl || importing}
-                  className="text-sm bg-[#a78bfa]/20 hover:bg-[#a78bfa]/30 disabled:opacity-60 border border-[#a78bfa66] text-[#e9d5ff] rounded-lg px-3 py-2"
+                  className="text-sm bg-rp-overlay/60 hover:bg-rp-overlay/40 disabled:opacity-60 border border-rp-highlight-high text-rp-text rounded-lg px-3 py-2"
                   title="Fetch and load from URL"
                 >
                   {importing ? "Importing…" : "Import"}
@@ -409,14 +409,14 @@ export default function SchemaStudio() {
                 <div className="ml-auto flex items-center gap-2">
                   <button
                     onClick={handleCopy}
-                    className="text-sm bg-[#a78bfa]/20 hover:bg-[#a78bfa]/30 border border-[#a78bfa66] text-[#e9d5ff] rounded-lg px-3 py-2"
+                    className="text-sm bg-rp-overlay/60 hover:bg-rp-overlay/40 border border-rp-highlight-high text-rp-text rounded-lg px-3 py-2"
                     title="Copy current source"
                   >
                     {copied ? "Copied ✓" : "Copy"}
                   </button>
                   <button
                     onClick={handleDownload}
-                    className="text-sm bg-[#a78bfa]/20 hover:bg-[#a78bfa]/30 border border-[#a78bfa66] text-[#e9d5ff] rounded-lg px-3 py-2"
+                    className="text-sm bg-rp-overlay/60 hover:bg-rp-overlay/40 border border-rp-highlight-high text-rp-text rounded-lg px-3 py-2"
                     title="Download current source"
                   >
                     Download
@@ -424,17 +424,17 @@ export default function SchemaStudio() {
                 </div>
               </div>
               <textarea
-                className="w-full min-h-[280px] rounded-xl px-4 py-3 bg-[#23243a]/70 border border-[#a78bfa66] text-gray-200 focus:outline-none focus:ring-2 focus:ring-[#a78bfa]"
+                className="w-full min-h-[280px] rounded-xl px-4 py-3 bg-rp-surface/70 border border-rp-highlight-high text-rp-text focus:outline-none focus:ring-2 focus:ring-rp-iris"
                 value={source}
                 onChange={(e) => setSource(e.target.value)}
                 placeholder={format === "yaml" ? "Paste YAML or OpenAPI here…" : "Paste JSON or OpenAPI here…"}
               />
               <div className="mt-2 text-sm">
-                {importError && <div className="text-red-400">Import error: {importError}</div>}
+                {importError && <div className="text-rp-love">Import error: {importError}</div>}
                 {parsed.error ? (
-                  <div className="text-red-400">Parse error: {parsed.error}</div>
+                  <div className="text-rp-love">Parse error: {parsed.error}</div>
                 ) : (
-                  <div className="text-green-300">Parsed successfully{parsed.isOpenAPI ? " • OpenAPI detected" : ""}.</div>
+                  <div className="text-rp-foam">Parsed successfully{parsed.isOpenAPI ? " • OpenAPI detected" : ""}.</div>
                 )}
               </div>
             </div>
@@ -445,11 +445,11 @@ export default function SchemaStudio() {
         {tab === "docs" && (
           <div className="w-full">
             {!parsed.value ? (
-              <div className="text-red-400">Nothing parsed yet. Paste a spec on the Source tab.</div>
+              <div className="text-rp-love">Nothing parsed yet. Paste a spec on the Source tab.</div>
             ) : !parsed.isOpenAPI ? (
-              <div className="text-gray-300">Not an OpenAPI spec. Add top-level <code className="text-[#a78bfa]">openapi</code> (3.x) or <code className="text-[#a78bfa]">swagger: 2.0</code>.</div>
+              <div className="text-rp-subtle">Not an OpenAPI spec. Add top-level <code className="text-rp-iris">openapi</code> (3.x) or <code className="text-rp-iris">swagger: 2.0</code>.</div>
             ) : (
-              <div className="rounded-xl border border-[#a78bfa99] bg-[#23243a]/80 p-2">
+              <div className="rounded-xl border border-rp-highlight-high bg-rp-overlay/80 p-2">
                 {/* Swagger UI */}
                 <SwaggerUI spec={parsed.value} docExpansion="list" defaultModelsExpandDepth={1} />
               </div>
@@ -461,27 +461,27 @@ export default function SchemaStudio() {
         {tab === "validate" && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
             <div>
-              <h3 className="text-[#a78bfa] font-semibold mb-2">JSON Schema</h3>
+              <h3 className="text-rp-iris font-semibold mb-2">JSON Schema</h3>
               <textarea
-                className="w-full min-h-[220px] rounded-xl px-4 py-3 bg-[#23243a]/70 border border-[#a78bfa66] text-gray-200 focus:outline-none focus:ring-2 focus:ring-[#a78bfa]"
+                className="w-full min-h-[220px] rounded-xl px-4 py-3 bg-rp-surface/70 border border-rp-highlight-high text-rp-text focus:outline-none focus:ring-2 focus:ring-rp-iris"
                 value={schemaText}
                 onChange={(e) => setSchemaText(e.target.value)}
               />
             </div>
             <div>
-              <h3 className="text-[#a78bfa] font-semibold mb-2">Data</h3>
+              <h3 className="text-rp-iris font-semibold mb-2">Data</h3>
               <textarea
-                className="w-full min-h-[220px] rounded-xl px-4 py-3 bg-[#23243a]/70 border border-[#a78bfa66] text-gray-200 focus:outline-none focus:ring-2 focus:ring-[#a78bfa]"
+                className="w-full min-h-[220px] rounded-xl px-4 py-3 bg-rp-surface/70 border border-rp-highlight-high text-rp-text focus:outline-none focus:ring-2 focus:ring-rp-iris"
                 value={dataText}
                 onChange={(e) => setDataText(e.target.value)}
               />
-              <div className="mt-3 rounded-xl border border-[#a78bfa99] bg-[#23243a]/80 p-3">
+              <div className="mt-3 rounded-xl border border-rp-highlight-high bg-rp-overlay/80 p-3">
                 {validateResult.ok ? (
-                  <div className="text-green-300">Valid ✓</div>
+                  <div className="text-rp-foam">Valid ✓</div>
                 ) : (
                   <div>
-                    <div className="text-red-400 mb-2">Invalid</div>
-                    <ul className="list-disc pl-5 text-sm text-gray-300">
+                    <div className="text-rp-love mb-2">Invalid</div>
+                    <ul className="list-disc pl-5 text-sm text-rp-subtle">
                       {(validateResult.errors || []).map((err: any, i: number) => (
                         <li key={i}>{err.instancePath || ""} {err.message}</li>
                       ))}
@@ -497,54 +497,54 @@ export default function SchemaStudio() {
         {tab === "types" && (
           <div className="w-full flex flex-col gap-4">
             {parsed.isOpenAPI ? (
-              <div className="rounded-xl border border-[#a78bfa99] bg-[#23243a]/60 p-4 text-gray-200">
+              <div className="rounded-xl border border-rp-highlight-high bg-rp-overlay/60 p-4 text-rp-text">
                 <div className="flex flex-wrap items-center gap-2 mb-3">
-                  <span className="text-[#a78bfa] font-semibold">OpenAPI detected</span>
+                  <span className="text-rp-iris font-semibold">OpenAPI detected</span>
                   <button
                     onClick={() => handleGenerateTypes()}
                     disabled={generating}
-                    className="ml-auto text-sm bg-[#a78bfa]/20 hover:bg-[#a78bfa]/30 disabled:opacity-60 border border-[#a78bfa66] text-[#e9d5ff] rounded-lg px-3 py-2"
+                    className="ml-auto text-sm bg-rp-overlay/70 hover:bg-rp-overlay/50 disabled:opacity-60 border border-rp-highlight-high text-rp-text rounded-lg px-3 py-2"
                   >
                     {generating ? "Generating…" : "Generate TypeScript"}
                   </button>
                   <button
                     onClick={handleCopyTypes}
-                    className="text-sm bg-[#a78bfa]/20 hover:bg-[#a78bfa]/30 border border-[#a78bfa66] text-[#e9d5ff] rounded-lg px-3 py-2"
+                    className="text-sm bg-rp-overlay/60 hover:bg-rp-overlay/40 border border-rp-highlight-high text-rp-text rounded-lg px-3 py-2"
                   >
                     {typesCopied ? "Copied ✓" : "Copy"}
                   </button>
                   <button
                     onClick={handleDownloadTypes}
-                    className="text-sm bg-[#a78bfa]/20 hover:bg-[#a78bfa]/30 border border-[#a78bfa66] text-[#e9d5ff] rounded-lg px-3 py-2"
+                    className="text-sm bg-rp-overlay/60 hover:bg-rp-overlay/40 border border-rp-highlight-high text-rp-text rounded-lg px-3 py-2"
                   >
                     Download
                   </button>
                 </div>
-                {typesError && <div className="text-red-400 mb-2">{typesError}</div>}
+                {typesError && <div className="text-rp-love mb-2">{typesError}</div>}
                 <textarea
-                  className="w-full min-h-[320px] rounded-xl px-4 py-3 bg-[#1c1e30]/80 border border-[#a78bfa66] text-gray-200 font-mono text-sm"
+                  className="w-full min-h-[320px] rounded-xl px-4 py-3 bg-rp-base/90 border border-rp-highlight-high text-rp-text font-mono text-sm"
                   value={typesOutput}
                   onChange={(e) => setTypesOutput(e.target.value)}
                   placeholder="Generated TypeScript types will appear here…"
                 />
               </div>
             ) : (
-              <div className="rounded-xl border border-[#a78bfa99] bg-[#23243a]/60 p-4 text-gray-200">
+              <div className="rounded-xl border border-rp-highlight-high bg-rp-overlay/60 p-4 text-rp-text">
                 <div className="flex flex-wrap items-center gap-3 mb-3">
-                  <span className="text-[#a78bfa] font-semibold">JSON Schema → {typesMode === "ts" ? "TypeScript" : "Zod"}</span>
-                  <label className="flex items-center gap-2 text-gray-300">
+                  <span className="text-rp-iris font-semibold">JSON Schema → {typesMode === "ts" ? "TypeScript" : "Zod"}</span>
+                  <label className="flex items-center gap-2 text-rp-subtle">
                     <input
                       type="radio"
-                      className="accent-[#a78bfa]"
+                      className="accent-[var(--rp-iris)]"
                       checked={typesMode === "ts"}
                       onChange={() => setTypesMode("ts")}
                     />
                     TS types
                   </label>
-                  <label className="flex items-center gap-2 text-gray-300">
+                  <label className="flex items-center gap-2 text-rp-subtle">
                     <input
                       type="radio"
-                      className="accent-[#a78bfa]"
+                      className="accent-[var(--rp-iris)]"
                       checked={typesMode === "zod"}
                       onChange={() => setTypesMode("zod")}
                     />
@@ -552,7 +552,7 @@ export default function SchemaStudio() {
                   </label>
                   <button
                     onClick={() => setSchemaInput(schemaText)}
-                    className="text-xs bg-[#a78bfa]/10 hover:bg-[#a78bfa]/20 border border-[#a78bfa66] text-[#e9d5ff] rounded-lg px-2 py-1"
+                    className="text-xs bg-rp-overlay/30 hover:bg-rp-overlay/50 border border-rp-highlight-high text-rp-text rounded-lg px-2 py-1"
                     title="Load JSON Schema from Validate tab"
                   >
                     Use Validate schema
@@ -560,38 +560,38 @@ export default function SchemaStudio() {
                   <button
                     onClick={handleGenerateTypes}
                     disabled={generating}
-                    className="ml-auto text-sm bg-[#a78bfa]/20 hover:bg-[#a78bfa]/30 disabled:opacity-60 border border-[#a78bfa66] text-[#e9d5ff] rounded-lg px-3 py-2"
+                    className="ml-auto text-sm bg-rp-overlay/60 hover:bg-rp-overlay/40 disabled:opacity-60 border border-rp-highlight-high text-rp-text rounded-lg px-3 py-2"
                   >
                     {generating ? "Generating…" : "Generate"}
                   </button>
                   <button
                     onClick={handleCopyTypes}
-                    className="text-sm bg-[#a78bfa]/20 hover:bg-[#a78bfa]/30 border border-[#a78bfa66] text-[#e9d5ff] rounded-lg px-3 py-2"
+                    className="text-sm bg-rp-overlay/60 hover:bg-rp-overlay/40 border border-rp-highlight-high text-rp-text rounded-lg px-3 py-2"
                   >
                     {typesCopied ? "Copied ✓" : "Copy"}
                   </button>
                   <button
                     onClick={handleDownloadTypes}
-                    className="text-sm bg-[#a78bfa]/20 hover:bg-[#a78bfa]/30 border border-[#a78bfa66] text-[#e9d5ff] rounded-lg px-3 py-2"
+                    className="text-sm bg-rp-overlay/60 hover:bg-rp-overlay/40 border border-rp-highlight-high text-rp-text rounded-lg px-3 py-2"
                   >
                     Download
                   </button>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <h4 className="text-sm text-gray-300 mb-2">JSON Schema</h4>
+                    <h4 className="text-sm text-rp-subtle mb-2">JSON Schema</h4>
                     <textarea
-                      className="w-full min-h-[240px] rounded-xl px-4 py-3 bg-[#1c1e30]/80 border border-[#a78bfa66] text-gray-200 font-mono text-sm"
+                      className="w-full min-h-[240px] rounded-xl px-4 py-3 bg-rp-base/90 border border-rp-highlight-high text-rp-text font-mono text-sm"
                       value={schemaInput}
                       onChange={(e) => setSchemaInput(e.target.value)}
                       placeholder="Paste JSON Schema here…"
                     />
-                    {typesError && <div className="text-red-400 mt-2">{typesError}</div>}
+                    {typesError && <div className="text-rp-love mt-2">{typesError}</div>}
                   </div>
                   <div>
-                    <h4 className="text-sm text-gray-300 mb-2">{typesMode === "ts" ? "TypeScript" : "Zod"} Output</h4>
+                    <h4 className="text-sm text-rp-subtle mb-2">{typesMode === "ts" ? "TypeScript" : "Zod"} Output</h4>
                     <textarea
-                      className="w-full min-h-[240px] rounded-xl px-4 py-3 bg-[#1c1e30]/80 border border-[#a78bfa66] text-gray-200 font-mono text-sm"
+                      className="w-full min-h-[240px] rounded-xl px-4 py-3 bg-rp-base/90 border border-rp-highlight-high text-rp-text font-mono text-sm"
                       value={typesOutput}
                       onChange={(e) => setTypesOutput(e.target.value)}
                       placeholder="Generated code will appear here…"

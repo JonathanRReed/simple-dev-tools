@@ -87,53 +87,75 @@
 @tailwind components;
 @tailwind utilities;
 
+/* --- Rosé Pine CSS Variables --- */
+:root[data-theme="main"] {
+  --rp-base: #191724;
+  --rp-surface: #1f1d2e;
+  --rp-overlay: #26233a;
+  --rp-muted: #6e6a86;
+  --rp-subtle: #908caa;
+  --rp-text: #e0def4;
+  --rp-love: #eb6f92;
+  --rp-gold: #f6c177;
+  --rp-rose: #ebbcba;
+  --rp-pine: #31748f;
+  --rp-foam: #9ccfd8;
+  --rp-iris: #c4a7e7;
+  --rp-highlight-low: #21202e;
+  --rp-highlight-med: #403d52;
+  --rp-highlight-high: #524f67;
+}
+
+:root[data-theme="moon"] {
+  --rp-base: #232136;
+  --rp-surface: #2a273f;
+  --rp-overlay: #393552;
+  --rp-muted: #6e6a86;
+  --rp-subtle: #908caa;
+  --rp-text: #e0def4;
+  --rp-love: #eb6f92;
+  --rp-gold: #f6c177;
+  --rp-rose: #ea9a97;
+  --rp-pine: #3e8fb0;
+  --rp-foam: #9ccfd8;
+  --rp-iris: #c4a7e7;
+  --rp-highlight-low: #2a283e;
+  --rp-highlight-med: #44415a;
+  --rp-highlight-high: #56526e;
+}
+
+:root[data-theme="dawn"] {
+  --rp-base: #faf4ed;
+  --rp-surface: #fffaf3;
+  --rp-overlay: #f2e9e1;
+  --rp-muted: #9893a5;
+  --rp-subtle: #797593;
+  --rp-text: #464261;
+  --rp-love: #b4637a;
+  --rp-gold: #ea9d34;
+  --rp-rose: #d7827e;
+  --rp-pine: #286983;
+  --rp-foam: #56949f;
+  --rp-highlight-med: #dfdad9;
+  --rp-highlight-high: #cecacd;
+}
+
 html, body {
   font-family: 'Nebula Sans', ui-sans-serif, system-ui, sans-serif;
 }
+:focus-visible {
+  outline: 2px solid var(--rp-iris);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px color-mix(in oklab, var(--rp-iris) 20%, transparent);
+}
 
 html {
-  background: #000;
+  background: var(--rp-base);
 }
 
 body {
   min-height: 100vh;
-  /* font-family: 'Inter', ui-sans-serif, system-ui, sans-serif; */
-  color: #E0E0E0;
-}
-
-/* Removed custom scrollbar styling for a cleaner look */
-/*
-::-webkit-scrollbar {
-  width: 8px;
-  background: #0a0f29;
-}
-::-webkit-scrollbar-thumb {
-  background: #3399ff;
-  border-radius: 4px;
-}
-*/
-
-@keyframes neon-blob-gradient {
-  0% {
-    background: radial-gradient(circle at 60% 40%, #3399ff 0%, #4dfff0 40%, #ff4dc4 70%, #9933ff 100%);
-  }
-  25% {
-    background: radial-gradient(circle at 40% 60%, #4dfff0 0%, #ff4dc4 40%, #ffd24d 70%, #3399ff 100%);
-  }
-  50% {
-    background: radial-gradient(circle at 60% 60%, #ff4dc4 0%, #ffd24d 40%, #9933ff 70%, #4dfff0 100%);
-  }
-  75% {
-    background: radial-gradient(circle at 40% 40%, #ffd24d 0%, #9933ff 40%, #3399ff 70%, #ff4dc4 100%);
-  }
-  100% {
-    background: radial-gradient(circle at 60% 40%, #3399ff 0%, #4dfff0 40%, #ff4dc4 70%, #9933ff 100%);
-  }
-}
-
-.animate-neon-blob {
-  animation: neon-blob-gradient 16s linear infinite;
-  filter: blur(80px);
+  color: var(--rp-text);
 }
 
 /* Robust fix for logo.avif aspect ratio warning */
