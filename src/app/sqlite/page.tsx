@@ -67,21 +67,21 @@ export default function SQLitePlayground() {
   };
 
   function ResultsTable({ results }: { results: any[] }) {
-    if (!results.length) return <div className="text-gray-400 mt-4">No results.</div>;
+    if (!results.length) return <div className="text-rp-muted mt-4">No results.</div>;
     return (
-      <div className="overflow-auto rounded-xl border border-[#a78bfa99] bg-[#23243a]/80 mt-4">
+      <div className="overflow-auto rounded-xl border border-rp-highlight-high bg-rp-overlay/70 mt-4">
         {results.map((result, idx) => (
-          <table key={idx} className="min-w-full text-sm text-gray-200 mb-4">
+          <table key={idx} className="min-w-full text-sm text-rp-text mb-4">
             <thead>
               <tr>
                 {result.columns.map((col: string) => (
-                  <th key={col} className="px-3 py-2 text-left font-bold text-[#a78bfa]">{col}</th>
+                  <th key={col} className="px-3 py-2 text-left font-bold text-rp-iris">{col}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {result.values.map((row: any[], i: number) => (
-                <tr key={i} className="even:bg-[#a78bfa11]">
+                <tr key={i} className="even:bg-rp-highlight-low/40">
                   {row.map((cell: any, j: number) => (
                     <td key={j} className="px-3 py-2">{cell as string}</td>
                   ))}
@@ -96,28 +96,28 @@ export default function SQLitePlayground() {
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center min-h-screen p-8">
-      <div className="bg-[#181926]/80 rounded-3xl shadow-2xl px-8 py-10 max-w-3xl w-full flex flex-col items-center gap-6 relative border border-[#a78bfa]" style={{backdropFilter:'blur(24px)', WebkitBackdropFilter:'blur(24px)'}}>
-        <h2 className="text-3xl font-bold text-[#facc15] mb-2 text-center drop-shadow">SQLite WASM Playground</h2>
-        <p className="text-bodyText mb-4 text-center max-w-xl">Run SQL queries on SQLite directly in your browser. No server or database required!</p>
+      <div className="bg-rp-surface/80 rounded-3xl shadow-2xl px-8 py-10 max-w-3xl w-full flex flex-col items-center gap-6 relative border border-rp-highlight-high" style={{backdropFilter:'blur(24px)', WebkitBackdropFilter:'blur(24px)'}}>
+        <h2 className="text-3xl font-bold text-rp-iris mb-2 text-center drop-shadow">SQLite WASM Playground</h2>
+        <p className="text-rp-subtle mb-4 text-center max-w-xl">Run SQL queries on SQLite directly in your browser. No server or database required!</p>
         <Editor
           value={sql}
           onValueChange={setSql}
           highlight={highlight}
           padding={12}
-          className="rounded-xl bg-[#23243a]/70 border border-[#a78bfa66] text-gray-200 font-mono text-sm min-h-[90px] focus:outline-none focus:ring-2 focus:ring-[#a78bfa] w-full"
+          className="rounded-xl bg-rp-surface/70 border border-rp-highlight-high text-rp-text font-mono text-sm min-h-[90px] focus:outline-none focus:ring-2 focus:ring-rp-iris w-full"
           style={{ minHeight: 90, background: "none" }}
           textareaId="sqlite-editor"
           textareaClassName="hidden"
           spellCheck={false}
         />
         <button
-          className="bg-gradient-to-r from-[#facc15] to-[#a78bfa] text-[#23243a] font-bold py-2 px-6 rounded-xl shadow hover:opacity-80 transition mt-2"
+          className="mt-2 px-6 py-2 rounded-xl border border-rp-iris text-rp-text bg-rp-overlay/80 font-semibold shadow hover:bg-rp-overlay/60 transition"
           onClick={runQuery}
           disabled={!db || loading}
         >
           {loading ? "Running..." : "Run Query"}
         </button>
-        {error && <div className="text-red-400 text-xs mt-2">{error}</div>}
+        {error && <div className="text-rp-love text-xs mt-2">{error}</div>}
         {results && <ResultsTable results={results} />}
       </div>
     </div>

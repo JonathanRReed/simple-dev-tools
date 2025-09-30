@@ -329,56 +329,56 @@ export default function SecurityTokens() {
         {tab === "jwt" && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
             <div>
-              <h3 className="text-[#a78bfa] font-semibold mb-2">JWT</h3>
+              <h3 className="text-rp-iris font-semibold mb-2">JWT</h3>
               <textarea
-                className="w-full min-h-[160px] rounded-xl px-4 py-3 bg-[#23243a]/70 border border-[#a78bfa66] text-gray-200 focus:outline-none focus:ring-2 focus:ring-[#a78bfa]"
+                className="w-full min-h-[160px] rounded-xl px-4 py-3 bg-rp-surface/70 border border-rp-highlight-high text-rp-text focus:outline-none focus:ring-2 focus:ring-rp-iris"
                 value={jwt}
                 onChange={(e) => setJwt(e.target.value)}
                 placeholder="Paste JWT (header.payload.signature)"
               />
               <div className="mt-2 flex gap-2 flex-wrap">
-                <button className="px-4 py-2 rounded-xl border border-[#a78bfa] text-white bg-[#23243a]/80" onClick={onDecode}>
+                <button className="px-4 py-2 rounded-xl border border-rp-iris text-rp-text bg-rp-overlay/80" onClick={onDecode}>
                   Decode
                 </button>
-                <button className="px-4 py-2 rounded-xl border border-[#a78bfa] text-white bg-[#23243a]/80" onClick={onVerify}>
+                <button className="px-4 py-2 rounded-xl border border-rp-iris text-rp-text bg-rp-overlay/80" onClick={onVerify}>
                   Verify (auto by alg)
                 </button>
               </div>
               <div className="mt-3 grid grid-cols-1 gap-3">
                 <div>
-                  <label className="text-gray-300 text-sm">Secret (HS256)</label>
+                  <label className="text-rp-subtle text-sm">Secret (HS256)</label>
                   <input
-                    className="w-full rounded-xl px-4 py-2 bg-[#23243a]/70 border border-[#a78bfa66] text-gray-200 focus:outline-none focus:ring-2 focus:ring-[#a78bfa]"
+                    className="w-full rounded-xl px-4 py-2 bg-rp-surface/70 border border-rp-highlight-high text-rp-text focus:outline-none focus:ring-2 focus:ring-rp-iris"
                     value={secret}
                     onChange={(e) => setSecret(e.target.value)}
                     placeholder="Shared secret for HS256"
                   />
                 </div>
                 <div>
-                  <label className="text-gray-300 text-sm">Public Key (PEM SPKI or JWK JSON) for RS256/ES256</label>
+                  <label className="text-rp-subtle text-sm">Public Key (PEM SPKI or JWK JSON) for RS256/ES256</label>
                   <textarea
-                    className="w-full min-h-[120px] rounded-xl px-4 py-2 bg-[#23243a]/70 border border-[#a78bfa66] text-gray-200 focus:outline-none focus:ring-2 focus:ring-[#a78bfa]"
+                    className="w-full min-h-[120px] rounded-xl px-4 py-2 bg-rp-surface/70 border border-rp-highlight-high text-rp-text focus:outline-none focus:ring-2 focus:ring-rp-iris"
                     value={publicKey}
                     onChange={(e) => setPublicKey(e.target.value)}
                     placeholder="-----BEGIN PUBLIC KEY-----... or JWK JSON (kty, n, e / crv, x, y)"
                   />
                 </div>
               </div>
-              {jwtError && <div className="mt-2 text-red-400 text-sm">{jwtError}</div>}
+              {jwtError && <div className="mt-2 text-rp-love text-sm">{jwtError}</div>}
               {"checked" in verifyState && verifyState.checked && (
-                <div className={`mt-3 rounded-xl border p-3 ${verifyState.ok ? "border-green-400" : "border-red-400"}`}>
-                  <div className={verifyState.ok ? "text-green-300" : "text-red-400"}>
+                <div className={`mt-3 rounded-xl border p-3 bg-rp-overlay/70 ${verifyState.ok ? "border-rp-foam" : "border-rp-love"}`}>
+                  <div className={verifyState.ok ? "text-rp-foam" : "text-rp-love"}>
                     {verifyState.ok ? "Signature Verified ✓" : "Invalid Signature"}
                   </div>
                   {!verifyState.ok && (
-                    <div className="text-xs text-gray-400 mt-1 break-all">
+                    <div className="text-xs text-rp-muted mt-1 break-all">
                       expected: {verifyState.expected}
                       <br />
                       actual: {verifyState.actual}
                     </div>
                   )}
                   {verifyState.note && (
-                    <div className="text-xs text-gray-400 mt-1">{verifyState.note}</div>
+                    <div className="text-xs text-rp-muted mt-1">{verifyState.note}</div>
                   )}
                 </div>
               )}
@@ -386,40 +386,40 @@ export default function SecurityTokens() {
             <div className="grid grid-cols-1 gap-4">
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <h4 className="text-gray-300 font-semibold">Header</h4>
+                  <h4 className="text-rp-subtle font-semibold">Header</h4>
                   <button
-                    className="text-xs text-[#a78bfa] hover:underline"
+                    className="text-xs text-rp-iris hover:text-rp-rose"
                     onClick={() => header && copy(JSON.stringify(header, null, 2))}
                   >
                     Copy
                   </button>
                 </div>
-                <pre className="w-full min-h-[120px] rounded-xl px-4 py-3 bg-[#0f1021] border border-[#a78bfa33] text-gray-200 whitespace-pre-wrap break-words">
+                <pre className="w-full min-h-[120px] rounded-xl px-4 py-3 bg-rp-base border border-rp-highlight-low text-rp-text whitespace-pre-wrap break-words">
                   {header ? JSON.stringify(header, null, 2) : "(decode to view)"}
                 </pre>
               </div>
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <h4 className="text-gray-300 font-semibold">Payload</h4>
+                  <h4 className="text-rp-subtle font-semibold">Payload</h4>
                   <button
-                    className="text-xs text-[#a78bfa] hover:underline"
+                    className="text-xs text-rp-iris hover:text-rp-rose"
                     onClick={() => payload && copy(JSON.stringify(payload, null, 2))}
                   >
                     Copy
                   </button>
                 </div>
-                <pre className="w-full min-h-[160px] rounded-xl px-4 py-3 bg-[#0f1021] border border-[#a78bfa33] text-gray-200 whitespace-pre-wrap break-words">
+                <pre className="w-full min-h-[160px] rounded-xl px-4 py-3 bg-rp-base border border-rp-highlight-low text-rp-text whitespace-pre-wrap break-words">
                   {payload ? JSON.stringify(payload, null, 2) : "(decode to view)"}
                 </pre>
                 {payload && (
-                  <div className="mt-2 text-xs text-gray-300 rounded-xl border border-[#a78bfa33] bg-[#23243a]/60 p-3">
-                    <div className="mb-1 text-gray-400">Claims</div>
+                  <div className="mt-2 text-xs text-rp-subtle rounded-xl border border-rp-highlight-high bg-rp-overlay/60 p-3">
+                    <div className="mb-1 text-rp-muted">Claims</div>
                     <ul className="list-disc pl-5 space-y-1">
                       {payload.exp && (
                         <li>
                           exp: {payload.exp} → {tsToLocal(payload.exp) || "(invalid)"}
                           {typeof payload.exp === "number" && Date.now() / 1000 > payload.exp ? (
-                            <span className="ml-2 text-red-400">(expired)</span>
+                            <span className="ml-2 text-rp-love">(expired)</span>
                           ) : null}
                         </li>
                       )}
@@ -428,7 +428,7 @@ export default function SecurityTokens() {
                         <li>
                           nbf: {payload.nbf} → {tsToLocal(payload.nbf) || "(invalid)"}
                           {typeof payload.nbf === "number" && Date.now() / 1000 < payload.nbf ? (
-                            <span className="ml-2 text-yellow-300">(not yet valid)</span>
+                            <span className="ml-2 text-rp-gold">(not yet valid)</span>
                           ) : null}
                         </li>
                       )}
@@ -444,33 +444,33 @@ export default function SecurityTokens() {
         {tab === "hash" && (
           <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <h3 className="text-[#a78bfa] font-semibold mb-2">Hash</h3>
+              <h3 className="text-rp-iris font-semibold mb-2">Hash</h3>
               <textarea
-                className="w-full min-h-[160px] rounded-xl px-4 py-3 bg-[#23243a]/70 border border-[#a78bfa66] text-gray-200 focus:outline-none focus:ring-2 focus:ring-[#a78bfa]"
+                className="w-full min-h-[160px] rounded-xl px-4 py-3 bg-rp-surface/70 border border-rp-highlight-high text-rp-text focus:outline-none focus:ring-2 focus:ring-rp-iris"
                 value={hashInput}
                 onChange={(e) => setHashInput(e.target.value)}
                 placeholder="Text to hash"
               />
               <div className="mt-2 flex items-center gap-3">
-                <label className="text-gray-300 text-sm">Algorithm</label>
+                <label className="text-rp-subtle text-sm">Algorithm</label>
                 <select
-                  className="rounded-xl px-3 py-2 bg-[#23243a]/70 border border-[#a78bfa66] text-gray-200"
+                  className="rounded-xl px-3 py-2 bg-rp-surface/70 border border-rp-highlight-high text-rp-text"
                   value={hashAlg}
                   onChange={(e) => setHashAlg(e.target.value as any)}
                 >
                   <option value="SHA-256">SHA-256</option>
                   <option value="SHA-512">SHA-512</option>
                 </select>
-                <button className="px-4 py-2 rounded-xl border border-[#a78bfa] text-white bg-[#23243a]/80" onClick={onHash}>
+                <button className="px-4 py-2 rounded-xl border border-rp-iris text-rp-text bg-rp-overlay/80" onClick={onHash}>
                   Compute
                 </button>
               </div>
               {hashOut && (
-                <div className="mt-3 rounded-xl border border-[#a78bfa99] bg-[#23243a]/80 p-3 text-sm">
-                  <div className="text-gray-300">Hex</div>
-                  <div className="font-mono break-all text-gray-200">{hashOut.hex}</div>
-                  <div className="text-gray-300 mt-2">Base64url</div>
-                  <div className="font-mono break-all text-gray-200">{hashOut.b64url}</div>
+                <div className="mt-3 rounded-xl border border-rp-highlight-high bg-rp-overlay/70 p-3 text-sm">
+                  <div className="text-rp-subtle">Hex</div>
+                  <div className="font-mono break-all text-rp-text">{hashOut.hex}</div>
+                  <div className="text-rp-subtle mt-2">Base64url</div>
+                  <div className="font-mono break-all text-rp-text">{hashOut.b64url}</div>
                 </div>
               )}
             </div>
@@ -481,41 +481,41 @@ export default function SecurityTokens() {
         {tab === "hmac" && (
           <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <h3 className="text-[#a78bfa] font-semibold mb-2">HMAC</h3>
+              <h3 className="text-rp-iris font-semibold mb-2">HMAC</h3>
               <textarea
-                className="w-full min-h-[160px] rounded-xl px-4 py-3 bg-[#23243a]/70 border border-[#a78bfa66] text-gray-200 focus:outline-none focus:ring-2 focus:ring-[#a78bfa]"
+                className="w-full min-h-[160px] rounded-xl px-4 py-3 bg-rp-surface/70 border border-rp-highlight-high text-rp-text focus:outline-none focus:ring-2 focus:ring-rp-iris"
                 value={hmacInput}
                 onChange={(e) => setHmacInput(e.target.value)}
                 placeholder="Message"
               />
               <div className="mt-2">
-                <label className="text-gray-300 text-sm">Secret</label>
+                <label className="text-rp-subtle text-sm">Secret</label>
                 <input
-                  className="w-full rounded-xl px-4 py-2 bg-[#23243a]/70 border border-[#a78bfa66] text-gray-200 focus:outline-none focus:ring-2 focus:ring-[#a78bfa]"
+                  className="w-full rounded-xl px-4 py-2 bg-rp-surface/70 border border-rp-highlight-high text-rp-text focus:outline-none focus:ring-2 focus:ring-rp-iris"
                   value={hmacSecret}
                   onChange={(e) => setHmacSecret(e.target.value)}
                 />
               </div>
               <div className="mt-2 flex items-center gap-3">
-                <label className="text-gray-300 text-sm">Algorithm</label>
+                <label className="text-rp-subtle text-sm">Algorithm</label>
                 <select
-                  className="rounded-xl px-3 py-2 bg-[#23243a]/70 border border-[#a78bfa66] text-gray-200"
+                  className="rounded-xl px-3 py-2 bg-rp-surface/70 border border-rp-highlight-high text-rp-text"
                   value={hmacAlg}
                   onChange={(e) => setHmacAlg(e.target.value as any)}
                 >
                   <option value="SHA-256">HMAC-SHA-256</option>
                   <option value="SHA-512">HMAC-SHA-512</option>
                 </select>
-                <button className="px-4 py-2 rounded-xl border border-[#a78bfa] text-white bg-[#23243a]/80" onClick={onHmac}>
+                <button className="px-4 py-2 rounded-xl border border-rp-iris text-rp-text bg-rp-overlay/80" onClick={onHmac}>
                   Compute
                 </button>
               </div>
               {hmacOut && (
-                <div className="mt-3 rounded-xl border border-[#a78bfa99] bg-[#23243a]/80 p-3 text-sm">
-                  <div className="text-gray-300">Hex</div>
-                  <div className="font-mono break-all text-gray-200">{hmacOut.hex}</div>
-                  <div className="text-gray-300 mt-2">Base64url</div>
-                  <div className="font-mono break-all text-gray-200">{hmacOut.b64url}</div>
+                <div className="mt-3 rounded-xl border border-rp-highlight-high bg-rp-overlay/70 p-3 text-sm">
+                  <div className="text-rp-subtle">Hex</div>
+                  <div className="font-mono break-all text-rp-text">{hmacOut.hex}</div>
+                  <div className="text-rp-subtle mt-2">Base64url</div>
+                  <div className="font-mono break-all text-rp-text">{hmacOut.b64url}</div>
                 </div>
               )}
             </div>
