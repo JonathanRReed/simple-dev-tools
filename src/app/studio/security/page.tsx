@@ -296,15 +296,19 @@ export default function SecurityTokens() {
   return (
     <ToolPage contentClassName="mx-auto max-w-6xl">
       <div
-        className="bg-[#181926]/80 rounded-3xl shadow-2xl px-6 md:px-8 py-8 flex flex-col gap-6 border border-[#a78bfa]"
-        style={{ backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)" }}
+        className="rounded-3xl border border-rp-highlight-high shadow-2xl px-6 md:px-8 py-8 flex flex-col gap-6 text-rp-text"
+        style={{
+          backdropFilter: "blur(24px)",
+          WebkitBackdropFilter: "blur(24px)",
+          backgroundColor: "color-mix(in oklab, var(--rp-surface) 88%, transparent)",
+        }}
       >
         <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-bold text-[#a78bfa] drop-shadow">Security & Tokens</h1>
-          <p className="text-sm text-bodyText max-w-3xl">Decode and verify JWTs (HS256/RS256/ES256), compute hashes, and generate HMACs using Web Crypto — no secrets leave the browser.</p>
+          <h1 className="text-3xl font-bold text-rp-iris drop-shadow">Security & Tokens</h1>
+          <p className="text-sm text-rp-subtle max-w-3xl">Decode and verify JWTs (HS256/RS256/ES256), compute hashes, and generate HMACs using Web Crypto — no secrets leave the browser.</p>
         </div>
 
-        <div className="rounded-xl border border-yellow-400/40 bg-yellow-500/10 text-yellow-200 text-sm p-3">
+        <div className="rounded-xl border border-rp-gold bg-rp-highlight-low text-rp-gold text-sm p-3">
           All operations run locally in your browser. Do not paste production secrets or private keys.
         </div>
 
@@ -317,10 +321,10 @@ export default function SecurityTokens() {
           ].map((t) => (
             <button
               key={t.k}
-              className={`px-4 py-2 rounded-xl border ${
+              className={`px-4 py-2 rounded-xl border transition-colors ${
                 tab === (t.k as any)
-                  ? "border-[#a78bfa] text-white bg-[#23243a]/80"
-                  : "border-[#a78bfa33] text-gray-300 bg-[#23243a]/50"
+                  ? "border-rp-iris text-rp-text bg-rp-overlay"
+                  : "border-rp-highlight-high text-rp-subtle bg-rp-surface"
               }`}
               onClick={() => setTab(t.k as any)}
             >
