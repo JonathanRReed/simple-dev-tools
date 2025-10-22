@@ -300,7 +300,7 @@ export default function SecurityTokens() {
         style={{ backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)" }}
       >
         <div className="flex flex-col gap-2">
-          <h2 className="text-3xl font-bold text-[#a78bfa] drop-shadow">Security & Tokens</h2>
+          <h1 className="text-3xl font-bold text-[#a78bfa] drop-shadow">Security & Tokens</h1>
           <p className="text-sm text-bodyText max-w-3xl">Decode and verify JWTs (HS256/RS256/ES256), compute hashes, and generate HMACs using Web Crypto — no secrets leave the browser.</p>
         </div>
 
@@ -333,7 +333,7 @@ export default function SecurityTokens() {
         {tab === "jwt" && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <h3 className="text-rp-iris font-semibold mb-2">JWT</h3>
+              <h2 className="text-rp-iris font-semibold mb-2">JWT</h2>
               <textarea
                 className="w-full min-h-[160px] rounded-xl px-4 py-3 bg-rp-surface/70 border border-rp-highlight-high text-rp-text focus:outline-none focus:ring-2 focus:ring-rp-iris"
                 value={jwt}
@@ -390,7 +390,7 @@ export default function SecurityTokens() {
             <div className="grid grid-cols-1 gap-4">
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <h4 className="text-rp-subtle font-semibold">Header</h4>
+                  <h3 className="text-rp-subtle font-semibold">Header</h3>
                   <button
                     className="text-xs text-rp-iris hover:text-rp-rose"
                     onClick={() => header && copy(JSON.stringify(header, null, 2))}
@@ -404,7 +404,7 @@ export default function SecurityTokens() {
               </div>
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <h4 className="text-rp-subtle font-semibold">Payload</h4>
+                  <h3 className="text-rp-subtle font-semibold">Payload</h3>
                   <button
                     className="text-xs text-rp-iris hover:text-rp-rose"
                     onClick={() => payload && copy(JSON.stringify(payload, null, 2))}
@@ -448,7 +448,7 @@ export default function SecurityTokens() {
         {tab === "hash" && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <h3 className="text-rp-iris font-semibold mb-2">Hash</h3>
+              <h2 className="text-rp-iris font-semibold mb-2">Hash</h2>
               <textarea
                 className="w-full min-h-[160px] rounded-xl px-4 py-3 bg-rp-surface/70 border border-rp-highlight-high text-rp-text focus:outline-none focus:ring-2 focus:ring-rp-iris"
                 value={hashInput}
@@ -485,7 +485,7 @@ export default function SecurityTokens() {
         {tab === "hmac" && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <h3 className="text-rp-iris font-semibold mb-2">HMAC</h3>
+              <h2 className="text-rp-iris font-semibold mb-2">HMAC</h2>
               <textarea
                 className="w-full min-h-[160px] rounded-xl px-4 py-3 bg-rp-surface/70 border border-rp-highlight-high text-rp-text focus:outline-none focus:ring-2 focus:ring-rp-iris"
                 value={hmacInput}

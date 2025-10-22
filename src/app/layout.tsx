@@ -9,7 +9,10 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 
 export const metadata: Metadata = {
-  title: 'Simple-Dev-Tools',
+  title: {
+    default: 'Simple-Dev-Tools',
+    template: '%s | Simple-Dev-Tools',
+  },
   description: 'Simple dev tools by Hello.World Consulting',
   icons: {
     icon: [

@@ -89,11 +89,17 @@ export default function Home() {
   return (
     <div className="flex flex-1 flex-col">
       <section className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6">
+        <header className="space-y-3 text-center sm:text-left">
+          <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Simple developer tools</h1>
+          <p className="text-base text-muted-foreground sm:text-lg">
+            Explore quick utilities, accelerators, and studios to ship documentation, diagrams, data experiments, and more.
+          </p>
+        </header>
         <div className="space-y-10">
           {toolGroups.map((group) => (
             <div key={group.title} className="space-y-6">
               <header className="space-y-1">
-                <h3 className="text-xl font-semibold text-foreground">{group.title}</h3>
+                <h2 className="text-xl font-semibold text-foreground">{group.title}</h2>
                 <p className="text-sm text-muted-foreground">{group.description}</p>
               </header>
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">

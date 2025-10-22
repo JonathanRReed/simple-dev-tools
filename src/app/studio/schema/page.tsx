@@ -377,7 +377,7 @@ export default function SchemaStudio() {
         style={{ backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)" }}
       >
         <div className="flex flex-col gap-2">
-          <h2 className="text-3xl font-bold text-rp-iris drop-shadow">Schema & Types Studio</h2>
+          <h1 className="text-3xl font-bold text-rp-iris drop-shadow">Schema & Types Studio</h1>
           <p className="text-sm text-rp-subtle max-w-3xl">Paste JSON/YAML or OpenAPI to parse, preview documentation, validate data, and generate TypeScript or Zod types entirely in-browser.</p>
         </div>
 
@@ -500,7 +500,7 @@ export default function SchemaStudio() {
         {tab === "validate" && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
             <div>
-              <h3 className="text-rp-iris font-semibold mb-2">JSON Schema</h3>
+              <h2 className="text-rp-iris font-semibold mb-2">JSON Schema</h2>
               <textarea
                 className="w-full min-h-[220px] rounded-xl px-4 py-3 bg-rp-surface/70 border border-rp-highlight-high text-rp-text focus:outline-none focus:ring-2 focus:ring-rp-iris"
                 value={schemaText}
@@ -508,7 +508,7 @@ export default function SchemaStudio() {
               />
             </div>
             <div>
-              <h3 className="text-rp-iris font-semibold mb-2">Data</h3>
+              <h2 className="text-rp-iris font-semibold mb-2">Data</h2>
               <textarea
                 className="w-full min-h-[220px] rounded-xl px-4 py-3 bg-rp-surface/70 border border-rp-highlight-high text-rp-text focus:outline-none focus:ring-2 focus:ring-rp-iris"
                 value={dataText}
@@ -622,7 +622,7 @@ export default function SchemaStudio() {
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <h4 className="text-sm text-rp-subtle mb-2">JSON Schema</h4>
+                    <h3 className="text-sm text-rp-subtle mb-2">JSON Schema</h3>
                     <textarea
                       className="w-full min-h-[240px] rounded-xl px-4 py-3 bg-rp-base/90 border border-rp-highlight-high text-rp-text font-mono text-sm"
                       value={schemaInput}
@@ -632,7 +632,7 @@ export default function SchemaStudio() {
                     {typesError && <div className="text-rp-love mt-2">{typesError}</div>}
                   </div>
                   <div>
-                    <h4 className="text-sm text-rp-subtle mb-2">{typesMode === "ts" ? "TypeScript" : "Zod"} Output</h4>
+                    <h3 className="text-sm text-rp-subtle mb-2">{typesMode === "ts" ? "TypeScript" : "Zod"} Output</h3>
                     <textarea
                       className="w-full min-h-[240px] rounded-xl px-4 py-3 bg-rp-base/90 border border-rp-highlight-high text-rp-text font-mono text-sm"
                       value={typesOutput}

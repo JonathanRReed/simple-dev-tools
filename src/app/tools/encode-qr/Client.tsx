@@ -154,7 +154,7 @@ export default function EncodeQR() {
         style={{ backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)" }}
       >
         <div className="flex flex-col gap-2">
-          <h2 className="text-3xl font-bold text-rp-iris drop-shadow">Encoders & QR</h2>
+          <h1 className="text-3xl font-bold text-rp-iris drop-shadow">Encoders & QR</h1>
           <p className="text-sm text-rp-subtle max-w-3xl">Encode/decode URLs and Base64 strings, then generate QR codes (PNG/SVG) without leaving the browser.</p>
         </div>
 
@@ -183,7 +183,7 @@ export default function EncodeQR() {
         {tab === "url" && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <h3 className="text-rp-iris font-semibold mb-2">Input</h3>
+              <h2 className="text-rp-iris font-semibold mb-2">Input</h2>
               <textarea
                 className="w-full min-h-[160px] rounded-xl px-4 py-3 bg-rp-surface/70 border border-rp-highlight-high text-rp-text focus:outline-none focus:ring-2 focus:ring-rp-iris"
                 value={urlInput}
@@ -200,7 +200,7 @@ export default function EncodeQR() {
               {urlError && <div className="mt-2 text-red-400 text-sm">{urlError}</div>}
             </div>
             <div>
-              <h3 className="text-rp-iris font-semibold mb-2">Output</h3>
+              <h2 className="text-rp-iris font-semibold mb-2">Output</h2>
               <textarea
                 className="w-full min-h-[160px] rounded-xl px-4 py-3 bg-rp-base border border-rp-highlight-low text-rp-text"
                 value={urlOutput}
@@ -214,7 +214,7 @@ export default function EncodeQR() {
         {tab === "base64" && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <h3 className="text-rp-iris font-semibold mb-2">Input</h3>
+              <h2 className="text-rp-iris font-semibold mb-2">Input</h2>
               <textarea
                 className="w-full min-h-[160px] rounded-xl px-4 py-3 bg-rp-surface/70 border border-rp-highlight-high text-rp-text focus:outline-none focus:ring-2 focus:ring-rp-iris"
                 value={b64Input}
@@ -235,7 +235,7 @@ export default function EncodeQR() {
               {b64Error && <div className="mt-2 text-red-400 text-sm">{b64Error}</div>}
             </div>
             <div>
-              <h3 className="text-rp-iris font-semibold mb-2">Output</h3>
+              <h2 className="text-rp-iris font-semibold mb-2">Output</h2>
               <textarea
                 className="w-full min-h-[160px] rounded-xl px-4 py-3 bg-rp-base border border-rp-highlight-low text-rp-text"
                 value={b64Output}
@@ -249,7 +249,7 @@ export default function EncodeQR() {
         {tab === "qr" && (
           <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,0.55fr)_minmax(0,0.45fr)] gap-6">
             <div>
-              <h3 className="text-rp-iris font-semibold mb-2">Text</h3>
+              <h2 className="text-rp-iris font-semibold mb-2">Text</h2>
               <textarea
                 className="w-full min-h-[120px] rounded-xl px-4 py-3 bg-rp-surface/70 border border-rp-highlight-high text-rp-text focus:outline-none focus:ring-2 focus:ring-rp-iris"
                 value={qrText}

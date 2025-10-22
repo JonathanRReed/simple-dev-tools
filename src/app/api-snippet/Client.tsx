@@ -38,7 +38,7 @@ export default function ApiSnippetClient() {
     <ToolPage contentClassName="mx-auto max-w-5xl">
       <div className="bg-rp-surface/80 rounded-3xl shadow-2xl px-6 sm:px-8 py-8 flex flex-col gap-6 border border-rp-highlight-high" style={{ backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)" }}>
         <div className="flex flex-col gap-2">
-          <h2 className="text-3xl font-bold text-rp-iris drop-shadow">API Snippet Generator</h2>
+          <h1 className="text-3xl font-bold text-rp-iris drop-shadow">API Snippet Generator</h1>
           <p className="text-sm text-rp-subtle max-w-2xl">Generate REST snippets for cURL, Python requests, and fetch. Provide an endpoint, method, and optional JSON payload.</p>
         </div>
         <form className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,0.6fr)_minmax(0,0.4fr)]" onSubmit={(e: React.FormEvent<HTMLFormElement>) => { e.preventDefault(); handleGenerate(); }}>
