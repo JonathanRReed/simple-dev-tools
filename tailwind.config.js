@@ -89,9 +89,9 @@ module.exports = {
   		},
   		fontFamily: {
   			sans: [
-  				'Nebula Sans',
-                    ...fontFamily.sans
-                ]
+  				'Inter',
+                ...fontFamily.sans
+            ]
   		}
   	}
   },
