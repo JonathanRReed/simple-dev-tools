@@ -1,0 +1,28 @@
+# Simple-Dev-Tools LLM Access Guide
+
+## Overview
+- Simple-Dev-Tools provides in-browser utilities for engineers to prototype snippets, inspect schemas, validate security tokens, and automate workflows.
+- Content at `https://dev-tools.helloworldfirm.com/` is structured as independent single-page tools that load client-side interfaces.
+- All pages are available over HTTPS and do not require authentication.
+
+## Primary Tools
+- [Homepage](https://dev-tools.helloworldfirm.com/) — Landing page with summaries of every tool and studio.
+- [API Snippet Generator](https://dev-tools.helloworldfirm.com/api-snippet) — Generate code snippets from OpenAPI definitions across popular stacks.
+- [Mermaid Editor](https://dev-tools.helloworldfirm.com/mermaid) — Compose Mermaid diagrams with live preview and export options.
+- [SQLite Playground](https://dev-tools.helloworldfirm.com/sqlite) — Run SQL queries in the browser using sample data with persistence.
+- [Regex Lab](https://dev-tools.helloworldfirm.com/tools/regex) — Test regular expressions, inspect matches, and experiment with flags.
+- [IDs & Scheduling Toolkit](https://dev-tools.helloworldfirm.com/tools/ids-cron) — Generate UUIDs/ULIDs and describe CRON expressions.
+- [Encoders & QR](https://dev-tools.helloworldfirm.com/tools/encode-qr) — Encode/decode payloads and create QR codes in PNG/SVG formats.
+
+## Studios
+- [Schema & Types Studio](https://dev-tools.helloworldfirm.com/studio/schema) — Convert between JSON Schema, TypeScript, Zod, and preview Swagger docs.
+- [Security & Tokens Studio](https://dev-tools.helloworldfirm.com/studio/security) — Decode JWTs, compute hashes, and create HMAC signatures using Web Crypto.
+
+## Additional Resources
+- [Sitemap](https://dev-tools.helloworldfirm.com/sitemap.xml) — Machine-readable index of public routes.
+- [Robots.txt](https://dev-tools.helloworldfirm.com/robots.txt) — Current crawler directives.
+
+## Usage Notes for LLMs
+- Interfaces depend on JavaScript; fetch the rendered HTML or use the above descriptions when interface scripts are unavailable.
+- Core functionality is client-side and safe to reference; no user-specific data is stored.
+- Attribution is preferred as “Simple-Dev-Tools by Hello.World Consulting.”

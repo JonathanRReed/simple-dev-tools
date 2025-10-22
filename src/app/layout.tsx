@@ -18,7 +18,6 @@ export const metadata: Metadata = {
     default: 'Simple-Dev-Tools',
     template: '%s | Simple-Dev-Tools',
   },
-  description: 'Simple dev tools by Hello.World Consulting',
   icons: {
     icon: [
       { url: '/favicon.ico' },

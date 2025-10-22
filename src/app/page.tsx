@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import {
   ArrowUpRight,
@@ -13,6 +14,14 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+
+export const metadata: Metadata = {
+  title: {
+    absolute: 'Simple-Dev-Tools | Developer accelerators & studios',
+  },
+  description:
+    'Simple dev tools by Hello.World Consulting. Developer accelerators, encoders, regex lab, schema studio, security utilities, and more.',
+};
 
 const toolGroups = [
   {
