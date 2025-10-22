@@ -114,7 +114,7 @@ export default function IDsCronTool() {
         style={{ backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)" }}
       >
         <div className="flex flex-col gap-2">
-          <h2 className="text-3xl font-bold text-rp-iris drop-shadow">IDs & Scheduling</h2>
+          <h1 className="text-3xl font-bold text-rp-iris drop-shadow">IDs & Scheduling</h1>
           <p className="text-sm text-rp-subtle max-w-3xl">Generate UUIDv4 and ULID identifiers, then humanize cron expressions using cRonstrue — all running locally.</p>
         </div>
 
@@ -143,7 +143,7 @@ export default function IDsCronTool() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* UUID */}
             <div>
-              <h3 className="text-rp-iris font-semibold mb-2">UUID v4</h3>
+              <h2 className="text-rp-iris font-semibold mb-2">UUID v4</h2>
               <div className="flex items-center gap-2">
                 <input
                   className="flex-1 rounded-xl px-4 py-2 bg-rp-surface/70 border border-rp-highlight-high text-rp-text"
@@ -167,7 +167,7 @@ export default function IDsCronTool() {
 
             {/* ULID */}
             <div>
-              <h3 className="text-rp-iris font-semibold mb-2">ULID</h3>
+              <h2 className="text-rp-iris font-semibold mb-2">ULID</h2>
               <div className="flex items-center gap-2">
                 <input
                   className="flex-1 rounded-xl px-4 py-2 bg-rp-surface/70 border border-rp-highlight-high text-rp-text"
@@ -216,7 +216,7 @@ export default function IDsCronTool() {
         {tab === "cron" && (
           <div className="w-full grid grid-cols-1 gap-4">
             <div>
-              <h3 className="text-rp-iris font-semibold mb-2">Cron Expression</h3>
+              <h2 className="text-rp-iris font-semibold mb-2">Cron Expression</h2>
               <input
                 className="w-full rounded-xl px-4 py-2 bg-rp-surface/70 border border-rp-highlight-high text-rp-text"
                 value={cron}

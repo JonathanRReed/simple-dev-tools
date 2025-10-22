@@ -181,7 +181,7 @@ function RegexLabInner() {
     <ToolPage contentClassName="mx-auto max-w-5xl">
       <div className="bg-rp-surface/80 rounded-3xl shadow-2xl px-6 sm:px-8 py-8 flex flex-col gap-6 relative border border-rp-highlight-high" style={{backdropFilter:'blur(24px)', WebkitBackdropFilter:'blur(24px)'}}>
         <div className="flex flex-col gap-2">
-          <h2 className="text-3xl font-bold text-rp-iris drop-shadow">Regex Lab</h2>
+          <h1 className="text-3xl font-bold text-rp-iris drop-shadow">Regex Lab</h1>
           <p className="text-sm text-rp-subtle max-w-3xl">Live-test regular expressions with instant matches, replacement previews, and quick flag toggles. Everything runs in your browser.</p>
         </div>
 
@@ -235,7 +235,7 @@ function RegexLabInner() {
           </div>
           <div>
             <div className="flex items-center justify-between mb-2">
-              <h3 className="text-rp-iris font-semibold">Matches</h3>
+              <h2 className="text-rp-iris font-semibold">Matches</h2>
               <div className="flex items-center gap-2">
                 <select
                   onChange={(e) => {
@@ -303,7 +303,7 @@ function RegexLabInner() {
             </div>
 
             <div className="mt-4">
-              <h3 className="text-rp-iris font-semibold mb-2">Replace Preview</h3>
+              <h2 className="text-rp-iris font-semibold mb-2">Replace Preview</h2>
               <div className="rounded-xl border border-rp-highlight-high bg-rp-overlay/70 p-3 whitespace-pre-wrap break-words max-h-[180px] overflow-auto text-rp-text">
                 {replaced}
               </div>

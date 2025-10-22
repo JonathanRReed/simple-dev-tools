@@ -177,7 +177,7 @@ export default function SQLiteClient() {
   return (
     <div className="bg-rp-surface/80 rounded-3xl shadow-2xl px-6 sm:px-8 py-8 flex flex-col gap-6 relative border border-rp-highlight-high" style={{ backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)" }}>
       <div className="flex flex-col gap-2">
-        <h2 className="text-3xl font-bold text-rp-iris drop-shadow">SQLite WASM Playground</h2>
+        <h1 className="text-3xl font-bold text-rp-iris drop-shadow">SQLite WASM Playground</h1>
         <p className="text-sm text-rp-subtle max-w-2xl">Run SQL experiments locally in your browser. Write statements on the left, execute instantly, and explore results without any backend.</p>
       </div>
       <div className="grid gap-6 lg:grid-cols-[minmax(0,0.55fr)_minmax(0,0.45fr)] items-start">
