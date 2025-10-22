@@ -1,28 +1,30 @@
-# Simple-Dev-Tools LLM Access Guide
+# Simple Dev Tools
 
-## Overview
-- Simple-Dev-Tools provides in-browser utilities for engineers to prototype snippets, inspect schemas, validate security tokens, and automate workflows.
-- Content at `https://dev-tools.helloworldfirm.com/` is structured as independent single-page tools that load client-side interfaces.
-- All pages are available over HTTPS and do not require authentication.
+> A collection of developer accelerators and studios built with Next.js, React, and TailwindCSS. Provides in-browser utilities for engineers to prototype snippets, inspect schemas, validate security tokens, generate diagrams, and automate workflows.
 
-## Primary Tools
-- [Homepage](https://dev-tools.helloworldfirm.com/) — Landing page with summaries of every tool and studio.
-- [API Snippet Generator](https://dev-tools.helloworldfirm.com/api-snippet) — Generate code snippets from OpenAPI definitions across popular stacks.
-- [Mermaid Editor](https://dev-tools.helloworldfirm.com/mermaid) — Compose Mermaid diagrams with live preview and export options.
-- [SQLite Playground](https://dev-tools.helloworldfirm.com/sqlite) — Run SQL queries in the browser using sample data with persistence.
-- [Regex Lab](https://dev-tools.helloworldfirm.com/tools/regex) — Test regular expressions, inspect matches, and experiment with flags.
-- [IDs & Scheduling Toolkit](https://dev-tools.helloworldfirm.com/tools/ids-cron) — Generate UUIDs/ULIDs and describe CRON expressions.
-- [Encoders & QR](https://dev-tools.helloworldfirm.com/tools/encode-qr) — Encode/decode payloads and create QR codes in PNG/SVG formats.
+Simple Dev Tools is a Next.js application hosted at `https://dev-tools.helloworldfirm.com/` (production) that offers independent single-page tools with client-side interfaces. All tools run entirely in the browser with no authentication required. Built by Jonathan Reed at Hello.World Consulting using modern web technologies including Radix UI, shadcn/ui components, HTMX concepts, and various specialized libraries.
+
+## Developer Accelerators
+
+- [API Snippet Generator](https://dev-tools.helloworldfirm.com/api-snippet): Draft OpenAPI-driven code snippets for any stack on the fly. Upload Swagger/OpenAPI definitions and generate REST API client code.
+- [Mermaid Editor](https://dev-tools.helloworldfirm.com/mermaid): Sketch sequence diagrams, flowcharts, and architecture visualizations quickly with live preview and export.
+- [SQLite Playground](https://dev-tools.helloworldfirm.com/sqlite): Run SQL experiments with instant preview and persistence using sql.js in the browser.
+- [Regex Lab](https://dev-tools.helloworldfirm.com/tools/regex): Iterate on regular expression patterns with explainers, tests, and sharing capabilities.
+- [IDs & Scheduling](https://dev-tools.helloworldfirm.com/tools/ids-cron): Generate ULIDs, UUIDs, and human-friendly CRON expression helpers with descriptions.
+- [Encoders & QR](https://dev-tools.helloworldfirm.com/tools/encode-qr): Encode/decode payloads (Base64, URL encoding), produce QR code assets (PNG/SVG), and inspect metadata.
 
 ## Studios
-- [Schema & Types Studio](https://dev-tools.helloworldfirm.com/studio/schema) — Convert between JSON Schema, TypeScript, Zod, and preview Swagger docs.
-- [Security & Tokens Studio](https://dev-tools.helloworldfirm.com/studio/security) — Decode JWTs, compute hashes, and create HMAC signatures using Web Crypto.
 
-## Additional Resources
-- [Sitemap](https://dev-tools.helloworldfirm.com/sitemap.xml) — Machine-readable index of public routes.
-- [Robots.txt](https://dev-tools.helloworldfirm.com/robots.txt) — Current crawler directives.
+- [Schema & Types Studio](https://dev-tools.helloworldfirm.com/studio/schema): Convert sources between JSON Schema, TypeScript interfaces, Zod schemas, and preview Swagger documentation.
+- [Security & Tokens](https://dev-tools.helloworldfirm.com/studio/security): Inspect JWTs, decode tokens, compute cryptographic hashes, and verify HMAC signatures using Web Crypto APIs.
 
-## Usage Notes for LLMs
-- Interfaces depend on JavaScript; fetch the rendered HTML or use the above descriptions when interface scripts are unavailable.
-- Core functionality is client-side and safe to reference; no user-specific data is stored.
-- Attribution is preferred as “Simple-Dev-Tools by Hello.World Consulting.”
+## Technical Documentation
+
+- [README](https://github.com/JonathanRReed/simple-dev-tools/blob/main/README.md): Project overview and MIT license information
+- [Package Dependencies](https://github.com/JonathanRReed/simple-dev-tools/blob/main/package.json): Full list of dependencies including Next.js, React, Radix UI, Prism, Mermaid, and more
+
+## Optional
+
+- [Homepage](https://dev-tools.helloworldfirm.com/): Landing page with visual cards showing all available tools and studios
+- [Sitemap](https://dev-tools.helloworldfirm.com/sitemap.xml): Machine-readable index of public routes
+- [Robots.txt](https://dev-tools.helloworldfirm.com/robots.txt): Current crawler directives”
