@@ -1,7 +1,12 @@
 import dynamic from "next/dynamic";
+import type { Metadata } from "next";
 
 import ToolLoading from "@/components/ToolLoading";
 import ToolPage from "@/components/layout/ToolPage";
+
+export const metadata: Metadata = {
+  title: "Mermaid Diagrams",
+};
 
 const MermaidClient = dynamic(() => import("./MermaidClient"), {
   ssr: false,
