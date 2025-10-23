@@ -1,6 +1,11 @@
 import dynamic from "next/dynamic";
+import type { Metadata } from "next";
 
 import ToolLoading from "@/components/ToolLoading";
+
+export const metadata: Metadata = {
+  title: "Encoders & QR",
+};
 
 const EncodeQrClient = dynamic(() => import("./Client"), {
   ssr: false,
