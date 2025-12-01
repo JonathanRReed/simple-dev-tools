@@ -1,93 +1,90 @@
-Sitemap: https://dev-tools.helloworldfirm.com/sitemap.xml
+# robots.txt – https://dev-tools.helloworldfirm.com
 
+# Generated 2025‑05‑07 · SEO‑optimised, AI‑scraper‑aware
+# ------------------------------------------------------------------
+# ███ 1. MAJOR SEARCH ENGINES (full access) ███
 User-agent: Googlebot
-Allow: /
+Allow: /*.js$
+Allow: /*.css$
 Disallow: /search/
 Disallow: /*?s=
 Disallow: /*?q=
-
-User-agent: Googlebot-Image
-Allow: /
+Sitemap: https://dev-tools.helloworldfirm.com/sitemap.xml
 
 User-agent: Bingbot
-Allow: /
+Allow: /*.js$
+Allow: /*.css$
 Disallow: /search/
 Disallow: /*?s=
 Disallow: /*?q=
 Crawl-delay: 5
 
-User-agent: DuckDuckBot
-Allow: /
+User-agent: DuckDuckBot               # DuckDuckGo
+Allow: /*.js$
+Allow: /*.css$
 Disallow: /search/
 Disallow: /*?s=
 Disallow: /*?q=
 
+# ███ 2. SOCIAL‑PREVIEW BOTS (OG/meta only) ███
 User-agent: FacebookBot
-Allow: /
-
 User-agent: meta-externalagent
-Allow: /
-
 User-agent: LinkedInBot
 Allow: /
 
-User-agent: GPTBot
+# ███ 3. MODEL‑TRAINING & BULK‑AI SCRAPERS ███
+User-agent: GPTBot                     # OpenAI model‑training
 Allow: /
-
+User-agent: OAI-SearchBot              # OpenAI retrieval indexer
+Allow: /
 User-agent: ChatGPT-User
+User-agent: ChatGPT-User/2.0
 Allow: /
 
-User-agent: OAI-SearchBot
-Allow: /
-
-User-agent: Google-Extended
-Allow: /
-
+User-agent: anthropic-ai               # Anthropic
 User-agent: ClaudeBot
-Allow: /
-
 User-agent: claude-web
-Allow: /
-
-User-agent: anthropic-ai
 Allow: /
 
 User-agent: PerplexityBot
 Allow: /
-
-User-agent: Perplexity-User
+User-agent: Perplexity-User/1.0
 Allow: /
 
-User-agent: Applebot
+User-agent: Google-Extended            # Gemini training
 Allow: /
 
-User-agent: Applebot-Extended
+User-agent: Amazonbot                  # Alexa / AI tasks
+Allow: /
+User-agent: Applebot-Extended          # Apple AI training
 Allow: /
 
-User-agent: MistralAI-User
+User-agent: Bytespider                 # ByteDance / TikTok AI
 Allow: /
 
-User-agent: Bytespider
+User-agent: MistralAI-User/1.0         # Mistral “Le Chat” crawler
 Allow: /
 
-User-agent: Amazonbot
+User-agent: AI2Bot                     # Allen AI / Semantic Scholar
 Allow: /
 
-User-agent: AI2Bot
+User-agent: CCBot                      # Common Crawl
 Allow: /
 
-User-agent: CCBot
+User-agent: cohere-ai                  # Cohere
 Allow: /
 
-User-agent: cohere-ai
+# Placeholder — xAI Grok crawler (token unknown as of May‑2025)
+# User-agent: GrokBot
+# Disallow: /
+
+# ███ 4. OTHER SEARCH/ASSIST BOTS (optional block) ███
+User-agent: Applebot                   # Siri / Spotlight search
 Allow: /
 
+# ███ 5. CATCH‑ALL ███
 User-agent: *
-Allow: /
 Disallow: /cgi-bin/
-Disallow: /search/
-Disallow: /*?s=
-Disallow: /*?q=
 Disallow: /wp-admin/
 Disallow: /admin/
 Disallow: /backend/
@@ -96,3 +93,7 @@ Disallow: /login/
 Disallow: /private/
 Disallow: /temp/
 Disallow: /includes/
+Disallow: /search/
+Disallow: /*?s=
+Disallow: /*?q=
+Allow: /
