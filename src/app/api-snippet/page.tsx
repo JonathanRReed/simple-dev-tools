@@ -6,6 +6,8 @@ import ToolPage from "@/components/layout/ToolPage";
 
 export const metadata: Metadata = {
   title: "API Snippet Generator",
+  description:
+    "Generate copy-paste-ready cURL, Python requests, and fetch snippets from a single endpoint definition. Works client-side—no API keys required.",
 };
 
 const ApiSnippetClient = dynamic(() => import("./Client"), {

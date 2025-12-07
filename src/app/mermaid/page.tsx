@@ -6,6 +6,8 @@ import ToolPage from "@/components/layout/ToolPage";
 
 export const metadata: Metadata = {
   title: "Mermaid Diagrams",
+  description:
+    "Edit Mermaid syntax, preview diagrams instantly, and export to SVG or PNG—all in your browser with zero setup.",
 };
 
 const MermaidClient = dynamic(() => import("./MermaidClient"), {

@@ -6,6 +6,8 @@ import ToolPage from "@/components/layout/ToolPage";
 
 export const metadata: Metadata = {
   title: "SQLite Playground",
+  description:
+    "Run SQL experiments locally in your browser using SQLite WASM. Edit queries, execute, and inspect results without any backend.",
 };
 
 const SQLiteClient = dynamic(() => import("./SQLiteClient"), {

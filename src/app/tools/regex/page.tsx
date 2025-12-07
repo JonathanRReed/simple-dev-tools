@@ -6,6 +6,8 @@ import ToolPage from "@/components/layout/ToolPage";
 
 export const metadata: Metadata = {
   title: "Regex Lab",
+  description:
+    "Test, visualize, and share regular expressions with live matches, replacements, and shareable URLs. Everything runs client-side.",
 };
 
 const RegexClient = dynamic(() => import("./Client"), {

@@ -6,6 +6,8 @@ import ToolPage from "@/components/layout/ToolPage";
 
 export const metadata: Metadata = {
   title: "IDs & Scheduling",
+  description:
+    "Generate UUIDv4 and ULID identifiers, inspect their parts, and humanize cron expressions with quick presets.",
 };
 
 const IdsCronClient = dynamic(() => import("./Client"), {

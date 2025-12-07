@@ -6,6 +6,8 @@ import ToolPage from "@/components/layout/ToolPage";
 
 export const metadata: Metadata = {
   title: "Encoders & QR",
+  description:
+    "Encode/decode URLs and Base64, then generate QR codes in PNG or SVG formats—no server required.",
 };
 
 const EncodeQrClient = dynamic(() => import("./Client"), {
