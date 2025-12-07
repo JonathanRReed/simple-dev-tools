@@ -47,6 +47,24 @@ export default function Footer() {
                 <span className="font-semibold text-primary">JonathanRReed.com</span>
                 <ExternalLink className="h-4 w-4 text-primary" />
               </Link>
+              <Link
+                href="https://5whys.jonathanrreed.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-between rounded-lg border border-border/60 bg-card/40 px-4 py-3 text-sm transition hover:border-primary/60 hover:bg-primary/10"
+              >
+                <span className="font-semibold text-primary">Career Studio</span>
+                <ExternalLink className="h-4 w-4 text-primary" />
+              </Link>
+              <Link
+                href="https://semesterbuild.jonathanrreed.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-between rounded-lg border border-border/60 bg-card/40 px-4 py-3 text-sm transition hover:border-primary/60 hover:bg-primary/10"
+              >
+                <span className="font-semibold text-primary">Semester Builder</span>
+                <ExternalLink className="h-4 w-4 text-primary" />
+              </Link>
             </div>
             <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
               <Image src="/jonathan.avif" alt="Jonathan Reed" width={28} height={28} className="rounded-full border border-primary/50 profile-img-strict" unoptimized />

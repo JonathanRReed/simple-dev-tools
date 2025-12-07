@@ -1,30 +1,39 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://dev.hellworldfirm.com/</loc>
+    <loc>https://dev-tools.helloworldfirm.com/</loc>
+    <lastmod>2025-12-07</lastmod>
   </url>
   <url>
-    <loc>https://dev.hellworldfirm.com/api-snippet</loc>
+    <loc>https://dev-tools.helloworldfirm.com/api-snippet</loc>
+    <lastmod>2025-12-07</lastmod>
   </url>
   <url>
-    <loc>https://dev.hellworldfirm.com/mermaid</loc>
+    <loc>https://dev-tools.helloworldfirm.com/mermaid</loc>
+    <lastmod>2025-12-07</lastmod>
   </url>
   <url>
-    <loc>https://dev.hellworldfirm.com/sqlite</loc>
+    <loc>https://dev-tools.helloworldfirm.com/sqlite</loc>
+    <lastmod>2025-12-07</lastmod>
   </url>
   <url>
-    <loc>https://dev.hellworldfirm.com/tools/regex</loc>
+    <loc>https://dev-tools.helloworldfirm.com/tools/regex</loc>
+    <lastmod>2025-12-07</lastmod>
   </url>
   <url>
-    <loc>https://dev.hellworldfirm.com/studio/schema</loc>
+    <loc>https://dev-tools.helloworldfirm.com/studio/schema</loc>
+    <lastmod>2025-12-07</lastmod>
   </url>
   <url>
-    <loc>https://dev.hellworldfirm.com/studio/security</loc>
+    <loc>https://dev-tools.helloworldfirm.com/studio/security</loc>
+    <lastmod>2025-12-07</lastmod>
   </url>
   <url>
-    <loc>https://dev.hellworldfirm.com/tools/ids-cron</loc>
+    <loc>https://dev-tools.helloworldfirm.com/tools/ids-cron</loc>
+    <lastmod>2025-12-07</lastmod>
   </url>
   <url>
-    <loc>https://dev.hellworldfirm.com/tools/encode-qr</loc>
+    <loc>https://dev-tools.helloworldfirm.com/tools/encode-qr</loc>
+    <lastmod>2025-12-07</lastmod>
   </url>
 </urlset>
