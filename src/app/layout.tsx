@@ -85,6 +85,7 @@ const jsonLd = {
   operatingSystem: 'Web',
   browserRequirements: 'Requires JavaScript',
   offers: softwareOffer,
+  image: 'https://dev-tools.helloworldfirm.com/logo.avif',
   provider: {
     '@type': 'Organization',
     name: 'Hello.World Consulting',
@@ -105,6 +106,7 @@ const jsonLd = {
       applicationCategory: 'DeveloperApplication',
       operatingSystem: 'Web',
       offers: softwareOffer,
+      image: 'https://dev-tools.helloworldfirm.com/logo.avif',
     },
     {
       '@type': 'SoftwareApplication',
@@ -114,6 +116,7 @@ const jsonLd = {
       applicationCategory: 'DeveloperApplication',
       operatingSystem: 'Web',
       offers: softwareOffer,
+      image: 'https://dev-tools.helloworldfirm.com/logo.avif',
     },
     {
       '@type': 'SoftwareApplication',
@@ -123,6 +126,7 @@ const jsonLd = {
       applicationCategory: 'DeveloperApplication',
       operatingSystem: 'Web',
       offers: softwareOffer,
+      image: 'https://dev-tools.helloworldfirm.com/logo.avif',
     },
     {
       '@type': 'SoftwareApplication',
@@ -132,6 +136,7 @@ const jsonLd = {
       applicationCategory: 'DeveloperApplication',
       operatingSystem: 'Web',
       offers: softwareOffer,
+      image: 'https://dev-tools.helloworldfirm.com/logo.avif',
     },
     {
       '@type': 'SoftwareApplication',
@@ -141,6 +146,7 @@ const jsonLd = {
       applicationCategory: 'DeveloperApplication',
       operatingSystem: 'Web',
       offers: softwareOffer,
+      image: 'https://dev-tools.helloworldfirm.com/logo.avif',
     },
     {
       '@type': 'SoftwareApplication',
@@ -150,6 +156,7 @@ const jsonLd = {
       applicationCategory: 'DeveloperApplication',
       operatingSystem: 'Web',
       offers: softwareOffer,
+      image: 'https://dev-tools.helloworldfirm.com/logo.avif',
     },
     {
       '@type': 'SoftwareApplication',
@@ -159,6 +166,7 @@ const jsonLd = {
       applicationCategory: 'DeveloperApplication',
       operatingSystem: 'Web',
       offers: softwareOffer,
+      image: 'https://dev-tools.helloworldfirm.com/logo.avif',
     },
     {
       '@type': 'SoftwareApplication',
@@ -168,6 +176,7 @@ const jsonLd = {
       applicationCategory: 'DeveloperApplication',
       operatingSystem: 'Web',
       offers: softwareOffer,
+      image: 'https://dev-tools.helloworldfirm.com/logo.avif',
     },
   ],
 };
