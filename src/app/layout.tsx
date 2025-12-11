@@ -15,11 +15,11 @@ import { SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 
 export const metadata: Metadata = {
   title: {
-    default: 'Simple-Dev-Tools – Hello.World Consulting',
-    template: '%s | Simple-Dev-Tools – Hello.World Consulting',
+    default: 'Simple Dev Tools | Developer accelerators by Jonathan R Reed',
+    template: '%s | Simple Dev Tools by Jonathan R Reed',
   },
   description:
-    'Simple dev tools by Hello.World Consulting. Developer accelerators, encoders, regex lab, schema studio, security utilities, and more.',
+    'Simple Dev Tools is a set of developer accelerators by Jonathan R Reed that streamline debugging, formatting and everyday coding workflows.',
   keywords: [
     'developer tools',
     'in-browser dev tools',
@@ -45,15 +45,15 @@ export const metadata: Metadata = {
     locale: 'en_US',
     url: 'https://dev-tools.helloworldfirm.com',
     siteName: 'Simple Dev Tools',
-    title: 'Simple Dev Tools – Hello.World Consulting',
+    title: 'Simple Dev Tools | Developer accelerators by Jonathan R Reed',
     description:
-      'Developer accelerators, encoders, regex lab, schema studio, security utilities, and more. All tools run in-browser.',
+      'Simple Dev Tools is a set of developer accelerators by Jonathan R Reed that streamline debugging, formatting and everyday coding workflows.',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Simple Dev Tools – Hello.World Consulting',
+    title: 'Simple Dev Tools | Developer accelerators by Jonathan R Reed',
     description:
-      'Developer accelerators, encoders, regex lab, schema studio, security utilities, and more.',
+      'Simple Dev Tools is a set of developer accelerators by Jonathan R Reed that streamline debugging, formatting and everyday coding workflows.',
     creator: '@jonathanrreed',
   },
   icons: {
@@ -93,6 +93,7 @@ const jsonLd = {
   author: {
     '@type': 'Person',
     name: 'Jonathan Reed',
+    alternateName: 'Jonathan R Reed',
     url: 'https://jonathanrreed.com',
   },
   hasPart: [
@@ -180,6 +181,20 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+(function () {
+  if (typeof window === "undefined") return;
+  var ascii = "\\n    ___  ________  ________     \\n   |\\\\  \\\\|\\\\   __  \\\\|\\\\   __  \\\\    \\n   \\\\ \\\\  \\\\ \\\\  \\\\|\\\\  \\\\ \\\\  \\\\|\\\\  \\\\   \\n __ \\\\ \\\\  \\\\ \\\\   _  _\\\\ \\\\   _  _\\\\  \\n|\\\\  \\\\\\\\_\\\\  \\\\ \\\\  \\\\\\\\  \\\\\\\\ \\\\  \\\\\\\\  \\\\| \\n\\\\ \\\\________\\\\ \\\\__\\\\\\\\ _\\\\\\\\ \\\\__\\\\\\\\ _\\\\\\n \\\\|________|\\\\|__|\\\\|__|\\\\|__|\\\\|__|\\n";
+  console.log(ascii);
+  console.log("Hey there. Interested in code?");
+  console.log("Check out my GitHub: https://github.com/JonathanRReed");
+  console.log("Most of my sites repos are open source.");
+})();
+`,
+          }}
         />
       </head>
       <body className="bg-background text-foreground font-sans antialiased">

@@ -17,10 +17,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 
 export const metadata: Metadata = {
   title: {
-    absolute: 'Simple-Dev-Tools | Developer accelerators & studios',
+    absolute: 'Simple Dev Tools | Developer accelerators by Jonathan R Reed',
   },
   description:
-    'Simple dev tools by Hello.World Consulting. Developer accelerators, encoders, regex lab, schema studio, security utilities, and more.',
+    'Simple Dev Tools is a set of developer accelerators by Jonathan R Reed that streamline debugging, formatting and everyday coding workflows.',
 };
 
 const toolGroups = [
@@ -98,9 +98,16 @@ export default function Home() {
   return (
     <div className="flex flex-1 flex-col">
       <section className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6">
-        <header className="space-y-3 text-center sm:text-left">
-          <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Simple developer tools</h1>
-          <p className="text-base text-muted-foreground sm:text-lg">
+        <header className="mb-10 space-y-4 rounded-2xl border border-border/40 bg-gradient-to-br from-card/80 via-card/60 to-background p-6 backdrop-blur sm:p-8">
+          <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
+            Simple Dev Tools
+          </h1>
+          <p className="max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
+            A small toolbox built by{' '}
+            <span className="font-medium text-primary">Jonathan R Reed</span>{' '}
+            to make everyday development faster and less noisy.
+          </p>
+          <p className="text-sm text-muted-foreground/80">
             Explore quick utilities, accelerators, and studios to ship documentation, diagrams, data experiments, and more.
           </p>
         </header>
