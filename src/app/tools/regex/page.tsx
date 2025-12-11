@@ -25,6 +25,7 @@ export default function RegexPage() {
           Regex Lab
         </h1>
         <p className="text-muted-foreground">
+          This regex tester is created by Jonathan R Reed to make quick pattern checks less painful.
           Test, visualize, and share regular expressions with live matches, replacements, and shareable URLs.
           Everything runs client-side.
         </p>

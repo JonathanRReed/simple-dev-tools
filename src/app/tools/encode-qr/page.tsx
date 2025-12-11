@@ -25,7 +25,8 @@ export default function EncodeQrPage() {
           Encoders & QR
         </h1>
         <p className="text-muted-foreground">
-          Encode/decode URLs and Base64, then generate QR codes in PNG or SVG formats—no server required.
+          This encoder tool is created by Jonathan R Reed for quick URL and Base64 encoding/decoding.
+          Generate QR codes in PNG or SVG formats—no server required.
         </p>
       </header>
       <EncodeQrClient />

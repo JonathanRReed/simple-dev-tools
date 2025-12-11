@@ -68,10 +68,20 @@ export default function Footer() {
             </div>
             <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
               <Image src="/jonathan.avif" alt="Jonathan Reed" width={28} height={28} className="rounded-full border border-primary/50 profile-img-strict" unoptimized />
-              <span>Built with care for the developer community.</span>
+              <span>Built with care by Jonathan Reed for the developer community.</span>
               <Button asChild variant="ghost" size="sm" className="h-7 px-2 text-xs text-primary hover:text-primary">
                 <Link href="/api-snippet">Explore tools</Link>
               </Button>
+            </div>
+            <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground pt-2">
+              <Link
+                href="https://jonathanrreed.com/projects/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline"
+              >
+                See more AI & cybersecurity projects by Jonathan R Reed
+              </Link>
             </div>
           </CardContent>
         </Card>
