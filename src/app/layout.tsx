@@ -72,112 +72,92 @@ const softwareOffer = {
   '@type': 'Offer',
   price: '0',
   priceCurrency: 'USD',
+  availability: 'https://schema.org/InStock',
 };
 
-const jsonLd = {
-  '@context': 'https://schema.org',
+const authorProfile = {
+  '@type': 'Person',
+  name: 'Jonathan Reed',
+  alternateName: 'Jonathan R Reed',
+  url: 'https://jonathanrreed.com',
+};
+
+const providerProfile = {
+  '@type': 'Organization',
+  name: 'Hello.World Consulting',
+  url: 'https://helloworldfirm.com',
+};
+
+const createApp = (
+  name: string,
+  description: string,
+  path: string,
+  image = 'https://dev-tools.helloworldfirm.com/logo.avif'
+) => ({
   '@type': 'SoftwareApplication',
-  name: 'Simple Dev Tools',
-  description:
-    'Developer accelerators, encoders, regex lab, schema studio, security utilities by Hello.World Consulting.',
-  url: 'https://dev-tools.helloworldfirm.com',
+  name,
+  description,
+  url: `https://dev-tools.helloworldfirm.com${path}`,
   applicationCategory: 'DeveloperApplication',
   operatingSystem: 'Web',
   browserRequirements: 'Requires JavaScript',
-  offers: softwareOffer,
-  image: 'https://dev-tools.helloworldfirm.com/logo.avif',
-  provider: {
-    '@type': 'Organization',
-    name: 'Hello.World Consulting',
-    url: 'https://helloworldfirm.com',
+  offers: {
+    ...softwareOffer,
+    url: `https://dev-tools.helloworldfirm.com${path}`,
   },
-  author: {
-    '@type': 'Person',
-    name: 'Jonathan Reed',
-    alternateName: 'Jonathan R Reed',
-    url: 'https://jonathanrreed.com',
-  },
+  image,
+  author: authorProfile,
+  provider: providerProfile,
+});
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  ...createApp(
+    'Simple Dev Tools',
+    'Developer accelerators, encoders, regex lab, schema studio, security utilities by Hello.World Consulting.',
+    ''
+  ),
   hasPart: [
-    {
-      '@type': 'SoftwareApplication',
-      name: 'API Snippet Generator',
-      description: 'Draft OpenAPI-driven snippets for any stack on the fly.',
-      url: 'https://dev-tools.helloworldfirm.com/api-snippet',
-      applicationCategory: 'DeveloperApplication',
-      operatingSystem: 'Web',
-      offers: softwareOffer,
-      image: 'https://dev-tools.helloworldfirm.com/logo.avif',
-    },
-    {
-      '@type': 'SoftwareApplication',
-      name: 'Mermaid Editor',
-      description: 'Sketch sequence diagrams, flows, and architecture quickly.',
-      url: 'https://dev-tools.helloworldfirm.com/mermaid',
-      applicationCategory: 'DeveloperApplication',
-      operatingSystem: 'Web',
-      offers: softwareOffer,
-      image: 'https://dev-tools.helloworldfirm.com/logo.avif',
-    },
-    {
-      '@type': 'SoftwareApplication',
-      name: 'SQLite Playground',
-      description: 'Run SQL experiments with instant preview and persistence.',
-      url: 'https://dev-tools.helloworldfirm.com/sqlite',
-      applicationCategory: 'DeveloperApplication',
-      operatingSystem: 'Web',
-      offers: softwareOffer,
-      image: 'https://dev-tools.helloworldfirm.com/logo.avif',
-    },
-    {
-      '@type': 'SoftwareApplication',
-      name: 'Regex Lab',
-      description: 'Iterate on regex patterns with explainers, tests, and sharing.',
-      url: 'https://dev-tools.helloworldfirm.com/tools/regex',
-      applicationCategory: 'DeveloperApplication',
-      operatingSystem: 'Web',
-      offers: softwareOffer,
-      image: 'https://dev-tools.helloworldfirm.com/logo.avif',
-    },
-    {
-      '@type': 'SoftwareApplication',
-      name: 'IDs & Scheduling',
-      description: 'Generate ULIDs, UUIDs, and human-friendly CRON helpers.',
-      url: 'https://dev-tools.helloworldfirm.com/tools/ids-cron',
-      applicationCategory: 'DeveloperApplication',
-      operatingSystem: 'Web',
-      offers: softwareOffer,
-      image: 'https://dev-tools.helloworldfirm.com/logo.avif',
-    },
-    {
-      '@type': 'SoftwareApplication',
-      name: 'Encoders & QR',
-      description: 'Encode payloads, produce QR assets, and inspect metadata.',
-      url: 'https://dev-tools.helloworldfirm.com/tools/encode-qr',
-      applicationCategory: 'DeveloperApplication',
-      operatingSystem: 'Web',
-      offers: softwareOffer,
-      image: 'https://dev-tools.helloworldfirm.com/logo.avif',
-    },
-    {
-      '@type': 'SoftwareApplication',
-      name: 'Schema & Types Studio',
-      description: 'Convert sources between JSON Schema, TypeScript, and more.',
-      url: 'https://dev-tools.helloworldfirm.com/studio/schema',
-      applicationCategory: 'DeveloperApplication',
-      operatingSystem: 'Web',
-      offers: softwareOffer,
-      image: 'https://dev-tools.helloworldfirm.com/logo.avif',
-    },
-    {
-      '@type': 'SoftwareApplication',
-      name: 'Security & Tokens',
-      description: 'Inspect JWTs, secrets, and verify signatures confidently.',
-      url: 'https://dev-tools.helloworldfirm.com/studio/security',
-      applicationCategory: 'DeveloperApplication',
-      operatingSystem: 'Web',
-      offers: softwareOffer,
-      image: 'https://dev-tools.helloworldfirm.com/logo.avif',
-    },
+    createApp(
+      'API Snippet Generator',
+      'Draft OpenAPI-driven snippets for any stack on the fly.',
+      '/api-snippet'
+    ),
+    createApp(
+      'Mermaid Editor',
+      'Sketch sequence diagrams, flows, and architecture quickly.',
+      '/mermaid'
+    ),
+    createApp(
+      'SQLite Playground',
+      'Run SQL experiments with instant preview and persistence.',
+      '/sqlite'
+    ),
+    createApp(
+      'Regex Lab',
+      'Iterate on regex patterns with explainers, tests, and sharing.',
+      '/tools/regex'
+    ),
+    createApp(
+      'IDs & Scheduling',
+      'Generate ULIDs, UUIDs, and human-friendly CRON helpers.',
+      '/tools/ids-cron'
+    ),
+    createApp(
+      'Encoders & QR',
+      'Encode payloads, produce QR assets, and inspect metadata.',
+      '/tools/encode-qr'
+    ),
+    createApp(
+      'Schema & Types Studio',
+      'Convert sources between JSON Schema, TypeScript, and more.',
+      '/studio/schema'
+    ),
+    createApp(
+      'Security & Tokens',
+      'Inspect JWTs, secrets, and verify signatures confidently.',
+      '/studio/security'
+    ),
   ],
 };
 
