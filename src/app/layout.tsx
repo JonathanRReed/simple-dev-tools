@@ -169,7 +169,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           }}
         />
       </head>
-      <body className="bg-background text-foreground font-sans antialiased">
+      <body className="noise-overlay bg-background text-foreground font-sans antialiased">
         <ThemeProvider>
           <NavigationProgressProvider>
             <NavigationProgressBar />
@@ -178,7 +178,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               <div className="flex bg-background max-w-7xl mx-auto w-full">
                 <AppSidebar />
                 <SidebarInset className="flex flex-1 flex-col">
-                  <header className="sticky top-0 z-30 flex items-center justify-between border-b border-border/60 bg-background/80 px-6 py-4 backdrop-blur">
+                  <header className="sticky top-0 z-30 flex items-center justify-between border-b border-border/40 bg-background/70 px-6 py-4 backdrop-blur-md">
                     <div className="flex items-center gap-3">
                       <SidebarTrigger className="border border-border/60 bg-card/60" />
                       <div className="flex flex-col">

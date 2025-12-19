@@ -2,6 +2,157 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================
+   PREMIUM POLISH - Utility-Focused Enhancements
+   ============================================ */
+
+/* --- Noise Texture Overlay --- */
+/* Very subtle grain for premium matte finish */
+.noise-overlay::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.015;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  mix-blend-mode: overlay;
+}
+
+/* --- Custom Scrollbar (themed to palette) --- */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--rp-highlight-med);
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--rp-highlight-high);
+  background-clip: content-box;
+}
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--rp-highlight-med) transparent;
+}
+
+/* --- Smooth Theme Transitions --- */
+html {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+body, .bg-background, .bg-card, .bg-popover {
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+.text-foreground, .text-muted-foreground, .text-primary {
+  transition: color 0.3s ease;
+}
+
+/* --- Staggered Card Animations --- */
+@keyframes card-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.card-stagger {
+  animation: card-fade-in 0.4s ease-out both;
+}
+.card-stagger:nth-child(1) { animation-delay: 0ms; }
+.card-stagger:nth-child(2) { animation-delay: 50ms; }
+.card-stagger:nth-child(3) { animation-delay: 100ms; }
+.card-stagger:nth-child(4) { animation-delay: 150ms; }
+.card-stagger:nth-child(5) { animation-delay: 200ms; }
+.card-stagger:nth-child(6) { animation-delay: 250ms; }
+.card-stagger:nth-child(7) { animation-delay: 300ms; }
+.card-stagger:nth-child(8) { animation-delay: 350ms; }
+
+/* --- Premium Card Hover States --- */
+.premium-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  will-change: transform;
+}
+.premium-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px -12px rgba(0, 0, 0, 0.3);
+}
+
+/* --- Spotlight Effect Variables --- */
+.spotlight-card {
+  --spotlight-x: 50%;
+  --spotlight-y: 50%;
+  --spotlight-opacity: 0;
+  position: relative;
+  overflow: hidden;
+}
+.spotlight-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: var(--spotlight-opacity);
+  background: radial-gradient(
+    400px circle at var(--spotlight-x) var(--spotlight-y),
+    hsla(var(--primary) / 0.12),
+    transparent 60%
+  );
+  transition: opacity 0.3s ease;
+}
+.spotlight-card:hover::after {
+  --spotlight-opacity: 1;
+}
+
+/* --- Button Press Effect --- */
+.btn-press {
+  transition: transform 0.1s ease;
+}
+.btn-press:active {
+  transform: scale(0.98) translateY(1px);
+}
+
+/* --- Gradient Text Utility --- */
+.gradient-text {
+  background: linear-gradient(135deg, var(--rp-iris) 0%, var(--rp-foam) 50%, var(--rp-rose) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* --- Reduced Motion --- */
+@media (prefers-reduced-motion: reduce) {
+  .card-stagger {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+  .premium-card:hover {
+    transform: none;
+  }
+  html, body, .bg-background, .bg-card, .bg-popover,
+  .text-foreground, .text-muted-foreground, .text-primary {
+    transition: none;
+  }
+  .spotlight-card::after {
+    display: none;
+  }
+}
+
+/* ============================================
+   END PREMIUM POLISH
+   ============================================ */
+
 @keyframes nav-progress {
   0% {
     transform: scaleX(0.05);
