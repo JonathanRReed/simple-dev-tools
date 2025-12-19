@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 
 import { cn } from "@/lib/utils";
 
-const FADE_DELAY_MS = 280;
+const FADE_DELAY_MS = 150;
 
 export default function InitialLoadOverlay() {
   const [hydrated, setHydrated] = useState(false);
