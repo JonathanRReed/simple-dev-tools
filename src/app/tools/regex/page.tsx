@@ -1,21 +1,16 @@
-import dynamic from "next/dynamic";
 import type { Metadata } from "next";
 
-import ToolLoading from "@/components/ToolLoading";
 import ToolPage from "@/components/layout/ToolPage";
+import RegexClientOnly from "./ClientOnly";
 
 export const metadata: Metadata = {
   title: "Regex Lab",
   description:
     "Test, visualize, and share regular expressions with live matches, replacements, and shareable URLs. Everything runs client-side.",
+  alternates: {
+    canonical: "/tools/regex/",
+  },
 };
-
-const RegexClient = dynamic(() => import("./Client"), {
-  ssr: false,
-  loading: () => (
-    <ToolLoading message="Loading Regex Lab…" />
-  ),
-});
 
 export default function RegexPage() {
   return (
@@ -30,7 +25,7 @@ export default function RegexPage() {
           Everything runs client-side.
         </p>
       </header>
-      <RegexClient />
+      <RegexClientOnly />
     </ToolPage>
   );
 }

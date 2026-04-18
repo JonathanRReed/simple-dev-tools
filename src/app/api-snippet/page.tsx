@@ -1,21 +1,16 @@
-import dynamic from "next/dynamic";
 import type { Metadata } from "next";
 
-import ToolLoading from "@/components/ToolLoading";
 import ToolPage from "@/components/layout/ToolPage";
+import ApiSnippetClientOnly from "./ClientOnly";
 
 export const metadata: Metadata = {
   title: "API Snippet Generator",
   description:
-    "Generate copy-paste-ready cURL, Python requests, and fetch snippets from a single endpoint definition. Works client-side—no API keys required.",
+    "Generate copy-paste-ready cURL, Python requests, and fetch snippets from a single endpoint definition. Works client-side, no API keys required.",
+  alternates: {
+    canonical: "/api-snippet/",
+  },
 };
-
-const ApiSnippetClient = dynamic(() => import("./Client"), {
-  ssr: false,
-  loading: () => (
-    <ToolLoading message="Loading API Snippet Generator…" />
-  ),
-});
 
 export default function ApiSnippetPage() {
   return (
@@ -26,10 +21,10 @@ export default function ApiSnippetPage() {
         </h1>
         <p className="text-muted-foreground">
           Generate copy-paste-ready cURL, Python requests, and fetch snippets from a single
-          endpoint definition. Works client-side—no API keys required.
+          endpoint definition. Works client-side, no API keys required.
         </p>
       </header>
-      <ApiSnippetClient />
+      <ApiSnippetClientOnly />
     </ToolPage>
   );
 }

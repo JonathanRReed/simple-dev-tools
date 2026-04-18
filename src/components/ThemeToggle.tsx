@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Check, Moon, Palette, Sun, Sunrise } from 'lucide-react';
+import { Check, Command, Gem, Moon, Palette, Sun, Sunrise } from 'lucide-react';
 import { useTheme } from 'next-themes';
 
 import { Badge } from '@/components/ui/badge';
@@ -14,14 +14,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { appThemes, getAppTheme, type AppThemeId } from '@/lib/themes';
+import { cn } from '@/lib/utils';
 
-const THEMES = [
-  { id: 'main', label: 'Rosé Pine', description: 'Rich midnight vibes', icon: Palette },
-  { id: 'moon', label: 'Moon', description: 'High-contrast twilight', icon: Moon },
-  { id: 'dawn', label: 'Dawn', description: 'Soft daylight mode', icon: Sunrise },
-] as const;
-
-type ThemeId = (typeof THEMES)[number]['id'];
+const THEME_ICONS = {
+  main: Palette,
+  moon: Moon,
+  dawn: Sunrise,
+  raycast: Command,
+  'art-deco': Gem,
+  paper: Sun,
+} as const satisfies Record<AppThemeId, typeof Palette>;
 
 export default function ThemeToggle() {
   const { setTheme, theme, resolvedTheme } = useTheme();
@@ -31,30 +34,31 @@ export default function ThemeToggle() {
     setMounted(true);
   }, []);
 
-  const current = (theme ?? resolvedTheme ?? 'main') as ThemeId;
+  const current = (theme ?? resolvedTheme ?? 'art-deco') as AppThemeId;
+  const currentTheme = getAppTheme(current) ?? appThemes[0];
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="icon" className="h-11 w-11 shadow-lg border-border/60">
+        <Button variant="outline" size="icon" className="size-11 shadow-lg border-border/60">
           <Palette className="h-[1.2rem] w-[1.2rem]" />
           <span className="sr-only">Toggle theme</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" sideOffset={8} className="w-56">
+      <DropdownMenuContent align="end" sideOffset={8} className="w-64">
         <DropdownMenuLabel className="flex items-center justify-between">
           Theme
           {mounted && (
-            <Badge variant="secondary" className="capitalize bg-secondary/60 text-secondary-foreground">
-              {current}
+            <Badge variant="secondary" className="bg-secondary/60 text-secondary-foreground">
+              {currentTheme.label}
             </Badge>
           )}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <div className="grid gap-1">
-          {THEMES.map((option) => {
-            const Icon = option.icon;
-            const active = mounted ? current === option.id : option.id === 'main';
+          {appThemes.map((option) => {
+            const Icon = THEME_ICONS[option.id];
+            const active = mounted ? current === option.id : option.id === 'art-deco';
             return (
               <DropdownMenuItem
                 key={option.id}
@@ -64,11 +68,25 @@ export default function ThemeToggle() {
                 }}
                 className="flex items-center gap-3 rounded-md border border-transparent px-3 py-2 focus:bg-muted"
               >
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <div className="flex size-9 items-center justify-center rounded-full bg-primary/10 text-primary">
                   <Icon className="h-4 w-4" />
                 </div>
                 <div className="flex flex-1 flex-col items-start">
-                  <span className="text-sm font-semibold leading-tight">{option.label}</span>
+                  <span className="flex w-full items-center justify-between gap-3 text-sm font-semibold leading-tight">
+                    {option.label}
+                    <span className="flex shrink-0 items-center gap-1" aria-hidden="true">
+                      {option.swatches.map((swatch) => (
+                        <span
+                          key={swatch}
+                          className={cn(
+                            'size-2.5 rounded-full border border-border/70',
+                            active && 'ring-1 ring-primary/60'
+                          )}
+                          style={{ backgroundColor: swatch }}
+                        />
+                      ))}
+                    </span>
+                  </span>
                   <span className="text-xs text-muted-foreground">{option.description}</span>
                 </div>
                 {active && <Check className="h-4 w-4 text-primary" />}

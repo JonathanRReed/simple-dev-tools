@@ -5,6 +5,9 @@ export const metadata: Metadata = {
   title: "Schema & Types Studio",
   description:
     "Parse JSON/YAML or OpenAPI specs, preview documentation, validate data, and generate TypeScript or Zod types entirely in-browser.",
+  alternates: {
+    canonical: "/studio/schema/",
+  },
 };
 
 export default function SchemaLayout({ children }: { children: ReactNode }) {

@@ -30,7 +30,7 @@ export default function ToolLoading({ message }: ToolLoadingProps) {
         </div>
         {showHint && (
           <p className="text-xs text-muted-foreground/80 text-center">
-            Just a moment—the tool is getting everything ready.
+            Just a moment, the tool is getting everything ready.
           </p>
         )}
       </div>

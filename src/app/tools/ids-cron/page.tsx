@@ -1,21 +1,16 @@
-import dynamic from "next/dynamic";
 import type { Metadata } from "next";
 
-import ToolLoading from "@/components/ToolLoading";
 import ToolPage from "@/components/layout/ToolPage";
+import IdsCronClientOnly from "./ClientOnly";
 
 export const metadata: Metadata = {
   title: "IDs & Scheduling",
   description:
-    "Generate UUIDv4 and ULID identifiers, inspect their parts, and humanize cron expressions with quick presets.",
+    "Generate UUIDv4 and ULID identifiers, inspect ULID timestamps, copy values, and humanize cron expressions with practical presets.",
+  alternates: {
+    canonical: "/tools/ids-cron/",
+  },
 };
-
-const IdsCronClient = dynamic(() => import("./Client"), {
-  ssr: false,
-  loading: () => (
-    <ToolLoading message="Loading IDs & Scheduling…" />
-  ),
-});
 
 export default function IdsCronPage() {
   return (
@@ -28,7 +23,7 @@ export default function IdsCronPage() {
           Generate UUIDv4 and ULID identifiers, inspect their parts, and humanize cron expressions with quick presets.
         </p>
       </header>
-      <IdsCronClient />
+      <IdsCronClientOnly />
     </ToolPage>
   );
 }

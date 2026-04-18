@@ -1,21 +1,16 @@
-import dynamic from "next/dynamic";
 import type { Metadata } from "next";
 
-import ToolLoading from "@/components/ToolLoading";
 import ToolPage from "@/components/layout/ToolPage";
+import EncodeQrClientOnly from "./ClientOnly";
 
 export const metadata: Metadata = {
   title: "Encoders & QR",
   description:
-    "Encode/decode URLs and Base64, then generate QR codes in PNG or SVG formats—no server required.",
+    "Encode and decode URLs or Base64 text, generate QR codes, tune size and error correction, and export PNG or SVG assets from a local browser workflow.",
+  alternates: {
+    canonical: "/tools/encode-qr/",
+  },
 };
-
-const EncodeQrClient = dynamic(() => import("./Client"), {
-  ssr: false,
-  loading: () => (
-    <ToolLoading message="Loading Encoders & QR…" />
-  ),
-});
 
 export default function EncodeQrPage() {
   return (
@@ -26,10 +21,10 @@ export default function EncodeQrPage() {
         </h1>
         <p className="text-muted-foreground">
           This encoder tool is created by Jonathan R Reed for quick URL and Base64 encoding/decoding.
-          Generate QR codes in PNG or SVG formats—no server required.
+          Generate QR codes in PNG or SVG formats with no server required.
         </p>
       </header>
-      <EncodeQrClient />
+      <EncodeQrClientOnly />
     </ToolPage>
   );
 }

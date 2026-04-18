@@ -26,5 +26,8 @@ Simple Dev Tools is a Next.js application hosted at `https://dev-tools.helloworl
 ## Optional
 
 - [Homepage](https://dev-tools.helloworldfirm.com/): Landing page with visual cards showing all available tools and studios
+- [About](https://dev-tools.helloworldfirm.com/about/): Builder and maintenance context
+- [Contact](https://dev-tools.helloworldfirm.com/contact/): Official contact paths
+- [Privacy](https://dev-tools.helloworldfirm.com/privacy/): Local-first privacy notes
 - [Sitemap](https://dev-tools.helloworldfirm.com/sitemap.xml): Machine-readable index of public routes
-- [Robots.txt](https://dev-tools.helloworldfirm.com/robots.txt): Current crawler directives”
+- [Robots.txt](https://dev-tools.helloworldfirm.com/robots.txt): Current crawler directives

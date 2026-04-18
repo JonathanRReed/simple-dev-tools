@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -13,6 +12,7 @@ import {
   SearchCode,
   ShieldCheck,
   Workflow,
+  X,
 } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
@@ -30,9 +30,23 @@ import {
   SidebarProvider,
   SidebarRail,
   SidebarSeparator,
+  useSidebar,
 } from '@/components/ui/sidebar';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import BrandMark from '@/components/BrandMark';
+import { siteConfig, toolGroups, type ToolIcon } from '@/lib/site';
 import { cn } from '@/lib/utils';
+
+const iconMap = {
+  braces: Braces,
+  calendarClock: CalendarClock,
+  code: Code2,
+  database: Database,
+  qr: QrCode,
+  searchCode: SearchCode,
+  shield: ShieldCheck,
+  workflow: Workflow,
+} satisfies Record<ToolIcon, typeof Code2>;
 
 const navSections = [
   {
@@ -41,24 +55,14 @@ const navSections = [
       { title: 'Home', href: '/', icon: Home, description: 'Product overview' },
     ],
   },
-  {
-    label: 'Tools',
-    items: [
-      { title: 'API Snippet Generator', href: '/api-snippet', icon: Code2 },
-      { title: 'Mermaid Editor', href: '/mermaid', icon: Workflow },
-      { title: 'SQLite Playground', href: '/sqlite', icon: Database },
-      { title: 'Regex Lab', href: '/tools/regex', icon: SearchCode },
-      { title: 'IDs & Scheduling', href: '/tools/ids-cron', icon: CalendarClock },
-      { title: 'Encoders & QR', href: '/tools/encode-qr', icon: QrCode },
-    ],
-  },
-  {
-    label: 'Studios',
-    items: [
-      { title: 'Schema & Types Studio', href: '/studio/schema', icon: Braces },
-      { title: 'Security & Tokens', href: '/studio/security', icon: ShieldCheck },
-    ],
-  },
+  ...toolGroups.map((group) => ({
+    label: group.title === 'Developer accelerators' ? 'Tools' : group.title,
+    items: group.tools.map((tool) => ({
+      title: tool.title,
+      href: tool.href,
+      icon: iconMap[tool.icon],
+    })),
+  })),
 ] as const;
 
 export function AppSidebarProvider({ children }: { children: React.ReactNode }) {
@@ -75,8 +79,10 @@ export default function AppSidebar() {
 
   const isActive = (href: string) => {
     if (!pathname) return false;
-    if (href === '/') return pathname === '/';
-    return pathname === href || pathname.startsWith(`${href}/`);
+    const normalizedHref = href === '/' ? href : href.replace(/\/$/, '');
+    const normalizedPathname = pathname === '/' ? pathname : pathname.replace(/\/$/, '');
+    if (normalizedHref === '/') return normalizedPathname === '/';
+    return normalizedPathname === normalizedHref || normalizedPathname.startsWith(`${normalizedHref}/`);
   };
 
   return (
@@ -85,29 +91,25 @@ export default function AppSidebar() {
       className="border-r border-border/40 bg-sidebar text-sidebar-foreground"
     >
       <SidebarHeader className="px-4 py-6 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:py-4">
-        <Link
-          href="/"
-          className="flex items-center gap-3 transition-all group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:h-10 group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0 group-data-[collapsible=icon]:rounded-full"
-        >
-          <Image
-            src="/logo.avif"
-            alt="Logo"
-            width={40}
-            height={40}
-            className="h-10 w-10 rounded-full logo-img-strict group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:w-8"
-            unoptimized
-          />
-          <div className="hidden flex-col text-left md:flex group-data-[collapsible=icon]:hidden">
-            <span className="text-lg font-semibold tracking-tight">Simple-Dev-Tools</span>
-            <span className="text-xs text-muted-foreground">by Hello.World Consulting</span>
-          </div>
-        </Link>
+        <div className="flex items-start justify-between gap-3 group-data-[collapsible=icon]:justify-center">
+          <Link
+            href="/"
+            className="flex min-w-0 items-center gap-3 transition-all group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:h-10 group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0 group-data-[collapsible=icon]:rounded-full"
+          >
+            <BrandMark className="size-10 group-data-[collapsible=icon]:size-8" />
+            <div className="hidden min-w-0 flex-col text-left md:flex group-data-[collapsible=icon]:hidden">
+              <span className="truncate text-lg font-semibold tracking-tight">{siteConfig.shortName}</span>
+              <span className="truncate text-xs text-muted-foreground">by {siteConfig.provider.name}</span>
+            </div>
+          </Link>
+          <SidebarCloseButton />
+        </div>
       </SidebarHeader>
       <SidebarContent className="px-2 group-data-[collapsible=icon]:px-1">
         <ScrollArea className="h-[calc(100vh-220px)] pr-2 group-data-[collapsible=icon]:pr-0">
           {navSections.map((section) => (
             <SidebarGroup key={section.label} className="pb-2">
-              <SidebarGroupLabel className="text-xs font-semibold uppercase tracking-wide text-muted-foreground/80">
+              <SidebarGroupLabel className="text-xs font-semibold text-muted-foreground/80">
                 {section.label}
               </SidebarGroupLabel>
               <SidebarGroupContent>
@@ -121,7 +123,7 @@ export default function AppSidebar() {
                           isActive={active}
                           tooltip={item.title}
                           className={cn(
-                            'text-sm transition-colors duration-150 data-[state=open]:bg-primary/15',
+                            'min-h-10 text-sm transition-colors duration-200 data-[state=open]:bg-primary/15',
                             'hover:bg-primary/10 hover:text-primary',
                             active && 'bg-primary/20 text-primary shadow-[inset_0_0_0_1px_rgba(196,167,231,0.35)]'
                           )}
@@ -151,14 +153,14 @@ export default function AppSidebar() {
         <div className="flex w-full flex-col gap-2 rounded-xl border border-border/60 bg-card/60 p-3">
           <p className="text-xs text-muted-foreground">A product of</p>
           <div className="flex items-center gap-2">
-            <Image src="/logo.avif" alt="Hello.World Consulting" width={28} height={28} className="rounded-full logo-img-strict" unoptimized />
+            <BrandMark className="size-7" />
             <div className="flex flex-col">
-              <span className="text-sm font-semibold">Hello.World Consulting</span>
+              <span className="text-sm font-semibold">{siteConfig.provider.name}</span>
               <Link
-                href="https://helloworldfirm.com"
+                href={siteConfig.provider.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-xs text-primary hover:underline"
+                className="inline-flex min-h-8 items-center text-xs text-primary hover:underline"
               >
                 helloworldfirm.com
               </Link>
@@ -170,5 +172,31 @@ export default function AppSidebar() {
         </div>
       </SidebarFooter>
     </PrimitiveSidebar>
+  );
+}
+
+function SidebarCloseButton() {
+  const { isMobile, setOpen, setOpenMobile } = useSidebar();
+
+  return (
+    <button
+      type="button"
+      aria-label="Close sidebar"
+      title="Close sidebar"
+      onClick={() => {
+        if (isMobile) {
+          setOpenMobile(false);
+          return;
+        }
+        setOpen(false);
+      }}
+      className={cn(
+        'inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-border/60 bg-card/60 text-muted-foreground transition-colors duration-200',
+        'hover:border-primary/60 hover:bg-primary/10 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        'group-data-[collapsible=icon]:hidden'
+      )}
+    >
+      <X className="h-4 w-4" />
+    </button>
   );
 }

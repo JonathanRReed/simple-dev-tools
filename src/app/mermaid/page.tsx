@@ -1,21 +1,16 @@
-import dynamic from "next/dynamic";
 import type { Metadata } from "next";
 
-import ToolLoading from "@/components/ToolLoading";
 import ToolPage from "@/components/layout/ToolPage";
+import MermaidClientOnly from "./ClientOnly";
 
 export const metadata: Metadata = {
   title: "Mermaid Diagrams",
   description:
-    "Edit Mermaid syntax, preview diagrams instantly, and export to SVG or PNG—all in your browser with zero setup.",
+    "Edit Mermaid syntax, preview diagrams instantly, start from common templates, and export SVG or PNG files from a browser-only workspace.",
+  alternates: {
+    canonical: "/mermaid/",
+  },
 };
-
-const MermaidClient = dynamic(() => import("./MermaidClient"), {
-  ssr: false,
-  loading: () => (
-    <ToolLoading message="Loading Mermaid tool…" />
-  ),
-});
 
 export default function MermaidPage() {
   return (
@@ -25,11 +20,11 @@ export default function MermaidPage() {
           Mermaid Diagrams
         </h1>
         <p className="text-muted-foreground">
-          Edit Mermaid syntax, preview diagrams instantly, and export to SVG or PNG—all in your
+          Edit Mermaid syntax, preview diagrams instantly, and export to SVG or PNG in your
           browser with zero setup.
         </p>
       </header>
-      <MermaidClient />
+      <MermaidClientOnly />
     </ToolPage>
   );
 }

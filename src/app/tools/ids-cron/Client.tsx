@@ -2,7 +2,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import cronstrue from "cronstrue";
 import { ulid } from "ulid";
-import ToolPage from "@/components/layout/ToolPage";
 
 // Crockford's Base32 used by ULID (no I, L, O, U)
 const CROCK32 = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
@@ -108,14 +107,13 @@ export default function IDsCronTool() {
   ];
 
   return (
-    <ToolPage contentClassName="mx-auto max-w-5xl">
-      <div
+    <div
         className="bg-rp-surface/80 rounded-3xl shadow-2xl px-6 md:px-8 py-8 flex flex-col gap-6 border border-rp-highlight-high"
         style={{ backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)" }}
       >
         <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-bold text-rp-iris drop-shadow">IDs & Scheduling</h1>
-          <p className="text-sm text-rp-subtle max-w-3xl">Generate UUIDv4 and ULID identifiers, then humanize cron expressions using cRonstrue — all running locally.</p>
+          <h2 className="text-2xl font-bold text-rp-iris drop-shadow">Identifier workspace</h2>
+          <p className="text-sm text-rp-subtle max-w-3xl">Generate UUIDv4 and ULID identifiers, then humanize cron expressions using cronstrue. All operations run locally.</p>
         </div>
 
         {/* Tabs */}
@@ -245,6 +243,5 @@ export default function IDsCronTool() {
           </div>
         )}
       </div>
-    </ToolPage>
   );
 }

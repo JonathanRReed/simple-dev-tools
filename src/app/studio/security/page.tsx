@@ -305,7 +305,7 @@ export default function SecurityTokens() {
       >
         <div className="flex flex-col gap-2">
           <h1 className="text-3xl font-bold text-rp-iris drop-shadow">Security & Tokens</h1>
-          <p className="text-sm text-rp-subtle max-w-3xl">Decode and verify JWTs (HS256/RS256/ES256), compute hashes, and generate HMACs using Web Crypto — no secrets leave the browser.</p>
+          <p className="text-sm text-rp-subtle max-w-3xl">Decode and verify JWTs (HS256/RS256/ES256), compute hashes, and generate HMACs using Web Crypto. No secrets leave the browser.</p>
         </div>
 
         <div className="rounded-xl border border-rp-gold bg-rp-highlight-low text-rp-gold text-sm p-3">
@@ -338,8 +338,9 @@ export default function SecurityTokens() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <h2 className="text-rp-iris font-semibold mb-2">JWT</h2>
-              <textarea
-                className="w-full min-h-[160px] rounded-xl px-4 py-3 bg-rp-surface/70 border border-rp-highlight-high text-rp-text focus:outline-none focus:ring-2 focus:ring-rp-iris"
+	              <textarea
+	                aria-label="JWT token"
+	                className="w-full min-h-[160px] rounded-xl px-4 py-3 bg-rp-surface/70 border border-rp-highlight-high text-rp-text focus:outline-none focus:ring-2 focus:ring-rp-iris"
                 value={jwt}
                 onChange={(e) => setJwt(e.target.value)}
                 placeholder="Paste JWT (header.payload.signature)"
@@ -355,8 +356,9 @@ export default function SecurityTokens() {
               <div className="mt-3 grid grid-cols-1 gap-3">
                 <div>
                   <label className="text-rp-subtle text-sm">Secret (HS256)</label>
-                  <input
-                    className="w-full rounded-xl px-4 py-2 bg-rp-surface/70 border border-rp-highlight-high text-rp-text focus:outline-none focus:ring-2 focus:ring-rp-iris"
+	                  <input
+	                    aria-label="HS256 shared secret"
+	                    className="w-full rounded-xl px-4 py-2 bg-rp-surface/70 border border-rp-highlight-high text-rp-text focus:outline-none focus:ring-2 focus:ring-rp-iris"
                     value={secret}
                     onChange={(e) => setSecret(e.target.value)}
                     placeholder="Shared secret for HS256"
@@ -364,8 +366,9 @@ export default function SecurityTokens() {
                 </div>
                 <div>
                   <label className="text-rp-subtle text-sm">Public Key (PEM SPKI or JWK JSON) for RS256/ES256</label>
-                  <textarea
-                    className="w-full min-h-[120px] rounded-xl px-4 py-2 bg-rp-surface/70 border border-rp-highlight-high text-rp-text focus:outline-none focus:ring-2 focus:ring-rp-iris"
+	                  <textarea
+	                    aria-label="RS256 or ES256 public key"
+	                    className="w-full min-h-[120px] rounded-xl px-4 py-2 bg-rp-surface/70 border border-rp-highlight-high text-rp-text focus:outline-none focus:ring-2 focus:ring-rp-iris"
                     value={publicKey}
                     onChange={(e) => setPublicKey(e.target.value)}
                     placeholder="-----BEGIN PUBLIC KEY-----... or JWK JSON (kty, n, e / crv, x, y)"
@@ -376,7 +379,7 @@ export default function SecurityTokens() {
               {"checked" in verifyState && verifyState.checked && (
                 <div className={`mt-3 rounded-xl border p-3 bg-rp-overlay/70 ${verifyState.ok ? "border-rp-foam" : "border-rp-love"}`}>
                   <div className={verifyState.ok ? "text-rp-foam" : "text-rp-love"}>
-                    {verifyState.ok ? "Signature Verified ✓" : "Invalid Signature"}
+                    {verifyState.ok ? "Signature Verified OK" : "Invalid Signature"}
                   </div>
                   {!verifyState.ok && (
                     <div className="text-xs text-rp-muted mt-1 break-all">
@@ -425,16 +428,16 @@ export default function SecurityTokens() {
                     <ul className="list-disc pl-5 space-y-1">
                       {payload.exp && (
                         <li>
-                          exp: {payload.exp} → {tsToLocal(payload.exp) || "(invalid)"}
+                          exp: {payload.exp} {'->'} {tsToLocal(payload.exp) || "(invalid)"}
                           {typeof payload.exp === "number" && Date.now() / 1000 > payload.exp ? (
                             <span className="ml-2 text-rp-love">(expired)</span>
                           ) : null}
                         </li>
                       )}
-                      {payload.iat && <li>iat: {payload.iat} → {tsToLocal(payload.iat) || "(invalid)"}</li>}
+                      {payload.iat && <li>iat: {payload.iat} {'->'} {tsToLocal(payload.iat) || "(invalid)"}</li>}
                       {payload.nbf && (
                         <li>
-                          nbf: {payload.nbf} → {tsToLocal(payload.nbf) || "(invalid)"}
+                          nbf: {payload.nbf} {'->'} {tsToLocal(payload.nbf) || "(invalid)"}
                           {typeof payload.nbf === "number" && Date.now() / 1000 < payload.nbf ? (
                             <span className="ml-2 text-rp-gold">(not yet valid)</span>
                           ) : null}
@@ -453,16 +456,18 @@ export default function SecurityTokens() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <h2 className="text-rp-iris font-semibold mb-2">Hash</h2>
-              <textarea
-                className="w-full min-h-[160px] rounded-xl px-4 py-3 bg-rp-surface/70 border border-rp-highlight-high text-rp-text focus:outline-none focus:ring-2 focus:ring-rp-iris"
+	              <textarea
+	                aria-label="Hash input"
+	                className="w-full min-h-[160px] rounded-xl px-4 py-3 bg-rp-surface/70 border border-rp-highlight-high text-rp-text focus:outline-none focus:ring-2 focus:ring-rp-iris"
                 value={hashInput}
                 onChange={(e) => setHashInput(e.target.value)}
                 placeholder="Text to hash"
               />
               <div className="mt-2 flex items-center gap-3">
                 <label className="text-rp-subtle text-sm">Algorithm</label>
-                <select
-                  className="rounded-xl px-3 py-2 bg-rp-surface/70 border border-rp-highlight-high text-rp-text"
+	                <select
+	                  aria-label="Hash algorithm"
+	                  className="rounded-xl px-3 py-2 bg-rp-surface/70 border border-rp-highlight-high text-rp-text"
                   value={hashAlg}
                   onChange={(e) => setHashAlg(e.target.value as any)}
                 >
@@ -490,24 +495,27 @@ export default function SecurityTokens() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <h2 className="text-rp-iris font-semibold mb-2">HMAC</h2>
-              <textarea
-                className="w-full min-h-[160px] rounded-xl px-4 py-3 bg-rp-surface/70 border border-rp-highlight-high text-rp-text focus:outline-none focus:ring-2 focus:ring-rp-iris"
+	              <textarea
+	                aria-label="HMAC message"
+	                className="w-full min-h-[160px] rounded-xl px-4 py-3 bg-rp-surface/70 border border-rp-highlight-high text-rp-text focus:outline-none focus:ring-2 focus:ring-rp-iris"
                 value={hmacInput}
                 onChange={(e) => setHmacInput(e.target.value)}
                 placeholder="Message"
               />
               <div className="mt-2">
                 <label className="text-rp-subtle text-sm">Secret</label>
-                <input
-                  className="w-full rounded-xl px-4 py-2 bg-rp-surface/70 border border-rp-highlight-high text-rp-text focus:outline-none focus:ring-2 focus:ring-rp-iris"
+	                <input
+	                  aria-label="HMAC secret"
+	                  className="w-full rounded-xl px-4 py-2 bg-rp-surface/70 border border-rp-highlight-high text-rp-text focus:outline-none focus:ring-2 focus:ring-rp-iris"
                   value={hmacSecret}
                   onChange={(e) => setHmacSecret(e.target.value)}
                 />
               </div>
               <div className="mt-2 flex items-center gap-3">
                 <label className="text-rp-subtle text-sm">Algorithm</label>
-                <select
-                  className="rounded-xl px-3 py-2 bg-rp-surface/70 border border-rp-highlight-high text-rp-text"
+	                <select
+	                  aria-label="HMAC algorithm"
+	                  className="rounded-xl px-3 py-2 bg-rp-surface/70 border border-rp-highlight-high text-rp-text"
                   value={hmacAlg}
                   onChange={(e) => setHmacAlg(e.target.value as any)}
                 >

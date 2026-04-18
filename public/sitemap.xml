@@ -2,38 +2,50 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://dev-tools.helloworldfirm.com/</loc>
-    <lastmod>2025-12-07</lastmod>
+    <lastmod>2026-04-18</lastmod>
   </url>
   <url>
-    <loc>https://dev-tools.helloworldfirm.com/api-snippet</loc>
-    <lastmod>2025-12-07</lastmod>
+    <loc>https://dev-tools.helloworldfirm.com/api-snippet/</loc>
+    <lastmod>2026-04-18</lastmod>
   </url>
   <url>
-    <loc>https://dev-tools.helloworldfirm.com/mermaid</loc>
-    <lastmod>2025-12-07</lastmod>
+    <loc>https://dev-tools.helloworldfirm.com/mermaid/</loc>
+    <lastmod>2026-04-18</lastmod>
   </url>
   <url>
-    <loc>https://dev-tools.helloworldfirm.com/sqlite</loc>
-    <lastmod>2025-12-07</lastmod>
+    <loc>https://dev-tools.helloworldfirm.com/sqlite/</loc>
+    <lastmod>2026-04-18</lastmod>
   </url>
   <url>
-    <loc>https://dev-tools.helloworldfirm.com/tools/regex</loc>
-    <lastmod>2025-12-07</lastmod>
+    <loc>https://dev-tools.helloworldfirm.com/tools/regex/</loc>
+    <lastmod>2026-04-18</lastmod>
   </url>
   <url>
-    <loc>https://dev-tools.helloworldfirm.com/studio/schema</loc>
-    <lastmod>2025-12-07</lastmod>
+    <loc>https://dev-tools.helloworldfirm.com/studio/schema/</loc>
+    <lastmod>2026-04-18</lastmod>
   </url>
   <url>
-    <loc>https://dev-tools.helloworldfirm.com/studio/security</loc>
-    <lastmod>2025-12-07</lastmod>
+    <loc>https://dev-tools.helloworldfirm.com/studio/security/</loc>
+    <lastmod>2026-04-18</lastmod>
   </url>
   <url>
-    <loc>https://dev-tools.helloworldfirm.com/tools/ids-cron</loc>
-    <lastmod>2025-12-07</lastmod>
+    <loc>https://dev-tools.helloworldfirm.com/tools/ids-cron/</loc>
+    <lastmod>2026-04-18</lastmod>
   </url>
   <url>
-    <loc>https://dev-tools.helloworldfirm.com/tools/encode-qr</loc>
-    <lastmod>2025-12-07</lastmod>
+    <loc>https://dev-tools.helloworldfirm.com/tools/encode-qr/</loc>
+    <lastmod>2026-04-18</lastmod>
+  </url>
+  <url>
+    <loc>https://dev-tools.helloworldfirm.com/about/</loc>
+    <lastmod>2026-04-18</lastmod>
+  </url>
+  <url>
+    <loc>https://dev-tools.helloworldfirm.com/contact/</loc>
+    <lastmod>2026-04-18</lastmod>
+  </url>
+  <url>
+    <loc>https://dev-tools.helloworldfirm.com/privacy/</loc>
+    <lastmod>2026-04-18</lastmod>
   </url>
 </urlset>
