@@ -68,12 +68,11 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: '/favicon.ico' },
-      { url: '/Favicon/favicon.svg', type: 'image/svg+xml' },
-      { url: '/Favicon/favicon-96x96.avif', type: 'image/avif', sizes: '96x96' },
+      { url: '/favicon.ico?v=20260418', sizes: 'any' },
+      { url: '/Favicon/favicon-96x96.avif?v=20260418', type: 'image/avif', sizes: '96x96' },
     ],
-    apple: [{ url: '/Favicon/apple-touch-icon.avif', type: 'image/avif', sizes: '180x180' }],
-    shortcut: '/favicon.ico',
+    apple: [{ url: '/Favicon/apple-touch-icon.avif?v=20260418', type: 'image/avif', sizes: '180x180' }],
+    shortcut: '/favicon.ico?v=20260418',
   },
   manifest: '/Favicon/site.webmanifest',
 };
