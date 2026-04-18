@@ -431,8 +431,9 @@ export default function SchemaStudio() {
             </div>
             <div>
               <div className="flex flex-wrap items-center gap-2 mb-2">
-                <input
-                  className="flex-1 rounded-xl px-3 py-2 bg-rp-surface/70 border border-rp-highlight-high text-rp-text focus:outline-none focus:ring-2 focus:ring-rp-iris"
+	                <input
+	                  aria-label="Import URL"
+	                  className="flex-1 rounded-xl px-3 py-2 bg-rp-surface/70 border border-rp-highlight-high text-rp-text focus:outline-none focus:ring-2 focus:ring-rp-iris"
                   placeholder="Import from URL (https://... .yaml or .json)"
                   value={importUrl}
                   onChange={(e) => setImportUrl(e.target.value)}
@@ -443,7 +444,7 @@ export default function SchemaStudio() {
                   className="text-sm bg-rp-overlay/60 hover:bg-rp-overlay/40 disabled:opacity-60 border border-rp-highlight-high text-rp-text rounded-lg px-3 py-2"
                   title="Fetch and load from URL"
                 >
-                  {importing ? "Importing…" : "Import"}
+                  {importing ? "Importing..." : "Import"}
                 </button>
                 <div className="ml-auto flex items-center gap-2">
                   <button
@@ -451,7 +452,7 @@ export default function SchemaStudio() {
                     className="text-sm bg-rp-overlay/60 hover:bg-rp-overlay/40 border border-rp-highlight-high text-rp-text rounded-lg px-3 py-2"
                     title="Copy current source"
                   >
-                    {copied ? "Copied ✓" : "Copy"}
+                    {copied ? "Copied OK" : "Copy"}
                   </button>
                   <button
                     onClick={handleDownload}
@@ -462,18 +463,19 @@ export default function SchemaStudio() {
                   </button>
                 </div>
               </div>
-              <textarea
-                className="w-full min-h-[280px] rounded-xl px-4 py-3 bg-rp-surface/70 border border-rp-highlight-high text-rp-text focus:outline-none focus:ring-2 focus:ring-rp-iris"
+	              <textarea
+	                aria-label="Schema or OpenAPI source"
+	                className="w-full min-h-[280px] rounded-xl px-4 py-3 bg-rp-surface/70 border border-rp-highlight-high text-rp-text focus:outline-none focus:ring-2 focus:ring-rp-iris"
                 value={source}
                 onChange={(e) => setSource(e.target.value)}
-                placeholder={format === "yaml" ? "Paste YAML or OpenAPI here…" : "Paste JSON or OpenAPI here…"}
+                placeholder={format === "yaml" ? "Paste YAML or OpenAPI here..." : "Paste JSON or OpenAPI here..."}
               />
               <div className="mt-2 text-sm">
                 {importError && <div className="text-rp-love">Import error: {importError}</div>}
                 {parsed.error ? (
                   <div className="text-rp-love">Parse error: {parsed.error}</div>
                 ) : (
-                  <div className="text-rp-foam">Parsed successfully{parsed.isOpenAPI ? " • OpenAPI detected" : ""}.</div>
+                  <div className="text-rp-foam">Parsed successfully{parsed.isOpenAPI ? " - OpenAPI detected" : ""}.</div>
                 )}
               </div>
             </div>
@@ -501,16 +503,18 @@ export default function SchemaStudio() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
             <div>
               <h2 className="text-rp-iris font-semibold mb-2">JSON Schema</h2>
-              <textarea
-                className="w-full min-h-[220px] rounded-xl px-4 py-3 bg-rp-surface/70 border border-rp-highlight-high text-rp-text focus:outline-none focus:ring-2 focus:ring-rp-iris"
+	              <textarea
+	                aria-label="JSON Schema for validation"
+	                className="w-full min-h-[220px] rounded-xl px-4 py-3 bg-rp-surface/70 border border-rp-highlight-high text-rp-text focus:outline-none focus:ring-2 focus:ring-rp-iris"
                 value={schemaText}
                 onChange={(e) => setSchemaText(e.target.value)}
               />
             </div>
             <div>
               <h2 className="text-rp-iris font-semibold mb-2">Data</h2>
-              <textarea
-                className="w-full min-h-[220px] rounded-xl px-4 py-3 bg-rp-surface/70 border border-rp-highlight-high text-rp-text focus:outline-none focus:ring-2 focus:ring-rp-iris"
+	              <textarea
+	                aria-label="JSON data to validate"
+	                className="w-full min-h-[220px] rounded-xl px-4 py-3 bg-rp-surface/70 border border-rp-highlight-high text-rp-text focus:outline-none focus:ring-2 focus:ring-rp-iris"
                 value={dataText}
                 onChange={(e) => setDataText(e.target.value)}
               />
@@ -518,9 +522,9 @@ export default function SchemaStudio() {
                 {validatorError ? (
                   <div className="text-rp-love">{validatorError}</div>
                 ) : !validateResult ? (
-                  <div className="text-rp-subtle">Validating…</div>
+                  <div className="text-rp-subtle">Validating...</div>
                 ) : validateResult.ok ? (
-                  <div className="text-rp-foam">Valid ✓</div>
+                  <div className="text-rp-foam">Valid OK</div>
                 ) : (
                   <div>
                     <div className="text-rp-love mb-2">Invalid</div>
@@ -548,13 +552,13 @@ export default function SchemaStudio() {
                     disabled={generating}
                     className="ml-auto text-sm bg-rp-overlay/70 hover:bg-rp-overlay/50 disabled:opacity-60 border border-rp-highlight-high text-rp-text rounded-lg px-3 py-2"
                   >
-                    {generating ? "Generating…" : "Generate TypeScript"}
+                    {generating ? "Generating..." : "Generate TypeScript"}
                   </button>
                   <button
                     onClick={handleCopyTypes}
                     className="text-sm bg-rp-overlay/60 hover:bg-rp-overlay/40 border border-rp-highlight-high text-rp-text rounded-lg px-3 py-2"
                   >
-                    {typesCopied ? "Copied ✓" : "Copy"}
+                    {typesCopied ? "Copied OK" : "Copy"}
                   </button>
                   <button
                     onClick={handleDownloadTypes}
@@ -564,17 +568,18 @@ export default function SchemaStudio() {
                   </button>
                 </div>
                 {typesError && <div className="text-rp-love mb-2">{typesError}</div>}
-                <textarea
-                  className="w-full min-h-[320px] rounded-xl px-4 py-3 bg-rp-base/90 border border-rp-highlight-high text-rp-text font-mono text-sm"
+	                <textarea
+	                  aria-label="Generated TypeScript types"
+	                  className="w-full min-h-[320px] rounded-xl px-4 py-3 bg-rp-base/90 border border-rp-highlight-high text-rp-text font-mono text-sm"
                   value={typesOutput}
                   onChange={(e) => setTypesOutput(e.target.value)}
-                  placeholder="Generated TypeScript types will appear here…"
+                  placeholder="Generated TypeScript types will appear here..."
                 />
               </div>
             ) : (
               <div className="rounded-xl border border-rp-highlight-high bg-rp-overlay/60 p-4 text-rp-text">
                 <div className="flex flex-wrap items-center gap-3 mb-3">
-                  <span className="text-rp-iris font-semibold">JSON Schema → {typesMode === "ts" ? "TypeScript" : "Zod"}</span>
+                  <span className="text-rp-iris font-semibold">JSON Schema {'->'} {typesMode === "ts" ? "TypeScript" : "Zod"}</span>
                   <label className="flex items-center gap-2 text-rp-subtle">
                     <input
                       type="radio"
@@ -605,13 +610,13 @@ export default function SchemaStudio() {
                     disabled={generating}
                     className="ml-auto text-sm bg-rp-overlay/60 hover:bg-rp-overlay/40 disabled:opacity-60 border border-rp-highlight-high text-rp-text rounded-lg px-3 py-2"
                   >
-                    {generating ? "Generating…" : "Generate"}
+                    {generating ? "Generating..." : "Generate"}
                   </button>
                   <button
                     onClick={handleCopyTypes}
                     className="text-sm bg-rp-overlay/60 hover:bg-rp-overlay/40 border border-rp-highlight-high text-rp-text rounded-lg px-3 py-2"
                   >
-                    {typesCopied ? "Copied ✓" : "Copy"}
+                    {typesCopied ? "Copied OK" : "Copy"}
                   </button>
                   <button
                     onClick={handleDownloadTypes}
@@ -623,21 +628,23 @@ export default function SchemaStudio() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <h3 className="text-sm text-rp-subtle mb-2">JSON Schema</h3>
-                    <textarea
-                      className="w-full min-h-[240px] rounded-xl px-4 py-3 bg-rp-base/90 border border-rp-highlight-high text-rp-text font-mono text-sm"
+	                    <textarea
+	                      aria-label="JSON Schema for type generation"
+	                      className="w-full min-h-[240px] rounded-xl px-4 py-3 bg-rp-base/90 border border-rp-highlight-high text-rp-text font-mono text-sm"
                       value={schemaInput}
                       onChange={(e) => setSchemaInput(e.target.value)}
-                      placeholder="Paste JSON Schema here…"
+                      placeholder="Paste JSON Schema here..."
                     />
                     {typesError && <div className="text-rp-love mt-2">{typesError}</div>}
                   </div>
                   <div>
                     <h3 className="text-sm text-rp-subtle mb-2">{typesMode === "ts" ? "TypeScript" : "Zod"} Output</h3>
-                    <textarea
-                      className="w-full min-h-[240px] rounded-xl px-4 py-3 bg-rp-base/90 border border-rp-highlight-high text-rp-text font-mono text-sm"
+	                    <textarea
+	                      aria-label={`${typesMode === "ts" ? "TypeScript" : "Zod"} output`}
+	                      className="w-full min-h-[240px] rounded-xl px-4 py-3 bg-rp-base/90 border border-rp-highlight-high text-rp-text font-mono text-sm"
                       value={typesOutput}
                       onChange={(e) => setTypesOutput(e.target.value)}
-                      placeholder="Generated code will appear here…"
+                      placeholder="Generated code will appear here..."
                     />
                   </div>
                 </div>

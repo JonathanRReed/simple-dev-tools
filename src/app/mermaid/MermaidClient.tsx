@@ -148,7 +148,7 @@ export default function MermaidClient() {
   return (
     <div className="bg-rp-surface/80 rounded-3xl shadow-2xl px-6 sm:px-8 py-8 flex flex-col gap-6 relative border border-rp-highlight-high" style={{ backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)" }}>
       <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold text-rp-iris drop-shadow">Mermaid Diagram Generator</h1>
+        <h2 className="text-2xl font-bold text-rp-iris drop-shadow">Diagram workspace</h2>
         <p className="text-sm text-rp-subtle max-w-3xl">Sketch sequence diagrams, flowcharts, and more. Edit Mermaid syntax on the left and preview instantly on the right.</p>
       </div>
       <div className="flex flex-wrap gap-3 w-full justify-start mb-2">
@@ -157,7 +157,7 @@ export default function MermaidClient() {
           onChange={(e) => handleTemplate(e.target.value)}
           defaultValue=""
         >
-          <option value="" disabled>Choose a template…</option>
+          <option value="" disabled>Choose a template...</option>
           {TEMPLATES.map((t) => (
             <option key={t.label} value={t.code}>{t.label}</option>
           ))}

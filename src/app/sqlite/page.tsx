@@ -1,21 +1,16 @@
-import dynamic from "next/dynamic";
 import type { Metadata } from "next";
 
-import ToolLoading from "@/components/ToolLoading";
 import ToolPage from "@/components/layout/ToolPage";
+import SQLiteClientOnly from "./ClientOnly";
 
 export const metadata: Metadata = {
   title: "SQLite Playground",
   description:
     "Run SQL experiments locally in your browser using SQLite WASM. Edit queries, execute, and inspect results without any backend.",
+  alternates: {
+    canonical: "/sqlite/",
+  },
 };
-
-const SQLiteClient = dynamic(() => import("./SQLiteClient"), {
-  ssr: false,
-  loading: () => (
-    <ToolLoading message="Loading SQLite playground…" />
-  ),
-});
 
 export default function SQLitePage() {
   return (
@@ -28,7 +23,7 @@ export default function SQLitePage() {
           Run SQL experiments locally in your browser using SQLite WASM. Edit queries, execute, and inspect results without any backend.
         </p>
       </header>
-      <SQLiteClient />
+      <SQLiteClientOnly />
     </ToolPage>
   );
 }

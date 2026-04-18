@@ -2,8 +2,6 @@
 import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-import ToolPage from '@/components/layout/ToolPage';
-
 const FLAG_LIST = [
   { key: "g", label: "g" },
   { key: "i", label: "i" },
@@ -57,7 +55,7 @@ function buildFlags(state: FlagsState): string {
 
 export default function RegexLab() {
   return (
-    <React.Suspense fallback={<div className="p-8 text-rp-subtle">Loading…</div>}>
+    <React.Suspense fallback={<div className="p-8 text-rp-subtle">Loading...</div>}>
       <RegexLabInner />
     </React.Suspense>
   );
@@ -178,10 +176,9 @@ function RegexLabInner() {
   };
 
   return (
-    <ToolPage contentClassName="mx-auto max-w-5xl">
-      <div className="bg-rp-surface/80 rounded-3xl shadow-2xl px-6 sm:px-8 py-8 flex flex-col gap-6 relative border border-rp-highlight-high" style={{backdropFilter:'blur(24px)', WebkitBackdropFilter:'blur(24px)'}}>
+    <div className="bg-rp-surface/80 rounded-3xl shadow-2xl px-6 sm:px-8 py-8 flex flex-col gap-6 relative border border-rp-highlight-high" style={{backdropFilter:'blur(24px)', WebkitBackdropFilter:'blur(24px)'}}>
         <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-bold text-rp-iris drop-shadow">Regex Lab</h1>
+          <h2 className="text-2xl font-bold text-rp-iris drop-shadow">Pattern workspace</h2>
           <p className="text-sm text-rp-subtle max-w-3xl">Live-test regular expressions with instant matches, replacement previews, and quick flag toggles. Everything runs in your browser.</p>
         </div>
 
@@ -211,7 +208,7 @@ function RegexLabInner() {
             className="ml-auto text-sm bg-rp-overlay/40 hover:bg-rp-overlay/50 border border-rp-highlight-high text-rp-text rounded-lg px-3 py-1"
             title="Copy shareable link"
           >
-            {copied ? "Copied ✓" : "Copy Link"}
+            {copied ? "Copied OK" : "Copy Link"}
           </button>
         </div>
 
@@ -246,7 +243,7 @@ function RegexLabInner() {
                   className="rounded-lg bg-rp-surface/70 border border-rp-highlight-high text-rp-text px-3 py-1"
                 >
                   <option value="" disabled>
-                    Choose sample…
+                    Choose sample...
                   </option>
                   {SAMPLES.map((s) => (
                     <option key={s.label} value={s.label}>
@@ -357,11 +354,10 @@ function RegexLabInner() {
           </p>
           <p>
             Useful links: {" "}
-            <a className="text-rp-iris hover:text-rp-rose" href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp" target="_blank" rel="noreferrer noopener">MDN RegExp</a>{" • "}
+            <a className="text-rp-iris hover:text-rp-rose" href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp" target="_blank" rel="noreferrer noopener">MDN RegExp</a>{" - "}
             <a className="text-rp-iris hover:text-rp-rose" href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replace" target="_blank" rel="noreferrer noopener">MDN String.replace</a>
           </p>
         </div>
       </div>
-    </ToolPage>
   );
 }

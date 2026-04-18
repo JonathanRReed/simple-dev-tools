@@ -87,12 +87,14 @@ module.exports = {
   			md: 'calc(var(--radius) - 2px)',
   			sm: 'calc(var(--radius) - 4px)'
   		},
-  		fontFamily: {
-  			sans: [
-  				'Inter',
-                ...fontFamily.sans
-            ]
-  		}
+		fontFamily: {
+			sans: [
+				'Satoshi',
+				'Geist',
+				'Outfit',
+				...fontFamily.sans
+			]
+		}
   	}
   },
   plugins: [require('tailwindcss-animate')],

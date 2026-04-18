@@ -1,91 +1,77 @@
-import Image from 'next/image';
 import Link from 'next/link';
-import { ExternalLink, Sparkles } from 'lucide-react';
+import { ArrowUpRight, ExternalLink } from 'lucide-react';
 
+import BrandMark from '@/components/BrandMark';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
+import { siteConfig, trustPages } from '@/lib/site';
 
 export default function Footer() {
   return (
-    <footer className="mt-6 border-t border-border/60 bg-background/60 px-6 py-6 backdrop-blur">
-      <div className="mx-auto flex w-full max-w-4xl flex-col gap-5 text-sm">
-        <Card className="border-border/60 bg-card/70 backdrop-blur">
-          <CardHeader className="flex flex-row items-center gap-3 pb-2">
-            <Image src="/logo.avif" alt="Hello.World Consulting" width={42} height={42} className="rounded-full logo-img-strict" unoptimized />
+    <footer className="border-t border-border/50 bg-background/70 px-6 py-10 backdrop-blur">
+      <div className="footer-panel mx-auto grid w-full max-w-6xl gap-8 rounded-[1.75rem] border border-border/50 p-6 sm:p-8 lg:grid-cols-[1fr_0.9fr] lg:items-end">
+        <div className="space-y-5">
+          <div className="flex items-center gap-3">
+            <BrandMark className="size-11" />
             <div>
-              <CardTitle className="text-xl">Hello.World Consulting</CardTitle>
-              <CardDescription className="text-muted-foreground">Simple dev tools for teams that ship.</CardDescription>
+              <h2 className="text-2xl font-black leading-none text-foreground">{siteConfig.provider.name}</h2>
+              <p className="mt-1 text-sm text-muted-foreground">Quiet developer tools for focused browser work.</p>
             </div>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-4">
-            <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-              <Badge variant="secondary" className="flex items-center gap-1 bg-secondary/60 text-secondary-foreground">
-                <Sparkles className="h-3.5 w-3.5" />
-                Crafted by Jonathan Reed
-              </Badge>
-              <span className="text-xs">2025 © All Rights Reserved</span>
-            </div>
-            <Separator className="bg-border/40" />
-            <div className="grid gap-3 md:grid-cols-2">
-              <Link
-                href="https://helloworldfirm.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-between rounded-lg border border-border/60 bg-card/40 px-4 py-3 text-sm transition hover:border-primary/60 hover:bg-primary/10"
-              >
-                <span className="font-semibold text-primary">helloworldfirm.com</span>
-                <ExternalLink className="h-4 w-4 text-primary" />
+          </div>
+          <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+            <Badge variant="secondary" className="flex items-center gap-1 rounded-md bg-secondary/70 text-secondary-foreground">
+              Built by Jonathan Reed
+            </Badge>
+            <span className="text-xs">2026 (c) All Rights Reserved</span>
+          </div>
+          <p className="max-w-xl text-sm leading-6 text-muted-foreground">
+            Browser-based utilities for common development tasks, built and maintained by Jonathan R Reed.
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-4">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <FooterExternalLink href={siteConfig.provider.url} label="helloworldfirm.com" />
+            <FooterExternalLink href="https://JonathanRReed.com" label="JonathanRReed.com" />
+          </div>
+          <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+            {trustPages.map((page) => (
+              <Link key={page.href} href={page.href} className="inline-flex min-h-11 min-w-11 items-center text-primary underline-offset-4 hover:underline">
+                {page.title}
               </Link>
-              <Link
-                href="https://JonathanRReed.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-between rounded-lg border border-border/60 bg-card/40 px-4 py-3 text-sm transition hover:border-primary/60 hover:bg-primary/10"
-              >
-                <span className="font-semibold text-primary">JonathanRReed.com</span>
-                <ExternalLink className="h-4 w-4 text-primary" />
-              </Link>
-              <Link
-                href="https://5whys.jonathanrreed.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-between rounded-lg border border-border/60 bg-card/40 px-4 py-3 text-sm transition hover:border-primary/60 hover:bg-primary/10"
-              >
-                <span className="font-semibold text-primary">Career Studio</span>
-                <ExternalLink className="h-4 w-4 text-primary" />
-              </Link>
-              <Link
-                href="https://semesterbuild.jonathanrreed.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-between rounded-lg border border-border/60 bg-card/40 px-4 py-3 text-sm transition hover:border-primary/60 hover:bg-primary/10"
-              >
-                <span className="font-semibold text-primary">Semester Builder</span>
-                <ExternalLink className="h-4 w-4 text-primary" />
-              </Link>
-            </div>
-            <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-              <Image src="/jonathan.avif" alt="Jonathan Reed" width={28} height={28} className="rounded-full border border-primary/50 profile-img-strict" unoptimized />
-              <span>Built with care by Jonathan Reed for the developer community.</span>
-              <Button asChild variant="ghost" size="sm" className="h-7 px-2 text-xs text-primary hover:text-primary">
-                <Link href="/api-snippet">Explore tools</Link>
-              </Button>
-            </div>
-            <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground pt-2">
-              <Link
-                href="https://jonathanrreed.com/projects/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary hover:underline"
-              >
-                See more AI & cybersecurity projects by Jonathan R Reed
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
+            ))}
+            <Link
+              href="https://jonathanrreed.com/projects/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex min-h-11 items-center gap-1 text-primary underline-offset-4 hover:underline"
+            >
+              More projects
+              <ArrowUpRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+          <Button asChild className="btn-press h-11 w-fit rounded-xl px-5">
+            <Link href="/api-snippet/">
+              Explore tools
+              <ArrowUpRight className="h-4 w-4" />
+            </Link>
+          </Button>
+        </div>
       </div>
     </footer>
+  );
+}
+
+function FooterExternalLink({ href, label }: { href: string; label: string }) {
+  return (
+    <Link
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex min-h-12 items-center justify-between rounded-xl border border-border/60 bg-card/55 px-4 py-3 text-sm transition duration-200 hover:border-primary/60 hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    >
+      <span className="font-semibold text-primary">{label}</span>
+      <ExternalLink className="h-4 w-4 text-primary" />
+    </Link>
   );
 }

@@ -2,8 +2,6 @@
 import React, { useMemo, useState } from "react";
 import QRCode from "qrcode";
 
-import ToolPage from "@/components/layout/ToolPage";
-
 const te = new TextEncoder();
 const td = new TextDecoder();
 
@@ -65,7 +63,7 @@ export default function EncodeQR() {
   }
 
   // Base64
-  const [b64Input, setB64Input] = useState<string>("Hello, 世界 🌐");
+  const [b64Input, setB64Input] = useState<string>("Hello, world");
   const [b64UrlSafe, setB64UrlSafe] = useState<boolean>(false);
   const [b64Output, setB64Output] = useState<string>("");
   const [b64Error, setB64Error] = useState<string>("");
@@ -148,13 +146,12 @@ export default function EncodeQR() {
   }
 
   return (
-    <ToolPage contentClassName="mx-auto max-w-5xl">
-      <div
+    <div
         className="bg-rp-surface/80 rounded-3xl shadow-2xl px-6 md:px-8 py-8 flex flex-col gap-6 border border-rp-highlight-high"
         style={{ backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)" }}
       >
         <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-bold text-rp-iris drop-shadow">Encoders & QR</h1>
+          <h2 className="text-2xl font-bold text-rp-iris drop-shadow">Encoding workspace</h2>
           <p className="text-sm text-rp-subtle max-w-3xl">Encode/decode URLs and Base64 strings, then generate QR codes (PNG/SVG) without leaving the browser.</p>
         </div>
 
@@ -324,6 +321,5 @@ export default function EncodeQR() {
           </div>
         )}
       </div>
-    </ToolPage>
   );
 }
