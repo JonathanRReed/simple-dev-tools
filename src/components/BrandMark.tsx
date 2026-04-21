@@ -15,7 +15,16 @@ export default function BrandMark({ className, label = 'Hello.World Consulting l
         className
       )}
     >
-      <Image src="/logo.avif" alt={label} width={96} height={96} className="h-full w-full object-cover" unoptimized />
+      <Image
+        src="/logo.avif"
+        alt={label}
+        width={96}
+        height={96}
+        className="h-full w-full object-cover"
+        priority
+        sizes="96px"
+        unoptimized
+      />
     </span>
   );
 }

@@ -36,7 +36,7 @@ const studioTools = toolGroups[1].tools;
 
 export default function Home() {
   return (
-    <main className="home-shell flex flex-1 flex-col overflow-x-hidden">
+    <div className="home-shell flex flex-1 flex-col overflow-x-hidden">
       <section className="home-hero mx-auto grid w-full max-w-7xl items-center gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[minmax(0,1.08fr)_minmax(320px,0.92fr)] lg:py-24">
         <div className="relative z-10 max-w-5xl">
           <p className="home-kicker">Simple Dev Tools</p>
@@ -188,7 +188,7 @@ export default function Home() {
           </Button>
         </div>
       </section>
-    </main>
+    </div>
   );
 }
 
