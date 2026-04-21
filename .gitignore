@@ -24,6 +24,7 @@ Thumbs.db
 build/
 dist/
 coverage/
+squirrel-audits/
 
 # Environment variables
 .env
