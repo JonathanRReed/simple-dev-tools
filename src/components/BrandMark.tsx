@@ -7,7 +7,7 @@ type BrandMarkProps = {
   label?: string;
 };
 
-export default function BrandMark({ className, label = 'Hello.World Consulting logo' }: BrandMarkProps) {
+export default function BrandMark({ className, label = 'Simple Dev Tools logo' }: BrandMarkProps) {
   return (
     <span
       className={cn(
@@ -16,7 +16,7 @@ export default function BrandMark({ className, label = 'Hello.World Consulting l
       )}
     >
       <Image
-        src="/logo.avif"
+        src="/simple_dev_tools_logo_assets/simple-dev-tools-favicon-256x256.png"
         alt={label}
         width={96}
         height={96}

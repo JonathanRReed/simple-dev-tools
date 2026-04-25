@@ -77,7 +77,7 @@ export default function SchemaStudio() {
         import("ajv-formats"),
       ]);
       const instance = new AjvCtor({ allErrors: true });
-      addFormatsFn(instance);
+      addFormatsFn(instance as any);
       setAjv(instance);
       return instance;
     } catch (error: any) {

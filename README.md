@@ -1,33 +1,53 @@
-# dev.hellworldfirm.com
+# Simple Dev Tools
 
-Simple Dev Tools is a static Next.js toolkit for everyday developer workflows. It is built by Jonathan R Reed for Hello.World Consulting and runs as browser-first utilities without auth, a database, or a custom backend.
+A collection of static, browser-first utilities for everyday developer workflows. Available at [dev.hellworldfirm.com](https://dev.hellworldfirm.com). 
+
+Everything runs locally in your browser—no auth, no database, and no custom backend required. Built by Jonathan R Reed for Hello.World Consulting.
 
 ## Tools
 
-- API Snippet Generator: cURL, Python requests, and fetch snippets from one endpoint definition.
-- Mermaid Editor: Mermaid syntax editing, preview, and SVG or PNG export.
-- SQLite Playground: local SQL experiments with SQLite WASM.
-- Regex Lab: live matches, replacements, samples, and shareable pattern URLs.
-- IDs & Scheduling: UUIDv4, ULID inspection, and cron expression descriptions.
-- Encoders & QR: URL encoding, Base64, and QR code export.
-- Schema & Types Studio: JSON, YAML, OpenAPI, validation, TypeScript, and Zod output.
-- Security & Tokens: JWT decode and verify, hashes, and HMAC generation with Web Crypto.
+- **API Snippets:** Generate cURL, Python requests, and fetch snippets from a single endpoint definition.
+- **Mermaid Editor:** Edit Mermaid syntax, preview in real-time, and export as SVG or PNG.
+- **SQLite Playground:** Run local SQL experiments in the browser using SQLite WASM.
+- **Regex Lab:** Test patterns with live matches, replacements, and shareable URLs.
+- **IDs & Scheduling:** Generate UUIDv4, inspect ULIDs, and parse cron expressions.
+- **Encoders & QR:** Encode/decode URLs and Base64, and export QR codes.
+- **Schema Studio:** Validate and convert between JSON, YAML, and OpenAPI. Generate TypeScript types and Zod schemas.
+- **Security & Tokens:** Decode and verify JWTs, calculate hashes, and generate HMACs using the Web Crypto API.
+
+## Tech Stack
+
+- **Framework:** Next.js (Static Export)
+- **UI:** React, Tailwind CSS, Radix UI
+- **Tooling:** TypeScript, Bun
 
 ## Development
+
+Install dependencies and start the development server:
 
 ```bash
 bun install
 bun run dev
-bun run lint
-bun run typecheck
-bun run build
 ```
 
-Use `bun run check` before shipping. It runs lint, typecheck, and production build.
+### Checks & Formatting
 
-## Static Export
+Before committing, run the check script to ensure code quality:
 
-The app uses `output: "export"` and `trailingSlash: true` so routes export as clean static directories. `public/robots.txt`, `public/sitemap.xml`, and `public/llms.txt` describe crawler and AI-reader surfaces.
+```bash
+bun run check
+```
+
+This runs:
+- `bun run lint` (ESLint)
+- `bun run typecheck` (TypeScript)
+- `bun run build` (Next.js production build)
+
+## Deployment (Static Export)
+
+The application uses `output: "export"` and `trailingSlash: true` in `next.config.js`. When built, routes are exported as clean static directories suitable for hosting on any static file server or CDN. 
+
+Crawler and AI-reader surfaces are defined in `public/robots.txt`, `public/sitemap.xml`, and `public/llms.txt`.
 
 ## License
 

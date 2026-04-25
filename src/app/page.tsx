@@ -46,6 +46,12 @@ export default function Home() {
           <p className="mt-7 max-w-2xl text-lg leading-8 text-muted-foreground text-pretty">
             Browser utilities from {siteConfig.author.name} for API snippets, diagrams, SQL, regex, IDs, QR codes, schemas, and tokens.
           </p>
+          <p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground text-pretty">
+            Each tool is built for the small checks that slow down implementation:
+            formatting request examples, debugging regular expressions, sketching
+            Mermaid diagrams, inspecting tokens, validating schemas, and keeping
+            sensitive samples close to the browser.
+          </p>
           <div className="mt-9 flex flex-col gap-3 sm:flex-row">
             <Button asChild size="lg" className="home-primary-cta btn-press h-12 rounded-xl px-6 text-base font-semibold">
               <Link href="/api-snippet/">
