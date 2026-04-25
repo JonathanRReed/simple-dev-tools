@@ -1,7 +1,7 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowUpRight, ExternalLink } from 'lucide-react';
 
-import BrandMark from '@/components/BrandMark';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { siteConfig, trustPages } from '@/lib/site';
@@ -11,12 +11,16 @@ export default function Footer() {
     <footer className="border-t border-border/50 bg-background/70 px-6 py-10 backdrop-blur">
       <div className="footer-panel mx-auto grid w-full max-w-6xl gap-8 rounded-[1.75rem] border border-border/50 p-6 sm:p-8 lg:grid-cols-[1fr_0.9fr] lg:items-end">
         <div className="space-y-5">
-          <div className="flex items-center gap-3">
-            <BrandMark className="size-11" />
-            <div>
-              <h2 className="text-2xl font-black leading-none text-foreground">{siteConfig.provider.name}</h2>
-              <p className="mt-1 text-sm text-muted-foreground">Quiet developer tools for focused browser work.</p>
-            </div>
+          <div className="flex flex-col gap-3">
+            <Image
+              src="/simple_dev_tools_logo_assets/simple-dev-tools-logo-footer-transparent.png"
+              alt={`${siteConfig.name} by ${siteConfig.provider.name}`}
+              width={512}
+              height={171}
+              className="h-16 w-auto"
+              unoptimized
+            />
+            <p className="text-sm text-muted-foreground">Quiet developer tools for focused browser work.</p>
           </div>
           <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
             <Badge variant="secondary" className="flex items-center gap-1 rounded-md bg-secondary/70 text-secondary-foreground">

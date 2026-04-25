@@ -1,5 +1,6 @@
 import './globals.css';
 import type { Metadata } from 'next';
+import Image from 'next/image';
 import type { ReactNode } from 'react';
 
 import Footer from '@/components/Footer';
@@ -52,7 +53,7 @@ export const metadata: Metadata = {
         alt: `${siteConfig.name} by ${siteConfig.author.name}`,
       },
       {
-        url: '/logo.avif',
+        url: '/simple_dev_tools_logo_assets/simple-dev-tools-favicon-512x512.png',
         width: 512,
         height: 512,
         alt: siteConfig.name,
@@ -68,13 +69,14 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: '/favicon.ico?v=20260418', sizes: 'any' },
-      { url: '/Favicon/favicon-96x96.avif?v=20260418', type: 'image/avif', sizes: '96x96' },
+      { url: '/simple_dev_tools_logo_assets/favicon.ico', sizes: 'any' },
+      { url: '/simple_dev_tools_logo_assets/favicon-32x32.png', type: 'image/png', sizes: '32x32' },
+      { url: '/simple_dev_tools_logo_assets/favicon-16x16.png', type: 'image/png', sizes: '16x16' },
     ],
-    apple: [{ url: '/Favicon/apple-touch-icon.avif?v=20260418', type: 'image/avif', sizes: '180x180' }],
-    shortcut: '/favicon.ico?v=20260418',
+    apple: [{ url: '/simple_dev_tools_logo_assets/apple-touch-icon.png', type: 'image/png', sizes: '180x180' }],
+    shortcut: '/simple_dev_tools_logo_assets/favicon.ico',
   },
-  manifest: '/Favicon/site.webmanifest',
+  manifest: '/simple_dev_tools_logo_assets/site.webmanifest',
 };
 
 const authorProfile = {
@@ -148,10 +150,15 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                   <header className="sticky top-0 z-30 flex items-center justify-between border-b border-border/40 bg-background/70 px-6 py-4 backdrop-blur-md">
                     <div className="flex items-center gap-3">
                       <SidebarTrigger className="size-11 border border-border/60 bg-card/60" />
-                      <div className="flex flex-col">
-                        <span className="text-lg font-semibold">{siteConfig.shortName}</span>
-                        <span className="text-sm text-muted-foreground">{siteConfig.provider.name}</span>
-                      </div>
+                      <Image
+                        src="/simple_dev_tools_logo_assets/simple-dev-tools-logo-normal-512w.png"
+                        alt={siteConfig.name}
+                        width={200}
+                        height={67}
+                        className="h-8 w-auto"
+                        unoptimized
+                        priority
+                      />
                     </div>
                     <ThemeToggle />
                   </header>

@@ -29,6 +29,18 @@ export default function ContactPage() {
             use the official Hello.World Consulting site or Jonathan R Reed&apos;s
             project profile.
           </p>
+          <p className="text-base leading-7 text-muted-foreground">
+            Useful reports include the tool name, browser, input type, expected
+            output, and whether the issue affects copying, exporting, validation,
+            or rendering. Please avoid sending private tokens, production secrets,
+            or customer data in a first message.
+          </p>
+          <p className="text-base leading-7 text-muted-foreground">
+            Reports about the Mermaid diagram generator, regex debugger, API
+            snippet generator, SQLite playground, schema studio, or token tools
+            are easiest to act on when they include a small reproducible sample.
+            A short example usually works better than a screenshot alone.
+          </p>
         </header>
 
         <section className="grid gap-4 sm:grid-cols-2">
@@ -54,6 +66,24 @@ export default function ContactPage() {
               {siteConfig.author.name}
             </span>
           </Link>
+        </section>
+
+        <section className="flex flex-col gap-3 border-t border-border/60 pt-6">
+          <h2 className="text-xl font-semibold text-foreground">
+            What to send
+          </h2>
+          <p className="leading-7 text-muted-foreground">
+            For consulting, describe the current workflow, the system you are
+            trying to build, and the risk or delivery problem you want solved.
+            For product feedback, describe the browser-only tool you used and the
+            exact output that felt wrong or incomplete.
+          </p>
+          <p className="leading-7 text-muted-foreground">
+            If the request is about a private codebase, send the shape of the
+            problem first instead of pasting confidential source code. The first
+            pass only needs the goal, the failing workflow, and the kind of
+            output you expected from the tool.
+          </p>
         </section>
       </article>
     </ToolPage>

@@ -40,6 +40,13 @@ export default function AboutPage() {
             clear copy and export actions, and transparent limits where a browser
             API or local runtime is involved.
           </p>
+          <p className="leading-7 text-muted-foreground">
+            That local-first shape matters for developer utilities. Regex samples,
+            snippets, tokens, schema drafts, SQL experiments, and diagram text can
+            include sensitive implementation details. Simple Dev Tools keeps those
+            workflows close to the browser so you can inspect or transform data
+            without sending it through a hosted analysis service.
+          </p>
         </section>
 
         <section className="flex flex-col gap-3 border-t border-border/60 pt-6">
@@ -55,6 +62,11 @@ export default function AboutPage() {
               project archive
             </Link>
             .
+          </p>
+          <p className="leading-7 text-muted-foreground">
+            The project is maintained as a practical companion to consulting and
+            product engineering work: small tools, predictable behavior, clear
+            outputs, and no forced account layer for tasks that should stay fast.
           </p>
         </section>
       </article>
