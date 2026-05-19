@@ -1,54 +1,61 @@
 # Simple Dev Tools
 
-A collection of static, browser-first utilities for everyday developer workflows. Available at [dev.hellworldfirm.com](https://dev.hellworldfirm.com). 
+Simple Dev Tools is a browser-first toolkit for everyday developer workflows. It is live at [dev.hellworldfirm.com](https://dev.hellworldfirm.com) and designed to be useful without auth, a database, or a custom backend.
 
-Everything runs locally in your browser—no auth, no database, and no custom backend required. Built by Jonathan R Reed for Hello.World Consulting.
+Built by Jonathan R Reed for Hello.World Consulting, the project highlights practical, portfolio-friendly strengths: polished UI, strong metadata, static hosting, and tools that are easy to try immediately.
 
-## Tools
+## What it includes
 
-- **API Snippets:** Generate cURL, Python requests, and fetch snippets from a single endpoint definition.
-- **Mermaid Editor:** Edit Mermaid syntax, preview in real-time, and export as SVG or PNG.
-- **SQLite Playground:** Run local SQL experiments in the browser using SQLite WASM.
-- **Regex Lab:** Test patterns with live matches, replacements, and shareable URLs.
-- **IDs & Scheduling:** Generate UUIDv4, inspect ULIDs, and parse cron expressions.
-- **Encoders & QR:** Encode/decode URLs and Base64, and export QR codes.
-- **Schema Studio:** Validate and convert between JSON, YAML, and OpenAPI. Generate TypeScript types and Zod schemas.
-- **Security & Tokens:** Decode and verify JWTs, calculate hashes, and generate HMACs using the Web Crypto API.
+- API snippets for cURL, Python requests, and fetch
+- Mermaid editing with live preview and export
+- SQLite experiments in the browser via SQLite WASM
+- Regex testing with live matches and replacements
+- UUID, ULID, and cron helpers
+- URL, Base64, and QR encoding tools
+- JSON, YAML, and OpenAPI schema validation and conversion
+- JWT decoding, hashing, and HMAC utilities
 
-## Tech Stack
+## Why this project is portfolio-ready
 
-- **Framework:** Next.js (Static Export)
-- **UI:** React, Tailwind CSS, Radix UI
-- **Tooling:** TypeScript, Bun
+- Everything runs locally in the browser, which keeps sensitive examples off a server.
+- The app is static-export friendly, so deployment is simple and low maintenance.
+- Metadata, Open Graph images, robots, sitemap, and llms.txt are already in place for discoverability.
+- The tool list is concrete and easy for an employer to understand quickly.
+
+## Tech stack
+
+- Next.js static export
+- React, Tailwind CSS, Radix UI
+- TypeScript and Bun
 
 ## Development
 
-Install dependencies and start the development server:
+Install dependencies and start the dev server:
 
 ```bash
 bun install
 bun run dev
 ```
 
-### Checks & Formatting
+## Quality checks
 
-Before committing, run the check script to ensure code quality:
+Run the full repo check before committing:
 
 ```bash
 bun run check
 ```
 
-This runs:
-- `bun run lint` (ESLint)
-- `bun run typecheck` (TypeScript)
-- `bun run build` (Next.js production build)
+That runs:
+- `bun run lint`
+- `bun run typecheck`
+- `bun run build`
 
-## Deployment (Static Export)
+## Deployment
 
-The application uses `output: "export"` and `trailingSlash: true` in `next.config.js`. When built, routes are exported as clean static directories suitable for hosting on any static file server or CDN. 
+The app uses `output: "export"` and `trailingSlash: true` in `next.config.js`, so routes export as static directories for CDNs or any static host.
 
-Crawler and AI-reader surfaces are defined in `public/robots.txt`, `public/sitemap.xml`, and `public/llms.txt`.
+Crawler and AI-reader surfaces live in `public/robots.txt`, `public/sitemap.xml`, and `public/llms.txt`.
 
 ## License
 
-Licensed under the Functional Source License, Version 1.1, MIT Future License. This repository is source-available today and converts to MIT two years after each version is made available. See [`LICENSE`](./LICENSE).
+Licensed under the Functional Source License, Version 1.1, MIT Future License. It is source-available today and converts to MIT two years after each version is released. See [`LICENSE`](./LICENSE).
