@@ -148,12 +148,16 @@ function generateSnippets(
   const python = pyLines.join("\n");
 
   // ---- js fetch ----
+  // fetch() throws if a body is supplied with GET/HEAD, so omit it there.
+  const jsBodyAllowed = hasBody && method !== "GET" && method !== "HEAD";
   const jsLines = [`fetch(${JSON.stringify(url)}, {`, `  method: ${JSON.stringify(method)},`];
   if (headerEntries.length) {
     jsLines.push(`  headers: ${jsObjectLiteral(headerEntries)},`);
   }
-  if (hasBody) {
+  if (jsBodyAllowed) {
     jsLines.push(`  body: JSON.stringify(${canonicalJson}),`);
+  } else if (hasBody) {
+    jsLines.push(`  // body omitted: fetch() does not allow a body with ${method}`);
   }
   jsLines.push("})");
   jsLines.push("  .then((res) => res.json())");

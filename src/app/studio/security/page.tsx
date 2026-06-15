@@ -294,7 +294,9 @@ export default function SecurityTokens() {
     } catch (e: any) {
       apply({ checked: true, ok: false, note: e?.message || "Verify error" });
     } finally {
-      if (gen === verifyGen.current) setVerifying(false);
+      // Always clear the loading flag — even when inputs changed mid-flight and
+      // the (stale) result was dropped — so Verify can't get stuck disabled.
+      setVerifying(false);
     }
   }
 

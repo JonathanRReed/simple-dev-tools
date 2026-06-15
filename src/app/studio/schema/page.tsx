@@ -347,7 +347,9 @@ export default function SchemaStudio() {
     (schema: JSONSchema): string => {
       if (!schema || typeof schema !== "object") return "z.any()";
       if (schema.$ref && typeof schema.$ref === "string") {
-        return `${refName(schema.$ref)}Schema`;
+        // z.lazy defers evaluation so a $ref to a schema declared LATER in the
+        // file doesn't throw a TDZ ReferenceError (and recursive refs work too).
+        return `z.lazy(() => ${refName(schema.$ref)}Schema)`;
       }
       if (schema.enum && Array.isArray(schema.enum)) {
         const allStrings = schema.enum.every((v: any) => typeof v === "string");

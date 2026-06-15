@@ -175,16 +175,28 @@ function resultsToCsv(results: ResultSet[]): string {
     .join("\n\n");
 }
 
+/** Disambiguate duplicate column names (e.g. SELECT * across a join) so that
+ *  building row objects never drops a column's value. */
+function dedupeColumns(columns: string[]): string[] {
+  const seen = new Map<string, number>();
+  return columns.map((col) => {
+    const n = (seen.get(col) ?? 0) + 1;
+    seen.set(col, n);
+    return n === 1 ? col : `${col}_${n}`;
+  });
+}
+
 function resultsToJson(results: ResultSet[]): string {
-  const mapped = results.map((r) =>
-    r.values.map((row) => {
+  const mapped = results.map((r) => {
+    const keys = dedupeColumns(r.columns);
+    return r.values.map((row) => {
       const obj: Record<string, unknown> = {};
-      r.columns.forEach((col, i) => {
-        obj[col] = cellToJson(row[i]);
+      keys.forEach((key, i) => {
+        obj[key] = cellToJson(row[i]);
       });
       return obj;
-    })
-  );
+    });
+  });
   // Flatten when there's a single result set for a cleaner export.
   return JSON.stringify(mapped.length === 1 ? mapped[0] : mapped, null, 2);
 }
@@ -265,15 +277,21 @@ export default function SQLiteClient() {
       let sawWrite = false;
       let changed = 0;
       for (const stmt of db.iterateStatements(source)) {
-        const columns = stmt.getColumnNames();
-        if (columns.length > 0) {
-          const values: unknown[][] = [];
-          while (stmt.step()) values.push(stmt.get());
-          out.push({ columns, values });
-        } else {
-          stmt.step(); // execute the write/DDL
-          sawWrite = true;
-          changed += db.getRowsModified();
+        try {
+          const columns = stmt.getColumnNames();
+          if (columns.length > 0) {
+            const values: unknown[][] = [];
+            while (stmt.step()) values.push(stmt.get());
+            out.push({ columns, values });
+          } else {
+            stmt.step(); // execute the write/DDL
+            sawWrite = true;
+            changed += db.getRowsModified();
+          }
+        } finally {
+          // Finalize each prepared statement so it doesn't keep tables locked
+          // for later DROP/ALTER in the same session. free() is idempotent.
+          stmt.free();
         }
       }
       if (out.length > 0) {
