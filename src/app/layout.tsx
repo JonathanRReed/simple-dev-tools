@@ -1,6 +1,6 @@
 import './globals.css';
 import type { Metadata } from 'next';
-import { Inter, JetBrains_Mono, Space_Grotesk } from 'next/font/google';
+import localFont from 'next/font/local';
 import type { ReactNode } from 'react';
 
 import AppHeader from '@/components/AppHeader';
@@ -16,23 +16,28 @@ import { RecentToolsProvider } from '@/hooks/use-recent-tools';
 import { SidebarInset } from '@/components/ui/sidebar';
 import { siteConfig, toolPages } from '@/lib/site';
 
-const fontSans = Inter({
-  subsets: ['latin'],
+// Self-hosted (vendored) variable fonts — no build-time network fetch, so the
+// static export builds reliably in any CI sandbox (e.g. Cloudflare Pages) and
+// the fonts are served same-origin (satisfies the strict font-src 'self' CSP).
+const fontSans = localFont({
+  src: './fonts/inter-latin-variable.woff2',
   variable: '--font-sans',
   display: 'swap',
+  weight: '100 900',
 });
 
-const fontDisplay = Space_Grotesk({
-  subsets: ['latin'],
-  weight: ['500', '600', '700'],
+const fontDisplay = localFont({
+  src: './fonts/space-grotesk-latin-variable.woff2',
   variable: '--font-display',
   display: 'swap',
+  weight: '300 700',
 });
 
-const fontMono = JetBrains_Mono({
-  subsets: ['latin'],
+const fontMono = localFont({
+  src: './fonts/jetbrains-mono-latin-variable.woff2',
   variable: '--font-mono',
   display: 'swap',
+  weight: '100 800',
 });
 
 export const metadata: Metadata = {
