@@ -83,15 +83,32 @@ module.exports = {
   			}
   		},
   		borderRadius: {
+  			none: '0',
+  			sm: 'var(--radius)',
+  			md: 'var(--radius)',
   			lg: 'var(--radius)',
-  			md: 'calc(var(--radius) - 2px)',
-  			sm: 'calc(var(--radius) - 4px)'
+  			xl: 'var(--radius)',
+  			'2xl': 'var(--radius)',
+  			'3xl': 'var(--radius)',
+  			full: '9999px'
+  		},
+  		boxShadow: {
+  			hard: 'var(--shadow-hard)',
+  			'hard-sm': 'var(--shadow-hard-sm)',
+  			'hard-lg': 'var(--shadow-hard-lg)'
   		},
 		fontFamily: {
 			sans: [
-				'Satoshi',
-				'Geist',
-				'Outfit',
+				'var(--font-sans)',
+				...fontFamily.sans
+			],
+			mono: [
+				'var(--font-mono)',
+				...fontFamily.mono
+			],
+			display: [
+				'var(--font-display)',
+				'var(--font-sans)',
 				...fontFamily.sans
 			]
 		}

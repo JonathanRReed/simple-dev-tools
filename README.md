@@ -1,6 +1,6 @@
 # Simple Dev Tools
 
-Simple Dev Tools is a browser-first toolkit for everyday developer workflows. It is live at [dev.hellworldfirm.com](https://dev.hellworldfirm.com) and designed to be useful without auth, a database, or a custom backend.
+Simple Dev Tools is a browser-first toolkit for everyday developer workflows. It is live at [dev-tools.helloworldfirm.com](https://dev-tools.helloworldfirm.com) and designed to be useful without auth, a database, or a custom backend.
 
 Built by Jonathan R Reed for Hello.World Consulting, the project highlights practical, portfolio-friendly strengths: polished UI, strong metadata, static hosting, and tools that are easy to try immediately.
 

@@ -1,18 +1,39 @@
 import './globals.css';
 import type { Metadata } from 'next';
-import Image from 'next/image';
+import { Inter, JetBrains_Mono, Space_Grotesk } from 'next/font/google';
 import type { ReactNode } from 'react';
 
+import AppHeader from '@/components/AppHeader';
+import { CommandMenuProvider } from '@/components/CommandMenu';
 import Footer from '@/components/Footer';
 import AppSidebar, { AppSidebarProvider } from '@/components/Sidebar';
-import ThemeToggle from '@/components/ThemeToggle';
 import {
   NavigationProgressBar,
   NavigationProgressProvider,
 } from '@/components/layout/NavigationProgress';
 import { ThemeProvider } from '@/components/theme-provider';
-import { SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
+import { RecentToolsProvider } from '@/hooks/use-recent-tools';
+import { SidebarInset } from '@/components/ui/sidebar';
 import { siteConfig, toolPages } from '@/lib/site';
+
+const fontSans = Inter({
+  subsets: ['latin'],
+  variable: '--font-sans',
+  display: 'swap',
+});
+
+const fontDisplay = Space_Grotesk({
+  subsets: ['latin'],
+  weight: ['500', '600', '700'],
+  variable: '--font-display',
+  display: 'swap',
+});
+
+const fontMono = JetBrains_Mono({
+  subsets: ['latin'],
+  variable: '--font-mono',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
@@ -126,51 +147,45 @@ const jsonLd = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${fontSans.variable} ${fontDisplay.variable} ${fontMono.variable}`}
+    >
       <head>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
-      <body className="noise-overlay bg-background text-foreground font-sans antialiased">
+      <body className="bg-background text-foreground font-sans antialiased">
         <ThemeProvider>
           <NavigationProgressProvider>
             <NavigationProgressBar />
-            <AppSidebarProvider>
-              <a
-                href="#main-content"
-                className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-background focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-foreground focus:shadow-lg"
-              >
-                Skip to content
-              </a>
-              <div className="flex w-full min-w-0 bg-background">
-                <AppSidebar />
-                <SidebarInset id="main-content" tabIndex={-1} className="flex min-w-0 flex-1 flex-col">
-                  <header className="sticky top-0 z-30 flex items-center justify-between border-b border-border/40 bg-background/70 px-6 py-4 backdrop-blur-md">
-                    <div className="flex items-center gap-3">
-                      <SidebarTrigger className="size-11 border border-border/60 bg-card/60" />
-                      <Image
-                        src="/simple_dev_tools_logo_assets/simple-dev-tools-logo-normal-512w.png"
-                        alt={siteConfig.name}
-                        width={200}
-                        height={67}
-                        className="h-8 w-auto"
-                        unoptimized
-                        priority
-                      />
-                    </div>
-                    <ThemeToggle />
-                  </header>
-                  <div className="flex min-w-0 flex-col overflow-x-hidden">
-                    <div className="px-6 py-6">
-                      {children}
-                    </div>
-                    <Footer />
+            <RecentToolsProvider>
+              <AppSidebarProvider>
+                <CommandMenuProvider>
+                  <a
+                    href="#main-content"
+                    className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:border-2 focus:border-border focus:bg-background focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-foreground"
+                  >
+                    Skip to content
+                  </a>
+                  <div className="flex w-full min-w-0 bg-background">
+                    <AppSidebar />
+                    <SidebarInset id="main-content" tabIndex={-1} className="flex min-w-0 flex-1 flex-col">
+                      <AppHeader />
+                      <div className="flex min-w-0 flex-col overflow-x-hidden">
+                        <div className="px-4 py-5 sm:px-6">
+                          {children}
+                        </div>
+                        <Footer />
+                      </div>
+                    </SidebarInset>
                   </div>
-                </SidebarInset>
-              </div>
-            </AppSidebarProvider>
+                </CommandMenuProvider>
+              </AppSidebarProvider>
+            </RecentToolsProvider>
           </NavigationProgressProvider>
         </ThemeProvider>
       </body>

@@ -2,8 +2,19 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
+import { Download, RotateCcw } from "lucide-react";
+
+import ToolShell from "@/components/tool/ToolShell";
+import { Button } from "@/components/ui/button";
+import { CopyButton } from "@/components/ui/copy-button";
+import { Alert } from "@/components/ui/alert";
+import { Label } from "@/components/ui/label";
+import { ResultPanel } from "@/components/ui/result-panel";
+import { cn } from "@/lib/utils";
 
 const DEFAULT_CODE = `graph TD\n  A[Client] -->|Request| B[API]\n  B -->|Response| A`;
+const STORAGE_KEY = "mermaid-editor-code";
+
 const TEMPLATES = [
   {
     label: "Flowchart",
@@ -15,7 +26,7 @@ const TEMPLATES = [
   },
   {
     label: "Class Diagram",
-    code: `classDiagram\n  Animal <|-- Duck\n  Animal <|-- Fish\n  Animal <|-- Zebra\n  Animal : +int age\n  Animal : +String gender\n  Animal: +isMammal()\n  Animal: +mate()`
+    code: `classDiagram\n  Animal <|-- Duck\n  Animal <|-- Fish\n  Animal <|-- Zebra\n  Animal : +int age\n  Animal : +String gender\n  Animal: +isMammal()\n  Animal: +mate()`,
   },
   {
     label: "State Diagram",
@@ -30,7 +41,7 @@ const TEMPLATES = [
 const Editor = dynamic(() => import("react-simple-code-editor"), {
   ssr: false,
   loading: () => (
-    <div className="min-h-[180px] rounded-xl border border-rp-highlight-high bg-rp-overlay/50 animate-pulse" />
+    <div className="min-h-[180px] border-2 border-border bg-background animate-pulse" />
   ),
 });
 
@@ -38,14 +49,46 @@ type MermaidModule = typeof import("mermaid");
 
 type HighlightFn = (code: string) => string;
 
+/** Parse width/height out of an SVG's viewBox attribute as a dimensions fallback. */
+function viewBoxDimensions(svg: string): { width: number; height: number } | null {
+  const match = svg.match(/viewBox\s*=\s*["']\s*[\d.+-]+\s+[\d.+-]+\s+([\d.+-]+)\s+([\d.+-]+)/i);
+  if (!match) return null;
+  const width = parseFloat(match[1]);
+  const height = parseFloat(match[2]);
+  if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
+    return null;
+  }
+  return { width, height };
+}
+
 export default function MermaidClient() {
   const [code, setCode] = useState(DEFAULT_CODE);
   const [error, setError] = useState<string | null>(null);
   const [mermaid, setMermaid] = useState<MermaidModule["default"] | null>(null);
+  const [hasDiagram, setHasDiagram] = useState(false);
   const diagramRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<string | null>(null);
   const highlightRef = useRef<HighlightFn>((value: string) => value);
   const [highlightReady, setHighlightReady] = useState(false);
+
+  // Restore any previously edited code from localStorage on mount.
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem(STORAGE_KEY);
+      if (saved != null && saved.length > 0) setCode(saved);
+    } catch {
+      // ignore storage access errors (private mode, etc.)
+    }
+  }, []);
+
+  // Persist code to localStorage as it changes.
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(STORAGE_KEY, code);
+    } catch {
+      // ignore storage access errors
+    }
+  }, [code]);
 
   useEffect(() => {
     let cancelled = false;
@@ -81,28 +124,41 @@ export default function MermaidClient() {
     };
   }, []);
 
+  // Debounced render: avoids re-rendering and flashing on every keystroke.
   useEffect(() => {
     if (!mermaid || !diagramRef.current) return;
     let cancelled = false;
-    (async () => {
-      try {
-        mermaid.parse(code);
-        const { svg } = await mermaid.render(`mermaid-svg-${Date.now()}`, code);
-        if (cancelled) return;
-        svgRef.current = svg;
-        if (diagramRef.current) diagramRef.current.innerHTML = svg;
-        setError(null);
-      } catch (err: any) {
-        if (cancelled) return;
-        setError(err?.message || "Invalid Mermaid syntax");
-        if (diagramRef.current) diagramRef.current.innerHTML = "";
-        svgRef.current = null;
-      }
-    })();
+
+    const timer = setTimeout(() => {
+      (async () => {
+        try {
+          // Let parse throw its descriptive error (e.g. "Parse error on line 2…")
+          // so the Alert shows the actual problem rather than a generic message.
+          await mermaid.parse(code);
+          if (cancelled) return;
+          const { svg } = await mermaid.render(`mermaid-svg-${Date.now()}`, code);
+          if (cancelled) return;
+          svgRef.current = svg;
+          if (diagramRef.current) diagramRef.current.innerHTML = svg;
+          setError(null);
+          setHasDiagram(true);
+        } catch (err) {
+          if (cancelled) return;
+          setError(err instanceof Error ? err.message : "Invalid Mermaid syntax");
+          if (diagramRef.current) diagramRef.current.innerHTML = "";
+          svgRef.current = null;
+          setHasDiagram(false);
+        }
+      })();
+    }, 250);
+
     return () => {
       cancelled = true;
+      clearTimeout(timer);
     };
   }, [code, mermaid]);
+
+  const canExport = hasDiagram && !error && svgRef.current != null;
 
   const handleExportSVG = () => {
     if (!svgRef.current) return;
@@ -116,18 +172,47 @@ export default function MermaidClient() {
   };
 
   const handleExportPNG = () => {
-    if (!svgRef.current) return;
     const svg = svgRef.current;
+    if (!svg) return;
+
+    // Determine real diagram dimensions. SVGs rendered by mermaid often have no
+    // intrinsic width/height, so img.width/height would be 0 and produce a blank
+    // PNG. Read the live <svg> element's measured size, falling back to the
+    // viewBox parsed from the markup.
+    const scale = 2;
+    const liveSvg = diagramRef.current?.querySelector("svg");
+    let width = 0;
+    let height = 0;
+    if (liveSvg) {
+      const rect = liveSvg.getBoundingClientRect();
+      width = rect.width;
+      height = rect.height;
+    }
+    if (!width || !height) {
+      const fromViewBox = viewBoxDimensions(svg);
+      if (fromViewBox) {
+        width = fromViewBox.width;
+        height = fromViewBox.height;
+      }
+    }
+    if (!width || !height) {
+      width = 800;
+      height = 600;
+    }
+
     const img = new window.Image();
     const svg64 = window.btoa(unescape(encodeURIComponent(svg)));
     const image64 = "data:image/svg+xml;base64," + svg64;
     img.onload = function () {
       const canvas = document.createElement("canvas");
-      canvas.width = img.width;
-      canvas.height = img.height;
+      canvas.width = Math.max(1, Math.round(width * scale));
+      canvas.height = Math.max(1, Math.round(height * scale));
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
-      ctx.drawImage(img, 0, 0);
+      // White background so the diagram is legible in viewers that assume opaque.
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
       canvas.toBlob((blob) => {
         if (!blob) return;
         const url = URL.createObjectURL(blob);
@@ -141,65 +226,102 @@ export default function MermaidClient() {
     img.src = image64;
   };
 
-  const handleTemplate = (templateCode: string) => {
-    setCode(templateCode);
+  const handleTemplate = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+    if (value) setCode(value);
+    // Reset back to the placeholder so re-selecting the same template re-applies.
+    e.target.value = "";
   };
 
+  const handleReset = () => {
+    setCode(DEFAULT_CODE);
+  };
+
+  const toolbar = (
+    <>
+      <select
+        aria-label="Insert a diagram template"
+        className="h-8 border-2 border-input bg-background px-3 font-mono text-xs text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        onChange={handleTemplate}
+        value=""
+      >
+        <option value="" disabled>
+          Template…
+        </option>
+        {TEMPLATES.map((t) => (
+          <option key={t.label} value={t.code}>
+            {t.label}
+          </option>
+        ))}
+      </select>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={handleExportSVG}
+        disabled={!canExport}
+      >
+        <Download className="size-4" aria-hidden="true" />
+        SVG
+      </Button>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={handleExportPNG}
+        disabled={!canExport}
+      >
+        <Download className="size-4" aria-hidden="true" />
+        PNG
+      </Button>
+      <CopyButton value={() => code} label="Copy code" size="sm" />
+      <Button variant="ghost" size="sm" onClick={handleReset}>
+        <RotateCcw className="size-4" aria-hidden="true" />
+        Reset
+      </Button>
+    </>
+  );
+
   return (
-    <div className="bg-rp-surface/80 rounded-3xl shadow-2xl px-6 sm:px-8 py-8 flex flex-col gap-6 relative border border-rp-highlight-high" style={{ backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)" }}>
-      <div className="flex flex-col gap-2">
-        <h2 className="text-2xl font-bold text-rp-iris drop-shadow">Diagram workspace</h2>
-        <p className="text-sm text-rp-subtle max-w-3xl">Sketch sequence diagrams, flowcharts, and more. Edit Mermaid syntax on the left and preview instantly on the right.</p>
-      </div>
-      <div className="flex flex-wrap gap-3 w-full justify-start mb-2">
-        <select
-          className="rounded-xl px-4 py-2 bg-rp-surface/70 border border-rp-highlight-high text-rp-text focus:outline-none focus:ring-2 focus:ring-rp-iris"
-          onChange={(e) => handleTemplate(e.target.value)}
-          defaultValue=""
-        >
-          <option value="" disabled>Choose a template...</option>
-          {TEMPLATES.map((t) => (
-            <option key={t.label} value={t.code}>{t.label}</option>
-          ))}
-        </select>
-        <button
-          className="px-4 py-2 rounded-xl border border-rp-iris text-rp-text bg-rp-overlay/80 font-semibold shadow hover:bg-rp-overlay/60 transition"
-          onClick={handleExportSVG}
-        >
-          Export SVG
-        </button>
-        <button
-          className="px-4 py-2 rounded-xl border border-rp-iris text-rp-text bg-rp-overlay/80 font-semibold shadow hover:bg-rp-overlay/60 transition"
-          onClick={handleExportPNG}
-        >
-          Export PNG
-        </button>
-        <button
-          className="px-4 py-2 rounded-xl border border-rp-iris text-rp-text bg-rp-overlay/80 font-semibold shadow hover:bg-rp-overlay/60 transition"
-          onClick={() => navigator.clipboard.writeText(code)}
-        >
-          Copy Mermaid Code
-        </button>
-      </div>
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,0.55fr)_minmax(0,0.45fr)]">
-        <div className="flex flex-col gap-3 min-w-[280px]">
+    <ToolShell eyebrow="Mermaid editor" toolbar={toolbar}>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,0.55fr)_minmax(0,0.45fr)]">
+        <div className="flex min-w-0 flex-col gap-2">
+          <Label htmlFor="mermaid-editor">Mermaid source</Label>
           <Editor
             value={code}
             onValueChange={setCode}
             highlight={(value) => highlightRef.current(value)}
             padding={12}
-            className="rounded-xl bg-rp-surface/70 border border-rp-highlight-high text-rp-text font-mono text-sm min-h-[180px] focus:outline-none focus:ring-2 focus:ring-rp-iris"
-            style={{ minHeight: 180, background: "none", opacity: highlightReady ? 1 : 0.85 }}
+            className="min-h-[260px] border-2 border-border bg-background font-mono text-sm text-foreground focus-within:ring-2 focus-within:ring-ring"
+            style={{ minHeight: 260, background: "none", opacity: highlightReady ? 1 : 0.85 }}
             textareaId="mermaid-editor"
-            textareaClassName="hidden"
             spellCheck={false}
           />
+          {error ? <Alert variant="error">{error}</Alert> : null}
         </div>
-        <div className="min-w-[280px] rounded-xl border border-rp-highlight-high bg-rp-overlay/70 p-4 min-h-[180px] flex flex-col gap-3">
-          <div ref={diagramRef} className="w-full flex-1 overflow-auto" />
-          {error && <div className="text-rp-love text-xs">{error}</div>}
-        </div>
+        <ResultPanel
+          title="Preview"
+          className="min-w-0"
+          bodyClassName="min-h-[260px]"
+        >
+          {/* White canvas (only when a diagram is present) keeps Mermaid's
+              default light theme legible on dark app themes and matches the
+              white-background PNG export. */}
+          <div
+            ref={diagramRef}
+            role="img"
+            aria-label="Rendered Mermaid diagram"
+            aria-live="polite"
+            className={cn(
+              "flex w-full flex-1 items-center justify-center overflow-auto [&_svg]:max-w-full",
+              hasDiagram && "bg-white p-3"
+            )}
+          />
+          {!hasDiagram && !error ? (
+            <p className="mt-3 text-center font-mono text-sm text-muted-foreground">
+              A valid diagram renders here.
+            </p>
+          ) : null}
+        </ResultPanel>
       </div>
-    </div>
+    </ToolShell>
   );
 }

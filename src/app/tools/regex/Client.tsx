@@ -1,6 +1,18 @@
 "use client";
 import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { RotateCcw } from "lucide-react";
+
+import ToolShell from "@/components/tool/ToolShell";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { CopyButton } from "@/components/ui/copy-button";
+import { Field } from "@/components/ui/field";
+import { Label } from "@/components/ui/label";
+import { ResultPanel } from "@/components/ui/result-panel";
+import { Alert } from "@/components/ui/alert";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 
 const FLAG_LIST = [
   { key: "g", label: "g" },
@@ -47,6 +59,13 @@ const SAMPLES: { label: string; pattern: string; flags?: string; test: string; r
     flags: "g",
     test: "Colors: #fff, #1e293b, #GGG",
   },
+  {
+    label: "Date (named groups)",
+    pattern: String.raw`(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})`,
+    flags: "g",
+    test: "Releases: 2024-01-15 and 2025-12-31.",
+    replace: "$<day>/$<month>/$<year>",
+  },
 ];
 
 function buildFlags(state: FlagsState): string {
@@ -55,7 +74,7 @@ function buildFlags(state: FlagsState): string {
 
 export default function RegexLab() {
   return (
-    <React.Suspense fallback={<div className="p-8 text-rp-subtle">Loading...</div>}>
+    <React.Suspense fallback={<div className="p-8 text-muted-foreground">Loading...</div>}>
       <RegexLabInner />
     </React.Suspense>
   );
@@ -77,12 +96,25 @@ function parseFlags(str: string): FlagsState {
   return base;
 }
 
+interface MatchInfo {
+  match: string;
+  index: number;
+  length: number;
+  groups: (string | undefined)[];
+  named: Record<string, string | undefined>;
+}
+
+interface Segment {
+  text: string;
+  matched: boolean;
+}
+
 function RegexLabInner() {
   const [pattern, setPattern] = useState<string>(DEFAULT_PATTERN);
   const [text, setText] = useState<string>(DEFAULT_TEXT);
   const [replacement, setReplacement] = useState<string>("$&");
   const [flags, setFlags] = useState<FlagsState>({ g: true, i: false, m: false, s: false, u: false, y: false });
-  const [copied, setCopied] = useState(false);
+  const [sampleValue, setSampleValue] = useState("");
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -97,6 +129,12 @@ function RegexLabInner() {
 
   const flagsStr = useMemo(() => buildFlags(flags), [flags]);
   const { re, error } = useMemo(() => safeRegExp(pattern, flagsStr), [pattern, flagsStr]);
+
+  // Effective regex literal /pattern/flags (escape any unescaped forward slashes for display)
+  const regexLiteral = useMemo(
+    () => `/${pattern.replace(/\//g, "\\/")}/${flagsStr}`,
+    [pattern, flagsStr]
+  );
 
   // Hydrate state from query params (?p=pattern&f=flags)
   useEffect(() => {
@@ -130,234 +168,378 @@ function RegexLabInner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pattern, flagsStr, getSP]);
 
-  const handleCopyLink = useCallback(async () => {
-    try {
-      await navigator.clipboard.writeText(window.location.href);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch {}
-  }, []);
+  const getShareUrl = useCallback(
+    () => (typeof window !== "undefined" ? window.location.href : ""),
+    []
+  );
 
-  const matches = useMemo(() => {
-    if (!re) return [] as { match: string; index: number; groups: (string | undefined)[] }[];
-    const list: { match: string; index: number; groups: (string | undefined)[] }[] = [];
+  const matches = useMemo<MatchInfo[]>(() => {
+    if (!re) return [];
+    const list: MatchInfo[] = [];
+    const pushMatch = (m: RegExpExecArray) => {
+      list.push({
+        match: m[0],
+        index: m.index,
+        length: m[0].length,
+        groups: Array.from(m).slice(1),
+        named: m.groups ? { ...m.groups } : {},
+      });
+    };
     if (re.global || re.sticky) {
       let m: RegExpExecArray | null;
       const r = new RegExp(re.source, re.flags); // copy to avoid lastIndex side-effects
       while ((m = r.exec(text)) !== null) {
-        list.push({ match: m[0], index: m.index, groups: Array.from(m).slice(1) });
+        pushMatch(m);
         if (m[0] === "") r.lastIndex++; // avoid infinite loops on zero-length matches
       }
     } else {
       const m = re.exec(text);
-      if (m) list.push({ match: m[0], index: m.index, groups: Array.from(m).slice(1) });
+      if (m) pushMatch(m);
     }
     return list;
   }, [re, text]);
 
-  const replaced = useMemo(() => {
-    if (!re) return "";
-    try {
-      return text.replace(re, replacement);
-    } catch {
-      return "";
+  // Build highlight segments from match index + length.
+  const segments = useMemo<Segment[]>(() => {
+    if (!re || matches.length === 0) return [{ text, matched: false }];
+    const segs: Segment[] = [];
+    let cursor = 0;
+    for (const m of matches) {
+      if (m.index > cursor) {
+        segs.push({ text: text.slice(cursor, m.index), matched: false });
+      }
+      // For zero-length matches there is nothing to highlight; skip the span.
+      if (m.length > 0) {
+        segs.push({ text: text.slice(m.index, m.index + m.length), matched: true });
+      }
+      cursor = Math.max(cursor, m.index + m.length);
     }
-  }, [re, text, replacement]);
+    if (cursor < text.length) {
+      segs.push({ text: text.slice(cursor), matched: false });
+    }
+    return segs;
+  }, [re, matches, text]);
 
-  const handleSample = (s: (typeof SAMPLES)[number]) => {
+  // Distinguish invalid regex from a genuinely empty replacement result.
+  const replaced = useMemo<{ value: string | null; error: string | null }>(() => {
+    if (!re) return { value: null, error };
+    try {
+      return { value: text.replace(re, replacement), error: null };
+    } catch (e: any) {
+      return { value: null, error: e?.message || "Replacement failed" };
+    }
+  }, [re, text, replacement, error]);
+
+  // Plain-text export of the matches list for copying.
+  const matchesText = useMemo(() => {
+    return matches
+      .map((m) => {
+        const parts: string[] = [`[${m.index}] ${m.match}`];
+        m.groups.forEach((g, j) => parts.push(`  $${j + 1}: ${g ?? "<empty>"}`));
+        Object.entries(m.named).forEach(([k, v]) => parts.push(`  $<${k}>: ${v ?? "<empty>"}`));
+        return parts.join("\n");
+      })
+      .join("\n");
+  }, [matches]);
+
+  const applySample = (s: (typeof SAMPLES)[number]) => {
     setPattern(s.pattern);
     setText(s.test);
     setReplacement(s.replace ?? "$&");
-    const newFlags: FlagsState = { g: false, i: false, m: false, s: false, u: false, y: false };
-    (s.flags ?? "").split("").forEach((k) => {
-      if (k && (newFlags as any)[k] !== undefined) (newFlags as any)[k] = true;
-    });
-    setFlags(newFlags);
+    setFlags(parseFlags(s.flags ?? ""));
   };
 
-  return (
-    <div className="bg-rp-surface/80 rounded-3xl shadow-2xl px-6 sm:px-8 py-8 flex flex-col gap-6 relative border border-rp-highlight-high" style={{backdropFilter:'blur(24px)', WebkitBackdropFilter:'blur(24px)'}}>
-        <div className="flex flex-col gap-2">
-          <h2 className="text-2xl font-bold text-rp-iris drop-shadow">Pattern workspace</h2>
-          <p className="text-sm text-rp-subtle max-w-3xl">Live-test regular expressions with instant matches, replacement previews, and quick flag toggles. Everything runs in your browser.</p>
-        </div>
+  const handleReset = () => {
+    setPattern(DEFAULT_PATTERN);
+    setText(DEFAULT_TEXT);
+    setReplacement("$&");
+    setFlags({ g: true, i: false, m: false, s: false, u: false, y: false });
+    setSampleValue("");
+  };
 
-        <div className="w-full flex flex-wrap items-center gap-3">
-          <label className="text-rp-subtle">Pattern</label>
-          <input
-            className="flex-1 rounded-xl px-4 py-2 bg-rp-surface/70 border border-rp-highlight-high text-rp-text focus:outline-none focus:ring-2 focus:ring-rp-iris"
+  const matchCountLabel = `${matches.length} ${matches.length === 1 ? "match" : "matches"}`;
+
+  const toolbar = (
+    <>
+      <select
+        aria-label="Load sample pattern"
+        value={sampleValue}
+        onChange={(e) => {
+          const s = SAMPLES.find((x) => x.label === e.target.value);
+          if (s) applySample(s);
+          // Reset so the same sample can be re-selected.
+          setSampleValue("");
+        }}
+        className="h-8 rounded-none border-2 border-input bg-background px-2 font-mono text-xs text-foreground focus-visible:border-ring focus-visible:outline-none"
+      >
+        <option value="" disabled>
+          Load sample…
+        </option>
+        {SAMPLES.map((s) => (
+          <option key={s.label} value={s.label}>
+            {s.label}
+          </option>
+        ))}
+      </select>
+      <CopyButton value={getShareUrl} label="Copy Link" />
+      <Button type="button" variant="outline" size="sm" onClick={handleReset}>
+        <RotateCcw className="size-4" aria-hidden="true" />
+        <span>Reset</span>
+      </Button>
+    </>
+  );
+
+  return (
+    <ToolShell eyebrow="Regex Lab" toolbar={toolbar} contentClassName="flex flex-col gap-6">
+      {/* Pattern + flags */}
+      <div className="flex flex-col gap-3">
+        <Field
+          label="Pattern"
+          htmlFor="regex-pattern"
+          action={
+            <div className="flex flex-wrap items-center gap-1.5">
+              {FLAG_LIST.map(({ key, label }) => (
+                <label
+                  key={key}
+                  className="flex cursor-pointer items-center gap-1 border-2 border-border px-1.5 py-0.5 font-mono text-xs text-muted-foreground has-[:checked]:border-primary has-[:checked]:text-foreground"
+                >
+                  <input
+                    type="checkbox"
+                    className="accent-[var(--rp-iris)]"
+                    checked={flags[key]}
+                    onChange={(e) => setFlags((f) => ({ ...f, [key]: e.target.checked }))}
+                  />
+                  {label}
+                </label>
+              ))}
+            </div>
+          }
+        >
+          <Input
+            id="regex-pattern"
+            className="font-mono"
             value={pattern}
             onChange={(e) => setPattern(e.target.value)}
             placeholder="Enter regex pattern (without / /)"
+            spellCheck={false}
+            autoCapitalize="off"
+            autoCorrect="off"
           />
-          <div className="flex items-center gap-2">
-            {FLAG_LIST.map(({ key, label }) => (
-              <label key={key} className="flex items-center gap-1 text-rp-subtle border border-rp-highlight-low rounded-lg px-2 py-1">
-                <input
-                  type="checkbox"
-                  className="accent-[var(--rp-iris)]"
-                  checked={flags[key]}
-                  onChange={(e) => setFlags((f) => ({ ...f, [key]: e.target.checked }))}
-                />
-                {label}
-              </label>
-            ))}
-          </div>
-          <button
-            onClick={handleCopyLink}
-            className="ml-auto text-sm bg-rp-overlay/40 hover:bg-rp-overlay/50 border border-rp-highlight-high text-rp-text rounded-lg px-3 py-1"
-            title="Copy shareable link"
-          >
-            {copied ? "Copied OK" : "Copy Link"}
-          </button>
+        </Field>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="brutal-label">Effective</span>
+          <code className="border-2 border-border bg-background px-2 py-0.5 font-mono text-sm text-foreground">
+            {regexLiteral}
+          </code>
+          {flagsStr ? (
+            <span className="flex flex-wrap items-center gap-1">
+              {flagsStr.split("").map((f) => (
+                <Badge key={f} variant="outline">
+                  {f}
+                </Badge>
+              ))}
+            </span>
+          ) : null}
+          <Badge variant={matches.length ? "default" : "outline"}>{matchCountLabel}</Badge>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-rp-subtle mb-2">Test String</label>
-            <textarea
-              className="w-full min-h-[140px] rounded-xl px-4 py-3 bg-rp-surface/70 border border-rp-highlight-high text-rp-text focus:outline-none focus:ring-2 focus:ring-rp-iris"
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-            />
-            <div className="mt-3">
-              <label className="block text-rp-subtle mb-2">Replacement</label>
-              <input
-                className="w-full rounded-xl px-4 py-2 bg-rp-surface/70 border border-rp-highlight-high text-rp-text focus:outline-none focus:ring-2 focus:ring-rp-iris"
-                value={replacement}
-                onChange={(e) => setReplacement(e.target.value)}
-                placeholder="$&, $1, $<name> etc."
-              />
-            </div>
-          </div>
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-rp-iris font-semibold">Matches</h2>
-              <div className="flex items-center gap-2">
-                <select
-                  onChange={(e) => {
-                    const s = SAMPLES.find((x) => x.label === e.target.value);
-                    if (s) handleSample(s);
-                  }}
-                  defaultValue=""
-                  className="rounded-lg bg-rp-surface/70 border border-rp-highlight-high text-rp-text px-3 py-1"
-                >
-                  <option value="" disabled>
-                    Choose sample...
-                  </option>
-                  {SAMPLES.map((s) => (
-                    <option key={s.label} value={s.label}>
-                      {s.label}
-                    </option>
-                  ))}
-                </select>
-                <a
-                  className="text-sm text-rp-iris hover:text-rp-rose"
-                  href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions"
-                  target="_blank"
-                  rel="noreferrer noopener"
-                >
-                  MDN RegExp Guide
-                </a>
-              </div>
-            </div>
+        {error ? <Alert variant="error">{error}</Alert> : null}
+      </div>
 
-            <div className="rounded-xl border border-rp-highlight-high bg-rp-overlay/70 p-3 max-h-[220px] overflow-auto">
-              {!re && error && <div className="text-rp-love text-sm">{error}</div>}
-              {re && matches.length === 0 && <div className="text-rp-muted text-sm">No matches.</div>}
-              {re && matches.length > 0 && (
-                <table className="w-full text-sm text-rp-text">
-                  <thead>
-                    <tr>
-                      <th className="text-left px-2 py-1 text-rp-subtle">Index</th>
-                      <th className="text-left px-2 py-1 text-rp-subtle">Match</th>
-                      <th className="text-left px-2 py-1 text-rp-subtle">Groups</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {matches.map((m, i) => (
-                      <tr key={i} className="even:bg-rp-highlight-low/40">
-                        <td className="px-2 py-1 align-top">{m.index}</td>
-                        <td className="px-2 py-1 align-top whitespace-pre-wrap break-words">{m.match}</td>
-                        <td className="px-2 py-1 align-top">
-                          {m.groups.length ? (
-                            <ul className="list-disc pl-5">
+      {/* Inputs */}
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <Field label="Test String" htmlFor="regex-test">
+          <textarea
+            id="regex-test"
+            className="flex min-h-[160px] w-full rounded-none border-2 border-input bg-background px-3 py-2 font-mono text-sm transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:outline-none"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            spellCheck={false}
+          />
+        </Field>
+        <Field
+          label="Replacement"
+          htmlFor="regex-replacement"
+          hint="Use $&, $1, $<name> etc."
+        >
+          <Input
+            id="regex-replacement"
+            className="font-mono"
+            value={replacement}
+            onChange={(e) => setReplacement(e.target.value)}
+            placeholder="$&, $1, $<name> etc."
+            spellCheck={false}
+            autoCapitalize="off"
+            autoCorrect="off"
+          />
+        </Field>
+      </div>
+
+      {/* Outputs */}
+      <Tabs defaultValue="highlight">
+        <TabsList>
+          <TabsTrigger value="highlight">Highlight</TabsTrigger>
+          <TabsTrigger value="matches">Matches</TabsTrigger>
+          <TabsTrigger value="replace">Replace</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="highlight">
+          <ResultPanel title="Highlighted Test String" scroll>
+            {!re && error ? (
+              <Alert variant="error">{error}</Alert>
+            ) : (
+              <pre className="whitespace-pre-wrap break-words font-mono text-sm leading-6 text-foreground">
+                {segments.map((seg, i) =>
+                  seg.matched ? (
+                    <span
+                      key={i}
+                      className="rounded-none bg-rp-gold/30 text-foreground ring-1 ring-rp-gold/60"
+                    >
+                      {seg.text}
+                    </span>
+                  ) : (
+                    <span key={i}>{seg.text}</span>
+                  )
+                )}
+              </pre>
+            )}
+          </ResultPanel>
+        </TabsContent>
+
+        <TabsContent value="matches">
+          <ResultPanel
+            title={matchCountLabel}
+            copyValue={matchesText}
+            scroll
+          >
+            {!re && error ? (
+              <Alert variant="error">{error}</Alert>
+            ) : matches.length === 0 ? (
+              <p className="font-mono text-sm text-muted-foreground">No matches.</p>
+            ) : (
+              <table className="w-full font-mono text-sm text-foreground">
+                <thead>
+                  <tr className="border-b-2 border-border">
+                    <th className="px-2 py-1 text-left">
+                      <Label>Index</Label>
+                    </th>
+                    <th className="px-2 py-1 text-left">
+                      <Label>Match</Label>
+                    </th>
+                    <th className="px-2 py-1 text-left">
+                      <Label>Groups</Label>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {matches.map((m, i) => {
+                    const hasGroups = m.groups.length > 0 || Object.keys(m.named).length > 0;
+                    return (
+                      <tr key={i} className="border-b border-border/50 align-top">
+                        <td className="px-2 py-1">{m.index}</td>
+                        <td className="px-2 py-1 whitespace-pre-wrap break-words">{m.match}</td>
+                        <td className="px-2 py-1">
+                          {hasGroups ? (
+                            <ul className="space-y-0.5">
                               {m.groups.map((g, j) => (
-                                <li key={j} className="break-words">
-                                  <span className="text-rp-subtle">Group {j + 1}:</span> {g ?? "<empty>"}
+                                <li key={`n-${j}`} className="break-words">
+                                  <span className="text-muted-foreground">${j + 1}:</span>{" "}
+                                  {g ?? <span className="text-muted-foreground">&lt;empty&gt;</span>}
+                                </li>
+                              ))}
+                              {Object.entries(m.named).map(([name, val]) => (
+                                <li key={`name-${name}`} className="break-words">
+                                  <span className="text-rp-iris">$&lt;{name}&gt;:</span>{" "}
+                                  {val ?? <span className="text-muted-foreground">&lt;empty&gt;</span>}
                                 </li>
                               ))}
                             </ul>
                           ) : (
-                            <span className="text-rp-muted">(none)</span>
+                            <span className="text-muted-foreground">(none)</span>
                           )}
                         </td>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+          </ResultPanel>
+        </TabsContent>
 
-            <div className="mt-4">
-              <h2 className="text-rp-iris font-semibold mb-2">Replace Preview</h2>
-              <div className="rounded-xl border border-rp-highlight-high bg-rp-overlay/70 p-3 whitespace-pre-wrap break-words max-h-[180px] overflow-auto text-rp-text">
-                {replaced}
-              </div>
+        <TabsContent value="replace">
+          <ResultPanel
+            title="Replace Preview"
+            actions={
+              <span className="brutal-label hidden sm:inline">{regexLiteral}</span>
+            }
+            copyValue={replaced.value ?? ""}
+            scroll
+          >
+            {replaced.error ? (
+              <Alert variant="error">{replaced.error}</Alert>
+            ) : replaced.value === "" ? (
+              <p className="font-mono text-sm italic text-muted-foreground">(empty result)</p>
+            ) : (
+              <pre className="whitespace-pre-wrap break-words font-mono text-sm text-foreground">
+                {replaced.value}
+              </pre>
+            )}
+          </ResultPanel>
+        </TabsContent>
+      </Tabs>
+
+      {/* Cheat sheet */}
+      <div className="border-2 border-border bg-card p-4">
+        <details>
+          <summary className="cursor-pointer font-mono text-xs font-semibold uppercase tracking-wider text-foreground">
+            Regex Cheat Sheet
+          </summary>
+          <div className="mt-3 grid grid-cols-1 gap-3 text-sm text-foreground md:grid-cols-2">
+            <div>
+              <div className="brutal-label mb-1">Basics</div>
+              <ul className="list-disc space-y-0.5 pl-5">
+                <li><code>.</code> any char (except newline unless <code>s</code>)</li>
+                <li><code>^</code> start, <code>$</code> end</li>
+                <li><code>\d</code> digit, <code>\w</code> word, <code>\s</code> space</li>
+                <li><code>\b</code> word boundary</li>
+              </ul>
+            </div>
+            <div>
+              <div className="brutal-label mb-1">Quantifiers</div>
+              <ul className="list-disc space-y-0.5 pl-5">
+                <li><code>*</code> 0+, <code>+</code> 1+, <code>?</code> 0/1, <code>{`{n}`}</code>, <code>{`{n,}`}</code>, <code>{`{n,m}`}</code></li>
+                <li>Lazy: append <code>?</code> e.g. <code>.*?</code></li>
+              </ul>
+            </div>
+            <div>
+              <div className="brutal-label mb-1">Groups &amp; Alternation</div>
+              <ul className="list-disc space-y-0.5 pl-5">
+                <li><code>(...)</code> capture, <code>(?:...)</code> non-capture</li>
+                <li><code>(?&lt;name&gt;...)</code> named capture, backref <code>\k&lt;name&gt;</code></li>
+                <li><code>a|b</code> alternation</li>
+              </ul>
+            </div>
+            <div>
+              <div className="brutal-label mb-1">Flags</div>
+              <ul className="list-disc space-y-0.5 pl-5">
+                <li><code>g</code> global, <code>i</code> ignoreCase, <code>m</code> multiline</li>
+                <li><code>s</code> dotAll, <code>u</code> unicode, <code>y</code> sticky</li>
+              </ul>
             </div>
           </div>
-        </div>
-
-        <div className="rounded-2xl border border-rp-highlight-high bg-rp-overlay/60 p-4">
-          <details>
-            <summary className="cursor-pointer text-rp-iris font-semibold">Regex Cheat Sheet</summary>
-            <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-rp-text">
-              <div>
-                <div className="font-medium text-rp-subtle mb-1">Basics</div>
-                <ul className="list-disc pl-5 space-y-0.5">
-                  <li><code>.</code> any char (except newline unless <code>s</code>)</li>
-                  <li><code>^</code> start, <code>$</code> end</li>
-                  <li><code>\d</code> digit, <code>\w</code> word, <code>\s</code> space</li>
-                  <li><code>\b</code> word boundary</li>
-                </ul>
-              </div>
-              <div>
-                <div className="font-medium text-rp-subtle mb-1">Quantifiers</div>
-                <ul className="list-disc pl-5 space-y-0.5">
-                  <li><code>*</code> 0+, <code>+</code> 1+, <code>?</code> 0/1, <code>{`{n}`}</code>, <code>{`{n,}`}</code>, <code>{`{n,m}`}</code></li>
-                  <li>Lazy: append <code>?</code> e.g. <code>.*?</code></li>
-                </ul>
-              </div>
-              <div>
-                <div className="font-medium text-rp-subtle mb-1">Groups & Alternation</div>
-                <ul className="list-disc pl-5 space-y-0.5">
-                  <li><code>(...)</code> capture, <code>(?:...)</code> non-capture</li>
-                  <li><code>(?&lt;name&gt;...)</code> named capture, backref <code>\k&lt;name&gt;</code></li>
-                  <li><code>a|b</code> alternation</li>
-                </ul>
-              </div>
-              <div>
-                <div className="font-medium text-rp-subtle mb-1">Flags</div>
-                <ul className="list-disc pl-5 space-y-0.5">
-                  <li><code>g</code> global, <code>i</code> ignoreCase, <code>m</code> multiline</li>
-                  <li><code>s</code> dotAll, <code>u</code> unicode, <code>y</code> sticky</li>
-                </ul>
-              </div>
-            </div>
-          </details>
-        </div>
-
-        <div className="text-xs text-rp-muted mt-2">
-          <p>
-            Flags: <code>g</code> global, <code>i</code> ignoreCase, <code>m</code> multiline,
-            <code> s</code> dotAll, <code>u</code> unicode, <code>y</code> sticky
-          </p>
-          <p>
-            Useful links: {" "}
-            <a className="text-rp-iris hover:text-rp-rose" href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp" target="_blank" rel="noreferrer noopener">MDN RegExp</a>{" - "}
-            <a className="text-rp-iris hover:text-rp-rose" href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replace" target="_blank" rel="noreferrer noopener">MDN String.replace</a>
-          </p>
-        </div>
+        </details>
       </div>
+
+      <div className="text-xs text-muted-foreground">
+        <p>
+          Useful links:{" "}
+          <a className="text-rp-iris hover:text-rp-rose" href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp" target="_blank" rel="noreferrer noopener">MDN RegExp</a>{" - "}
+          <a className="text-rp-iris hover:text-rp-rose" href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replace" target="_blank" rel="noreferrer noopener">MDN String.replace</a>{" - "}
+          <a className="text-rp-iris hover:text-rp-rose" href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions" target="_blank" rel="noreferrer noopener">MDN Guide</a>
+        </p>
+      </div>
+    </ToolShell>
   );
 }
