@@ -46,7 +46,7 @@ export default function ContactPage() {
         <section className="grid gap-4 sm:grid-cols-2">
           <Link
             href={siteConfig.provider.url}
-            className="rounded-xl border border-border/60 bg-card/60 p-5 transition hover:border-primary/60 hover:bg-primary/10"
+            className="border-2 border-border bg-card p-5 transition-colors hover:border-primary hover:bg-primary/10"
           >
             <span className="block text-sm text-muted-foreground">
               Consulting
@@ -57,7 +57,7 @@ export default function ContactPage() {
           </Link>
           <Link
             href={siteConfig.author.url}
-            className="rounded-xl border border-border/60 bg-card/60 p-5 transition hover:border-primary/60 hover:bg-primary/10"
+            className="border-2 border-border bg-card p-5 transition-colors hover:border-primary hover:bg-primary/10"
           >
             <span className="block text-sm text-muted-foreground">
               Portfolio

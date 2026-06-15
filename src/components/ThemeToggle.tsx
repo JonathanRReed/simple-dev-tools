@@ -40,7 +40,7 @@ export default function ThemeToggle() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="icon" className="size-11 shadow-lg border-border/60">
+        <Button variant="outline" size="icon" className="size-9 border-2 border-border">
           <Palette className="h-[1.2rem] w-[1.2rem]" />
           <span className="sr-only">Toggle theme</span>
         </Button>

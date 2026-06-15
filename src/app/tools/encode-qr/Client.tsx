@@ -1,6 +1,17 @@
 "use client";
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import QRCode from "qrcode";
+import { ArrowLeftRight, Download, RotateCcw } from "lucide-react";
+
+import ToolShell from "@/components/tool/ToolShell";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { CopyButton } from "@/components/ui/copy-button";
+import { Field } from "@/components/ui/field";
+import { Label } from "@/components/ui/label";
+import { ResultPanel } from "@/components/ui/result-panel";
+import { Alert } from "@/components/ui/alert";
+import { Input } from "@/components/ui/input";
 
 const te = new TextEncoder();
 const td = new TextDecoder();
@@ -37,75 +48,148 @@ function fromBase64Url(b64url: string): string {
   return s;
 }
 
+const QR_MIN = 128;
+const QR_MAX = 1024;
+const QR_DEFAULT = 256;
+
+/** Parse + clamp a QR size; falls back to the default on NaN. */
+function clampQrSize(raw: string): number {
+  const n = parseInt(raw, 10);
+  if (!Number.isFinite(n)) return QR_DEFAULT;
+  return Math.min(QR_MAX, Math.max(QR_MIN, n));
+}
+
+function counts(s: string): string {
+  const bytes = te.encode(s).length;
+  return `${s.length.toLocaleString()} chars · ${bytes.toLocaleString()} bytes`;
+}
+
+type EncodeMode = "encode" | "decode";
+
+const READONLY_TEXTAREA =
+  "w-full min-h-[160px] resize-y bg-background/60 px-4 py-3 font-mono text-sm text-foreground";
+
 export default function EncodeQR() {
   const [tab, setTab] = useState<"url" | "base64" | "qr">("url");
 
-  // URL encode/decode
-  const [urlInput, setUrlInput] = useState<string>("https://example.com/?q=hello world&x=1+2");
+  // ── URL encode/decode ────────────────────────────────────────────────
+  const [urlInput, setUrlInput] = useState<string>(
+    "https://example.com/?q=hello world&x=1+2"
+  );
+  const [urlMode, setUrlMode] = useState<EncodeMode>("encode");
   const [urlOutput, setUrlOutput] = useState<string>("");
   const [urlError, setUrlError] = useState<string>("");
 
-  function onUrlEncode() {
-    try {
-      setUrlError("");
-      setUrlOutput(encodeURIComponent(urlInput));
-    } catch (e: any) {
-      setUrlError(e?.message || "Encode error");
-    }
+  // Auto/debounced URL transform.
+  useEffect(() => {
+    const id = setTimeout(() => {
+      if (urlInput === "") {
+        setUrlOutput("");
+        setUrlError("");
+        return;
+      }
+      try {
+        setUrlError("");
+        setUrlOutput(
+          urlMode === "encode"
+            ? encodeURIComponent(urlInput)
+            : decodeURIComponent(urlInput)
+        );
+      } catch (e: any) {
+        setUrlOutput("");
+        setUrlError(e?.message || `${urlMode === "encode" ? "Encode" : "Decode"} error`);
+      }
+    }, 200);
+    return () => clearTimeout(id);
+  }, [urlInput, urlMode]);
+
+  function resetUrl() {
+    setUrlInput("");
+    setUrlOutput("");
+    setUrlError("");
   }
-  function onUrlDecode() {
-    try {
-      setUrlError("");
-      setUrlOutput(decodeURIComponent(urlInput));
-    } catch (e: any) {
-      setUrlError(e?.message || "Decode error");
-    }
+  function swapUrl() {
+    if (!urlOutput) return;
+    setUrlInput(urlOutput);
+    // After a swap the natural next step is the inverse direction.
+    setUrlMode((m) => (m === "encode" ? "decode" : "encode"));
   }
 
-  // Base64
+  // ── Base64 ───────────────────────────────────────────────────────────
   const [b64Input, setB64Input] = useState<string>("Hello, world");
+  const [b64Mode, setB64Mode] = useState<EncodeMode>("encode");
   const [b64UrlSafe, setB64UrlSafe] = useState<boolean>(false);
   const [b64Output, setB64Output] = useState<string>("");
   const [b64Error, setB64Error] = useState<string>("");
 
-  function onB64Encode() {
-    try {
-      setB64Error("");
-      let b64 = toBase64(b64Input);
-      if (b64UrlSafe) b64 = toBase64Url(b64);
-      setB64Output(b64);
-    } catch (e: any) {
-      setB64Error(e?.message || "Encode error");
-    }
+  // Auto/debounced Base64 transform. Re-runs when the URL-safe toggle
+  // changes so the output never goes stale.
+  useEffect(() => {
+    const id = setTimeout(() => {
+      if (b64Input === "") {
+        setB64Output("");
+        setB64Error("");
+        return;
+      }
+      try {
+        setB64Error("");
+        if (b64Mode === "encode") {
+          let b64 = toBase64(b64Input);
+          if (b64UrlSafe) b64 = toBase64Url(b64);
+          setB64Output(b64);
+        } else {
+          let src = b64Input;
+          if (b64UrlSafe) src = fromBase64Url(src);
+          setB64Output(fromBase64(src));
+        }
+      } catch (e: any) {
+        setB64Output("");
+        setB64Error(
+          e?.message ||
+            "Decode error (ensure valid Base64 and toggle URL-safe appropriately)"
+        );
+      }
+    }, 200);
+    return () => clearTimeout(id);
+  }, [b64Input, b64Mode, b64UrlSafe]);
+
+  function resetB64() {
+    setB64Input("");
+    setB64Output("");
+    setB64Error("");
   }
-  function onB64Decode() {
-    try {
-      setB64Error("");
-      let src = b64Input;
-      if (b64UrlSafe) src = fromBase64Url(src);
-      const text = fromBase64(src);
-      setB64Output(text);
-    } catch (e: any) {
-      setB64Error(e?.message || "Decode error (ensure valid Base64 and toggle URL-safe appropriately)");
-    }
+  function swapB64() {
+    if (!b64Output) return;
+    setB64Input(b64Output);
+    setB64Mode((m) => (m === "encode" ? "decode" : "encode"));
   }
 
-  // QR
+  // ── QR ───────────────────────────────────────────────────────────────
   const [qrText, setQrText] = useState<string>("https://example.com");
-  const [qrSize, setQrSize] = useState<number>(256);
+  // Kept as a string so the field allows free typing (e.g. clearing to retype
+  // "512"); the effective size is clamped only at generation / on blur.
+  const [qrSizeInput, setQrSizeInput] = useState<string>(String(QR_DEFAULT));
   const [qrEcc, setQrEcc] = useState<"L" | "M" | "Q" | "H">("M");
   const [qrFormat, setQrFormat] = useState<"png" | "svg">("png");
   const [qrPngDataUrl, setQrPngDataUrl] = useState<string>("");
   const [qrSvg, setQrSvg] = useState<string>("");
   const [qrError, setQrError] = useState<string>("");
 
-  async function onGenerateQR() {
+  const generateQR = useCallback(async () => {
+    // Empty/whitespace guard: the library throws a raw error otherwise.
+    if (qrText.trim() === "") {
+      setQrPngDataUrl("");
+      setQrSvg("");
+      setQrError("Enter some text or a URL to generate a QR code.");
+      return;
+    }
+    const size = clampQrSize(qrSizeInput);
     try {
       setQrError("");
       if (qrFormat === "png") {
         const url = await QRCode.toDataURL(qrText, {
           errorCorrectionLevel: qrEcc,
-          width: qrSize,
+          width: size,
           margin: 2,
           scale: 4,
         });
@@ -115,15 +199,33 @@ export default function EncodeQR() {
         const svg = await QRCode.toString(qrText, {
           errorCorrectionLevel: qrEcc,
           type: "svg",
-          width: qrSize,
+          width: size,
           margin: 2,
         } as any);
         setQrSvg(svg);
         setQrPngDataUrl("");
       }
     } catch (e: any) {
+      setQrPngDataUrl("");
+      setQrSvg("");
       setQrError(e?.message || "QR generation error");
     }
+  }, [qrText, qrSizeInput, qrEcc, qrFormat]);
+
+  // Debounced auto-generation. Re-running on format change also clears the
+  // previous (stale) preview, since only one of png/svg is ever set.
+  useEffect(() => {
+    const id = setTimeout(() => {
+      void generateQR();
+    }, 300);
+    return () => clearTimeout(id);
+  }, [generateQR]);
+
+  function resetQr() {
+    setQrText("");
+    setQrPngDataUrl("");
+    setQrSvg("");
+    setQrError("");
   }
 
   function downloadPng() {
@@ -145,181 +247,284 @@ export default function EncodeQR() {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
+  const eyebrow = useMemo(
+    () => (tab === "url" ? "ENCODER / URL" : tab === "base64" ? "ENCODER / BASE64" : "ENCODER / QR"),
+    [tab]
+  );
+
   return (
-    <div
-        className="bg-rp-surface/80 rounded-3xl shadow-2xl px-6 md:px-8 py-8 flex flex-col gap-6 border border-rp-highlight-high"
-        style={{ backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)" }}
-      >
-        <div className="flex flex-col gap-2">
-          <h2 className="text-2xl font-bold text-rp-iris drop-shadow">Encoding workspace</h2>
-          <p className="text-sm text-rp-subtle max-w-3xl">Encode/decode URLs and Base64 strings, then generate QR codes (PNG/SVG) without leaving the browser.</p>
-        </div>
+    <ToolShell eyebrow={eyebrow}>
+      <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
+        <TabsList>
+          <TabsTrigger value="url">URL</TabsTrigger>
+          <TabsTrigger value="base64">Base64</TabsTrigger>
+          <TabsTrigger value="qr">QR</TabsTrigger>
+        </TabsList>
 
-        {/* Tabs */}
-        <div className="flex flex-wrap gap-2">
-          {[
-            { k: "url", label: "URL" },
-            { k: "base64", label: "Base64" },
-            { k: "qr", label: "QR" },
-          ].map((t) => (
-            <button
-              key={t.k}
-              className={`px-4 py-2 rounded-xl border ${
-                tab === (t.k as any)
-                  ? "border-rp-iris text-rp-text bg-rp-overlay/80"
-                  : "border-rp-highlight-high text-rp-subtle bg-rp-surface/50"
-              }`}
-              onClick={() => setTab(t.k as any)}
+        {/* ── URL ────────────────────────────────────────────────────── */}
+        <TabsContent value="url">
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            <div className="flex border-2 border-border">
+              <Button
+                type="button"
+                size="sm"
+                variant={urlMode === "encode" ? "default" : "ghost"}
+                className="rounded-none"
+                aria-pressed={urlMode === "encode"}
+                onClick={() => setUrlMode("encode")}
+              >
+                Encode
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant={urlMode === "decode" ? "default" : "ghost"}
+                className="rounded-none border-l-2 border-border"
+                aria-pressed={urlMode === "decode"}
+                onClick={() => setUrlMode("decode")}
+              >
+                Decode
+              </Button>
+            </div>
+            <Button type="button" size="sm" variant="outline" onClick={swapUrl} disabled={!urlOutput}>
+              <ArrowLeftRight aria-hidden="true" /> Swap
+            </Button>
+            <Button type="button" size="sm" variant="outline" onClick={resetUrl}>
+              <RotateCcw aria-hidden="true" /> Reset
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <Field
+              label="Input"
+              htmlFor="url-input"
+              hint={counts(urlInput)}
             >
-              {t.label}
-            </button>
-          ))}
-        </div>
-
-        {/* URL */}
-        {tab === "url" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <h2 className="text-rp-iris font-semibold mb-2">Input</h2>
               <textarea
-                className="w-full min-h-[160px] rounded-xl px-4 py-3 bg-rp-surface/70 border border-rp-highlight-high text-rp-text focus:outline-none focus:ring-2 focus:ring-rp-iris"
+                id="url-input"
+                className="w-full min-h-[160px] resize-y px-4 py-3 font-mono text-sm"
                 value={urlInput}
                 onChange={(e) => setUrlInput(e.target.value)}
+                placeholder="Text or URL to encode/decode"
               />
-              <div className="mt-2 flex gap-2">
-                <button className="px-4 py-2 rounded-xl border border-rp-iris text-rp-text bg-rp-overlay/80" onClick={onUrlEncode}>
-                  Encode
-                </button>
-                <button className="px-4 py-2 rounded-xl border border-rp-iris text-rp-text bg-rp-overlay/80" onClick={onUrlDecode}>
-                  Decode
-                </button>
-              </div>
-              {urlError && <div className="mt-2 text-red-400 text-sm">{urlError}</div>}
-            </div>
-            <div>
-              <h2 className="text-rp-iris font-semibold mb-2">Output</h2>
-              <textarea
-                className="w-full min-h-[160px] rounded-xl px-4 py-3 bg-rp-base border border-rp-highlight-low text-rp-text"
-                value={urlOutput}
-                onChange={(e) => setUrlOutput(e.target.value)}
-              />
+            </Field>
+
+            <div className="flex flex-col gap-1.5">
+              <ResultPanel
+                title="Output"
+                copyValue={urlOutput}
+                bodyClassName="p-0"
+              >
+                <Label htmlFor="url-output" className="sr-only">
+                  URL output
+                </Label>
+                <textarea
+                  id="url-output"
+                  readOnly
+                  className={READONLY_TEXTAREA + " border-0"}
+                  value={urlOutput}
+                  placeholder="Result appears here"
+                />
+              </ResultPanel>
+              <p className="text-xs text-muted-foreground">{counts(urlOutput)}</p>
             </div>
           </div>
-        )}
 
-        {/* Base64 */}
-        {tab === "base64" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <h2 className="text-rp-iris font-semibold mb-2">Input</h2>
+          {urlError && (
+            <Alert variant="error" className="mt-4">
+              {urlError}
+            </Alert>
+          )}
+        </TabsContent>
+
+        {/* ── Base64 ─────────────────────────────────────────────────── */}
+        <TabsContent value="base64">
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            <div className="flex border-2 border-border">
+              <Button
+                type="button"
+                size="sm"
+                variant={b64Mode === "encode" ? "default" : "ghost"}
+                className="rounded-none"
+                aria-pressed={b64Mode === "encode"}
+                onClick={() => setB64Mode("encode")}
+              >
+                Encode
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant={b64Mode === "decode" ? "default" : "ghost"}
+                className="rounded-none border-l-2 border-border"
+                aria-pressed={b64Mode === "decode"}
+                onClick={() => setB64Mode("decode")}
+              >
+                Decode
+              </Button>
+            </div>
+            <label className="flex items-center gap-2 border-2 border-border px-3 py-1.5 font-mono text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <input
+                type="checkbox"
+                checked={b64UrlSafe}
+                onChange={(e) => setB64UrlSafe(e.target.checked)}
+              />
+              URL-safe
+            </label>
+            <Button type="button" size="sm" variant="outline" onClick={swapB64} disabled={!b64Output}>
+              <ArrowLeftRight aria-hidden="true" /> Swap
+            </Button>
+            <Button type="button" size="sm" variant="outline" onClick={resetB64}>
+              <RotateCcw aria-hidden="true" /> Reset
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <Field label="Input" htmlFor="b64-input" hint={counts(b64Input)}>
               <textarea
-                className="w-full min-h-[160px] rounded-xl px-4 py-3 bg-rp-surface/70 border border-rp-highlight-high text-rp-text focus:outline-none focus:ring-2 focus:ring-rp-iris"
+                id="b64-input"
+                className="w-full min-h-[160px] resize-y px-4 py-3 font-mono text-sm"
                 value={b64Input}
                 onChange={(e) => setB64Input(e.target.value)}
                 placeholder="Text to encode or Base64 to decode"
               />
-              <div className="mt-2 flex flex-wrap items-center gap-3">
-                <label className="text-rp-subtle text-sm flex items-center gap-2">
-                  <input type="checkbox" checked={b64UrlSafe} onChange={(e) => setB64UrlSafe(e.target.checked)} /> URL-safe
-                </label>
-                <button className="px-4 py-2 rounded-xl border border-rp-iris text-rp-text bg-rp-overlay/80" onClick={onB64Encode}>
-                  Encode
-                </button>
-                <button className="px-4 py-2 rounded-xl border border-rp-iris text-rp-text bg-rp-overlay/80" onClick={onB64Decode}>
-                  Decode
-                </button>
-              </div>
-              {b64Error && <div className="mt-2 text-red-400 text-sm">{b64Error}</div>}
-            </div>
-            <div>
-              <h2 className="text-rp-iris font-semibold mb-2">Output</h2>
-              <textarea
-                className="w-full min-h-[160px] rounded-xl px-4 py-3 bg-rp-base border border-rp-highlight-low text-rp-text"
-                value={b64Output}
-                onChange={(e) => setB64Output(e.target.value)}
-              />
+            </Field>
+
+            <div className="flex flex-col gap-1.5">
+              <ResultPanel
+                title="Output"
+                copyValue={b64Output}
+                bodyClassName="p-0"
+              >
+                <Label htmlFor="b64-output" className="sr-only">
+                  Base64 output
+                </Label>
+                <textarea
+                  id="b64-output"
+                  readOnly
+                  className={READONLY_TEXTAREA + " border-0"}
+                  value={b64Output}
+                  placeholder="Result appears here"
+                />
+              </ResultPanel>
+              <p className="text-xs text-muted-foreground">{counts(b64Output)}</p>
             </div>
           </div>
-        )}
 
-        {/* QR */}
-        {tab === "qr" && (
-          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,0.55fr)_minmax(0,0.45fr)] gap-6">
-            <div>
-              <h2 className="text-rp-iris font-semibold mb-2">Text</h2>
-              <textarea
-                className="w-full min-h-[120px] rounded-xl px-4 py-3 bg-rp-surface/70 border border-rp-highlight-high text-rp-text focus:outline-none focus:ring-2 focus:ring-rp-iris"
-                value={qrText}
-                onChange={(e) => setQrText(e.target.value)}
-              />
-              <div className="mt-3 grid grid-cols-2 gap-3 items-end">
-                <div>
-                  <label className="text-rp-subtle text-sm">Size (px)</label>
-                  <input
+          {b64Error && (
+            <Alert variant="error" className="mt-4">
+              {b64Error}
+            </Alert>
+          )}
+        </TabsContent>
+
+        {/* ── QR ─────────────────────────────────────────────────────── */}
+        <TabsContent value="qr">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,0.55fr)_minmax(0,0.45fr)]">
+            <div className="flex flex-col gap-4">
+              <Field label="Text" htmlFor="qr-text" hint={counts(qrText)}>
+                <textarea
+                  id="qr-text"
+                  className="w-full min-h-[120px] resize-y px-4 py-3 font-mono text-sm"
+                  value={qrText}
+                  onChange={(e) => setQrText(e.target.value)}
+                  placeholder="Text or URL to encode into a QR code"
+                />
+              </Field>
+
+              <div className="grid grid-cols-2 gap-4">
+                <Field label="Size (px)" htmlFor="qr-size" hint={`${QR_MIN}–${QR_MAX}`}>
+                  <Input
+                    id="qr-size"
                     type="number"
-                    min={128}
-                    max={1024}
-                    className="w-full rounded-xl px-3 py-2 bg-rp-surface/70 border border-rp-highlight-high text-rp-text"
-                    value={qrSize}
-                    onChange={(e) => setQrSize(parseInt(e.target.value || "256", 10))}
+                    min={QR_MIN}
+                    max={QR_MAX}
+                    value={qrSizeInput}
+                    onChange={(e) => setQrSizeInput(e.target.value)}
+                    onBlur={(e) => setQrSizeInput(String(clampQrSize(e.target.value)))}
                   />
-                </div>
-                <div>
-                  <label className="text-rp-subtle text-sm">Error Correction</label>
+                </Field>
+
+                <Field label="Error correction" htmlFor="qr-ecc">
                   <select
-                    className="w-full rounded-xl px-3 py-2 bg-rp-surface/70 border border-rp-highlight-high text-rp-text"
+                    id="qr-ecc"
+                    className="h-9 w-full px-3 py-1 font-mono text-sm"
                     value={qrEcc}
-                    onChange={(e) => setQrEcc(e.target.value as any)}
+                    onChange={(e) => setQrEcc(e.target.value as typeof qrEcc)}
                   >
                     <option value="L">L (7%)</option>
                     <option value="M">M (15%)</option>
                     <option value="Q">Q (25%)</option>
                     <option value="H">H (30%)</option>
                   </select>
-                </div>
-                <div>
-                  <label className="text-rp-subtle text-sm">Format</label>
+                </Field>
+
+                <Field label="Format" htmlFor="qr-format">
                   <select
-                    className="w-full rounded-xl px-3 py-2 bg-rp-surface/70 border border-rp-highlight-high text-rp-text"
+                    id="qr-format"
+                    className="h-9 w-full px-3 py-1 font-mono text-sm"
                     value={qrFormat}
-                    onChange={(e) => setQrFormat(e.target.value as any)}
+                    onChange={(e) => setQrFormat(e.target.value as typeof qrFormat)}
                   >
                     <option value="png">PNG</option>
                     <option value="svg">SVG</option>
                   </select>
-                </div>
-                <div className="flex gap-2 justify-end">
-                  <button className="px-4 py-2 rounded-xl border border-rp-iris text-rp-text bg-rp-overlay/80" onClick={onGenerateQR}>
-                    Generate
-                  </button>
-                  {qrFormat === "png" && qrPngDataUrl && (
-                    <button className="px-4 py-2 rounded-xl border border-rp-iris text-rp-text bg-rp-overlay/80" onClick={downloadPng}>
-                      Download PNG
-                    </button>
+                </Field>
+
+                <div className="flex items-end gap-2">
+                  {qrFormat === "png" ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full"
+                      onClick={downloadPng}
+                      disabled={!qrPngDataUrl}
+                    >
+                      <Download aria-hidden="true" /> PNG
+                    </Button>
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full"
+                      onClick={downloadSvg}
+                      disabled={!qrSvg}
+                    >
+                      <Download aria-hidden="true" /> SVG
+                    </Button>
                   )}
-                  {qrFormat === "svg" && qrSvg && (
-                    <button className="px-4 py-2 rounded-xl border border-rp-iris text-rp-text bg-rp-overlay/80" onClick={downloadSvg}>
-                      Download SVG
-                    </button>
-                  )}
+                  <Button type="button" variant="outline" size="icon" aria-label="Reset" onClick={resetQr}>
+                    <RotateCcw aria-hidden="true" />
+                  </Button>
                 </div>
               </div>
-              {qrError && <div className="mt-2 text-red-400 text-sm">{qrError}</div>}
+
+              {qrError && <Alert variant="error">{qrError}</Alert>}
             </div>
-            <div className="flex items-center justify-center min-h-[260px] rounded-xl border border-rp-highlight-low bg-rp-base p-4">
-              {qrFormat === "png" && qrPngDataUrl && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={qrPngDataUrl} alt="QR code" className="shadow-lg rounded" />
-              )}
-              {qrFormat === "svg" && qrSvg && (
-                <div className="max-w-full" dangerouslySetInnerHTML={{ __html: qrSvg }} />
-              )}
-              {!qrPngDataUrl && !qrSvg && (
-                <div className="text-rp-muted text-sm">Generate a QR to preview it here.</div>
-              )}
-            </div>
+
+            <ResultPanel title="Preview" bodyClassName="p-0">
+              <div className="flex min-h-[260px] items-center justify-center bg-background/60 p-4">
+                {qrFormat === "png" && qrPngDataUrl && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={qrPngDataUrl} alt="Generated QR code" className="max-w-full" />
+                )}
+                {qrFormat === "svg" && qrSvg && (
+                  <div
+                    className="max-w-full"
+                    role="img"
+                    aria-label="Generated QR code"
+                    dangerouslySetInnerHTML={{ __html: qrSvg }}
+                  />
+                )}
+                {!qrPngDataUrl && !qrSvg && !qrError && (
+                  <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+                    QR preview appears here
+                  </p>
+                )}
+              </div>
+            </ResultPanel>
           </div>
-        )}
-      </div>
+        </TabsContent>
+      </Tabs>
+    </ToolShell>
   );
 }

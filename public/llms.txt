@@ -2,16 +2,16 @@
 
 > A collection of developer accelerators and studios built with Next.js, React, and TailwindCSS. Provides in-browser utilities for engineers to prototype snippets, inspect schemas, validate security tokens, generate diagrams, and automate workflows.
 
-Simple Dev Tools is a Next.js application hosted at `https://dev-tools.helloworldfirm.com/` (production) that offers independent single-page tools with client-side interfaces. All tools run entirely in the browser with no authentication required. Built by Jonathan Reed at Hello.World Consulting using modern web technologies including Radix UI, shadcn/ui components, HTMX concepts, and various specialized libraries.
+Simple Dev Tools is a Next.js application hosted at `https://dev-tools.helloworldfirm.com/` (production) that offers independent single-page tools with client-side interfaces. All tools run entirely in the browser with no authentication required. Built by Jonathan Reed at Hello.World Consulting using modern web technologies including Radix UI, shadcn/ui components, and various specialized libraries.
 
 ## Developer Accelerators
 
-- [API Snippet Generator](https://dev-tools.helloworldfirm.com/api-snippet): Draft OpenAPI-driven code snippets for any stack on the fly. Upload Swagger/OpenAPI definitions and generate REST API client code.
+- [API Snippet Generator](https://dev-tools.helloworldfirm.com/api-snippet): Generate cURL, Python requests, and JavaScript fetch snippets from an endpoint, HTTP method, custom headers, bearer token, and JSON body.
 - [Mermaid Editor](https://dev-tools.helloworldfirm.com/mermaid): Sketch sequence diagrams, flowcharts, and architecture visualizations quickly with live preview and export.
-- [SQLite Playground](https://dev-tools.helloworldfirm.com/sqlite): Run SQL experiments with instant preview and persistence using sql.js in the browser.
+- [SQLite Playground](https://dev-tools.helloworldfirm.com/sqlite): Run SQL experiments against an in-memory SQLite database (sql.js WASM) with instant result tables and CSV/JSON export.
 - [Regex Lab](https://dev-tools.helloworldfirm.com/tools/regex): Iterate on regular expression patterns with explainers, tests, and sharing capabilities.
 - [IDs & Scheduling](https://dev-tools.helloworldfirm.com/tools/ids-cron): Generate ULIDs, UUIDs, and human-friendly CRON expression helpers with descriptions.
-- [Encoders & QR](https://dev-tools.helloworldfirm.com/tools/encode-qr): Encode/decode payloads (Base64, URL encoding), produce QR code assets (PNG/SVG), and inspect metadata.
+- [Encoders & QR](https://dev-tools.helloworldfirm.com/tools/encode-qr): Encode/decode payloads (Base64, URL encoding) and produce QR code assets (PNG/SVG).
 
 ## Studios
 
@@ -25,7 +25,7 @@ Simple Dev Tools is a Next.js application hosted at `https://dev-tools.helloworl
 
 ## Optional
 
-- [Homepage](https://dev-tools.helloworldfirm.com/): Landing page with visual cards showing all available tools and studios
+- [Homepage](https://dev-tools.helloworldfirm.com/): Keyboard-first launcher with a searchable index of all tools (also reachable anywhere via the ⌘K command palette)
 - [About](https://dev-tools.helloworldfirm.com/about/): Builder and maintenance context
 - [Contact](https://dev-tools.helloworldfirm.com/contact/): Official contact paths
 - [Privacy](https://dev-tools.helloworldfirm.com/privacy/): Local-first privacy notes
