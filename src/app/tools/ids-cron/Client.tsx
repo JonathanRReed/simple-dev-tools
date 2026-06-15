@@ -2,6 +2,19 @@
 import React, { useEffect, useMemo, useState } from "react";
 import cronstrue from "cronstrue";
 import { ulid } from "ulid";
+import { CronExpressionParser } from "cron-parser";
+import { RefreshCw } from "lucide-react";
+
+import ToolShell from "@/components/tool/ToolShell";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { CopyButton } from "@/components/ui/copy-button";
+import { Field } from "@/components/ui/field";
+import { Label } from "@/components/ui/label";
+import { ResultPanel } from "@/components/ui/result-panel";
+import { Alert } from "@/components/ui/alert";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 
 // Crockford's Base32 used by ULID (no I, L, O, U)
 const CROCK32 = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
@@ -9,25 +22,48 @@ const CROCK32_MAP: Record<string, number> = Object.fromEntries(
   CROCK32.split("").map((c, i) => [c, i])
 );
 
+// Maximum value representable by a ULID's 48-bit timestamp.
+const MAX_ULID_TIMESTAMP = 0xffffffffffff; // 281474976710655
+
+const ULID_RE = new RegExp(`^[${CROCK32}]{26}$`, "i");
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 type CryptoLike = {
   getRandomValues: (array: Uint8Array) => Uint8Array;
   randomUUID?: () => string;
 };
 
-function decodeUlidTimestamp(u: string) {
-  const t = u.slice(0, 10).toUpperCase();
+/**
+ * Decode the 48-bit timestamp embedded in a ULID. Validates length, character
+ * set (Crockford base32, case-insensitive) and that the decoded timestamp does
+ * not overflow 48 bits — instead of silently reporting a wrong result.
+ */
+function decodeUlidTimestamp(u: string): number {
+  const value = u.trim();
+  if (value.length !== 26) {
+    throw new Error("A ULID must be exactly 26 characters.");
+  }
+  if (!ULID_RE.test(value)) {
+    throw new Error("ULID contains characters outside Crockford base32.");
+  }
+  const t = value.slice(0, 10).toUpperCase();
   let ms = 0;
   for (const ch of t) {
     const v = CROCK32_MAP[ch];
     if (v === undefined) throw new Error(`Invalid ULID char: ${ch}`);
     ms = ms * 32 + v;
   }
+  if (ms > MAX_ULID_TIMESTAMP) {
+    throw new Error("ULID timestamp overflows 48 bits.");
+  }
   return ms; // milliseconds since epoch
 }
 
 function randomUUIDv4() {
-  const c = (globalThis as any).crypto as CryptoLike | undefined;
-  if (c && "randomUUID" in c) return c.randomUUID!();
+  const c = (globalThis as { crypto?: CryptoLike }).crypto;
+  if (c && "randomUUID" in c && typeof c.randomUUID === "function")
+    return c.randomUUID();
   if (c && "getRandomValues" in c) {
     // Fallback (RFC4122 v4) using getRandomValues
     const bytes = new Uint8Array(16);
@@ -56,6 +92,19 @@ function randomUUIDv4() {
   });
 }
 
+/** Human-readable variant from the UUID's variant nibble (RFC 4122 §4.1.1). */
+function uuidVariant(value: string): string {
+  // The variant is the high bits of the first nibble of the 4th group.
+  const nibble = parseInt(value.replace(/-/g, "").charAt(16), 16);
+  if (Number.isNaN(nibble)) return "Unknown";
+  if ((nibble & 0b1000) === 0) return "NCS (reserved)";
+  if ((nibble & 0b1100) === 0b1000) return "RFC 4122";
+  if ((nibble & 0b1110) === 0b1100) return "Microsoft (reserved)";
+  return "Future (reserved)";
+}
+
+type GenKind = "uuid" | "ulid";
+
 export default function IDsCronTool() {
   const [tab, setTab] = useState<"ids" | "cron">("ids");
 
@@ -63,10 +112,32 @@ export default function IDsCronTool() {
   const [uuid, setUuid] = useState<string>("");
   const [ulidValue, setUlidValue] = useState<string>("");
 
+  // Bulk generation state
+  const [bulkKind, setBulkKind] = useState<GenKind>("uuid");
+  const [bulkCount, setBulkCount] = useState<number>(10);
+  const [bulkOutput, setBulkOutput] = useState<string>("");
+  // The kind actually generated (so the result title doesn't relabel when the
+  // dropdown changes before regenerating).
+  const [bulkGenKind, setBulkGenKind] = useState<GenKind>("uuid");
+
   useEffect(() => {
     setUuid(randomUUIDv4());
     setUlidValue(ulid());
   }, []);
+
+  const uuidInfo = useMemo(() => {
+    const value = uuid.trim();
+    if (!value) return { ok: false as const, error: "Enter a UUID to inspect." };
+    if (!UUID_RE.test(value)) {
+      return { ok: false as const, error: "Not a valid UUID (expected 8-4-4-4-12 hex)." };
+    }
+    const version = parseInt(value.replace(/-/g, "").charAt(12), 16);
+    return {
+      ok: true as const,
+      version: Number.isNaN(version) ? "?" : String(version),
+      variant: uuidVariant(value),
+    };
+  }, [uuid]);
 
   const ulidInfo = useMemo(() => {
     try {
@@ -76,27 +147,58 @@ export default function IDsCronTool() {
       const tsPart = ulidValue.slice(0, 10);
       const randPart = ulidValue.slice(10);
       return { ok: true as const, ms, iso: date.toISOString(), tsPart, randPart };
-    } catch (e: any) {
-      return { ok: false as const, error: e?.message || "Invalid ULID" };
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "Invalid ULID";
+      return { ok: false as const, error: message };
     }
   }, [ulidValue]);
+
+  function generateBulk() {
+    const n = Math.max(1, Math.min(50, Math.floor(bulkCount) || 1));
+    const lines: string[] = [];
+    for (let i = 0; i < n; i++) {
+      lines.push(bulkKind === "uuid" ? randomUUIDv4() : ulid());
+    }
+    setBulkOutput(lines.join("\n"));
+    setBulkGenKind(bulkKind);
+  }
 
   // Cron tab state
   const [cron, setCron] = useState<string>("*/5 * * * *");
   const cronDesc = useMemo(() => {
     try {
       return { ok: true as const, text: cronstrue.toString(cron, { use24HourTimeFormat: true }) };
-    } catch (e: any) {
-      return { ok: false as const, error: e?.message || "Invalid cron" };
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "Invalid cron";
+      return { ok: false as const, error: message };
     }
   }, [cron]);
 
-  async function copy(text: string) {
+  const cronRuns = useMemo(() => {
     try {
-      await navigator.clipboard.writeText(text);
-      // Optional: toast could be added later
-    } catch {}
-  }
+      // Interpret the schedule in UTC so the listed times match both the "(UTC)"
+      // label and the timezone-agnostic description above.
+      const it = CronExpressionParser.parse(cron, { tz: "UTC" });
+      const out: string[] = [];
+      for (let i = 0; i < 5; i++) {
+        out.push(it.next().toDate().toISOString().replace(".000Z", "Z"));
+      }
+      return { ok: true as const, runs: out };
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "Invalid cron";
+      return { ok: false as const, error: message };
+    }
+  }, [cron]);
+
+  // The description (cronstrue) and the schedule (cron-parser) are independent
+  // parsers; treat the expression as valid only when BOTH agree so the two
+  // panels never contradict each other.
+  const cronValid = cronDesc.ok && cronRuns.ok;
+  const cronError = !cronRuns.ok
+    ? (cronRuns as { error: string }).error
+    : !cronDesc.ok
+    ? (cronDesc as { error: string }).error
+    : null;
 
   const presets = [
     { label: "Every minute", expr: "* * * * *" },
@@ -105,143 +207,217 @@ export default function IDsCronTool() {
     { label: "Daily at 09:00", expr: "0 9 * * *" },
     { label: "Mon 09:00", expr: "0 9 * * 1" },
   ];
+  const activePreset = presets.find((p) => p.expr === cron.trim());
 
   return (
-    <div
-        className="bg-rp-surface/80 rounded-3xl shadow-2xl px-6 md:px-8 py-8 flex flex-col gap-6 border border-rp-highlight-high"
-        style={{ backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)" }}
-      >
-        <div className="flex flex-col gap-2">
-          <h2 className="text-2xl font-bold text-rp-iris drop-shadow">Identifier workspace</h2>
-          <p className="text-sm text-rp-subtle max-w-3xl">Generate UUIDv4 and ULID identifiers, then humanize cron expressions using cronstrue. All operations run locally.</p>
-        </div>
-
-        {/* Tabs */}
-        <div className="flex flex-wrap gap-2">
-          {[
-            { k: "ids", label: "IDs" },
-            { k: "cron", label: "Cron" },
-          ].map((t) => (
-            <button
-              key={t.k}
-              className={`px-4 py-2 rounded-xl border transition-colors ${
-                tab === (t.k as any)
-                  ? "border-rp-iris text-rp-text bg-rp-overlay/80"
-                  : "border-rp-highlight-high text-rp-subtle bg-rp-surface/40"
-              }`}
-              onClick={() => setTab(t.k as any)}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
+    <ToolShell eyebrow="IDs & Scheduling">
+      <Tabs value={tab} onValueChange={(v) => setTab(v as "ids" | "cron")}>
+        <TabsList>
+          <TabsTrigger value="ids">IDs</TabsTrigger>
+          <TabsTrigger value="cron">Cron</TabsTrigger>
+        </TabsList>
 
         {/* IDs tab */}
-        {tab === "ids" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* UUID */}
-            <div>
-              <h2 className="text-rp-iris font-semibold mb-2">UUID v4</h2>
-              <div className="flex items-center gap-2">
-                <input
-                  className="flex-1 rounded-xl px-4 py-2 bg-rp-surface/70 border border-rp-highlight-high text-rp-text"
-                  value={uuid}
-                  onChange={(e) => setUuid(e.target.value)}
-                />
-                <button
-                  className="px-3 py-2 rounded-xl border border-rp-iris text-rp-text bg-rp-overlay/80"
-                  onClick={() => setUuid(randomUUIDv4())}
+        <TabsContent value="ids">
+          <div className="flex flex-col gap-6">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              {/* UUID */}
+              <div className="flex flex-col gap-3">
+                <Field
+                  label="UUID v4"
+                  htmlFor="uuid-input"
+                  error={uuidInfo.ok ? undefined : uuidInfo.error}
+                  action={
+                    <>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setUuid(randomUUIDv4())}
+                      >
+                        <RefreshCw className="size-4" aria-hidden="true" /> New
+                      </Button>
+                      <CopyButton value={() => uuid} disabled={!uuid} />
+                    </>
+                  }
                 >
-                  New
-                </button>
-                <button
-                  className="px-3 py-2 rounded-xl border border-rp-iris text-rp-text bg-rp-overlay/80"
-                  onClick={() => uuid && copy(uuid)}
-                >
-                  Copy
-                </button>
-              </div>
-            </div>
-
-            {/* ULID */}
-            <div>
-              <h2 className="text-rp-iris font-semibold mb-2">ULID</h2>
-              <div className="flex items-center gap-2">
-                <input
-                  className="flex-1 rounded-xl px-4 py-2 bg-rp-surface/70 border border-rp-highlight-high text-rp-text"
-                  value={ulidValue}
-                  onChange={(e) => setUlidValue(e.target.value.trim())}
-                  placeholder="01HZX..."
-                />
-                <button
-                  className="px-3 py-2 rounded-xl border border-rp-iris text-rp-text bg-rp-overlay/80"
-                  onClick={() => setUlidValue(ulid())}
-                >
-                  New
-                </button>
-                <button
-                  className="px-3 py-2 rounded-xl border border-rp-iris text-rp-text bg-rp-overlay/80"
-                  onClick={() => ulidValue && copy(ulidValue)}
-                >
-                  Copy
-                </button>
-              </div>
-              <div className="mt-3 rounded-xl border border-rp-highlight-high p-3 bg-rp-overlay/60 text-sm">
-                {ulidInfo.ok ? (
-                  <div className="space-y-1 text-rp-text">
-                    <div>
-                      <span className="text-rp-subtle">Timestamp part</span>: <span className="font-mono">{ulidInfo.tsPart}</span>
-                    </div>
-                    <div>
-                      <span className="text-rp-subtle">Random part</span>: <span className="font-mono break-all">{ulidInfo.randPart}</span>
-                    </div>
-                    <div>
-                      <span className="text-rp-subtle">Epoch ms</span>: <span className="font-mono">{ulidInfo.ms}</span>
-                    </div>
-                    <div>
-                      <span className="text-rp-subtle">ISO time</span>: <span className="font-mono">{ulidInfo.iso}</span>
-                    </div>
+                  <Input
+                    id="uuid-input"
+                    className="font-mono"
+                    value={uuid}
+                    onChange={(e) => setUuid(e.target.value)}
+                    aria-invalid={!uuidInfo.ok}
+                    spellCheck={false}
+                  />
+                </Field>
+                {uuidInfo.ok ? (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge variant="outline">Version {uuidInfo.version}</Badge>
+                    <Badge variant="outline">{uuidInfo.variant}</Badge>
                   </div>
+                ) : null}
+              </div>
+
+              {/* ULID */}
+              <div className="flex flex-col gap-3">
+                <Field
+                  label="ULID"
+                  htmlFor="ulid-input"
+                  action={
+                    <>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setUlidValue(ulid())}
+                      >
+                        <RefreshCw className="size-4" aria-hidden="true" /> New
+                      </Button>
+                      <CopyButton value={() => ulidValue} disabled={!ulidValue} />
+                    </>
+                  }
+                >
+                  <Input
+                    id="ulid-input"
+                    className="font-mono"
+                    value={ulidValue}
+                    onChange={(e) => setUlidValue(e.target.value.trim())}
+                    placeholder="01HZX..."
+                    aria-invalid={!ulidInfo.ok}
+                    spellCheck={false}
+                  />
+                </Field>
+                {ulidInfo.ok ? (
+                  <ResultPanel title="ULID parts">
+                    <dl className="space-y-1 text-sm">
+                      <div className="flex flex-wrap gap-2">
+                        <dt className="text-muted-foreground">Timestamp part</dt>
+                        <dd className="font-mono">{ulidInfo.tsPart}</dd>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <dt className="text-muted-foreground">Random part</dt>
+                        <dd className="break-all font-mono">{ulidInfo.randPart}</dd>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <dt className="text-muted-foreground">Epoch ms</dt>
+                        <dd className="font-mono">{ulidInfo.ms}</dd>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <dt className="text-muted-foreground">ISO time</dt>
+                        <dd className="font-mono">{ulidInfo.iso}</dd>
+                      </div>
+                    </dl>
+                  </ResultPanel>
                 ) : (
-                  <div className="text-rp-love">{ulidInfo.error}</div>
+                  <Alert variant="error">{ulidInfo.error}</Alert>
                 )}
               </div>
             </div>
+
+            {/* Bulk generation */}
+            <div className="flex flex-col gap-3 border-t-2 border-border pt-6">
+              <div className="flex flex-wrap items-end gap-3">
+                <Field label="Bulk type" htmlFor="bulk-kind" className="w-40">
+                  <select
+                    id="bulk-kind"
+                    className="flex h-9 w-full rounded-none border-2 border-input bg-background px-3 py-1 font-mono text-sm transition-colors focus-visible:border-ring focus-visible:outline-none"
+                    value={bulkKind}
+                    onChange={(e) => setBulkKind(e.target.value as GenKind)}
+                  >
+                    <option value="uuid">UUID v4</option>
+                    <option value="ulid">ULID</option>
+                  </select>
+                </Field>
+                <Field
+                  label="Count (1-50)"
+                  htmlFor="bulk-count"
+                  className="w-32"
+                >
+                  <Input
+                    id="bulk-count"
+                    type="number"
+                    min={1}
+                    max={50}
+                    className="font-mono"
+                    value={bulkCount}
+                    onChange={(e) => setBulkCount(Number(e.target.value))}
+                  />
+                </Field>
+                <Button type="button" onClick={generateBulk}>
+                  Generate
+                </Button>
+              </div>
+              {bulkOutput ? (
+                <ResultPanel
+                  title={`${bulkOutput.split("\n").length} ${bulkGenKind.toUpperCase()}`}
+                  copyValue={() => bulkOutput}
+                  scroll
+                  mono
+                >
+                  {bulkOutput}
+                </ResultPanel>
+              ) : null}
+            </div>
           </div>
-        )}
+        </TabsContent>
 
         {/* Cron tab */}
-        {tab === "cron" && (
-          <div className="w-full grid grid-cols-1 gap-4">
-            <div>
-              <h2 className="text-rp-iris font-semibold mb-2">Cron Expression</h2>
-              <input
-                className="w-full rounded-xl px-4 py-2 bg-rp-surface/70 border border-rp-highlight-high text-rp-text"
+        <TabsContent value="cron">
+          <div className="flex w-full flex-col gap-4">
+            <Field
+              label="Cron expression"
+              htmlFor="cron-input"
+              error={cronError ?? undefined}
+              action={<CopyButton value={() => cron} disabled={!cron} />}
+            >
+              <Input
+                id="cron-input"
+                className="font-mono"
                 value={cron}
                 onChange={(e) => setCron(e.target.value)}
                 placeholder="*/5 * * * *"
+                aria-invalid={!cronValid}
+                spellCheck={false}
               />
-              <div className="mt-2 flex flex-wrap gap-2">
+            </Field>
+
+            <div className="flex flex-col gap-1.5">
+              <Label>Presets</Label>
+              <div className="flex flex-wrap gap-2">
                 {presets.map((p) => (
-                  <button
+                  <Button
                     key={p.expr}
-                    className="px-3 py-1.5 rounded-xl border border-rp-highlight-high text-rp-text bg-rp-overlay/60 text-sm"
+                    type="button"
+                    size="sm"
+                    variant={activePreset?.expr === p.expr ? "default" : "outline"}
+                    aria-pressed={activePreset?.expr === p.expr}
                     onClick={() => setCron(p.expr)}
                   >
                     {p.label}
-                  </button>
+                  </Button>
                 ))}
               </div>
             </div>
-            <div className="rounded-xl border border-rp-highlight-high bg-rp-overlay/70 p-3">
-              {cronDesc.ok ? (
-                <div className="text-rp-text">{cronDesc.text}</div>
-              ) : (
-                <div className="text-rp-love">{cronDesc.error}</div>
-              )}
-            </div>
+
+            {cronValid && cronDesc.ok && cronRuns.ok ? (
+              <>
+                <ResultPanel title="Description">
+                  <p className="text-sm">{cronDesc.text}</p>
+                </ResultPanel>
+                <ResultPanel
+                  title="Next 5 runs (UTC)"
+                  copyValue={() => cronRuns.runs.join("\n")}
+                  mono
+                >
+                  {cronRuns.runs.join("\n")}
+                </ResultPanel>
+              </>
+            ) : (
+              <Alert variant="error">{cronError ?? "Invalid cron expression"}</Alert>
+            )}
           </div>
-        )}
-      </div>
+        </TabsContent>
+      </Tabs>
+    </ToolShell>
   );
 }

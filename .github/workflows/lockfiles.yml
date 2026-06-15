@@ -1,0 +1,35 @@
+name: Lockfiles in sync
+
+# This repo tracks BOTH package-lock.json (used by the Cloudflare Pages build)
+# and bun.lock (used for local dev). They can silently drift apart — e.g.
+# `bun add` updates only bun.lock, leaving the npm lock stale and breaking the
+# deploy. This guard fails the PR if either lockfile is out of sync with
+# package.json, so drift is caught before it reaches Cloudflare.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  in-sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node (matches the deploy via .nvmrc)
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      # npm ci fails if package-lock.json is out of sync with package.json.
+      # This is effectively what the Cloudflare Pages build does.
+      - name: package-lock.json is in sync
+        run: npm ci --no-audit --no-fund
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+
+      # --frozen-lockfile fails if bun.lock is out of sync with package.json.
+      - name: bun.lock is in sync
+        run: bun install --frozen-lockfile

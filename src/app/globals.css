@@ -3,22 +3,11 @@
 @tailwind utilities;
 
 /* ============================================
-   PREMIUM POLISH - Utility-Focused Enhancements
+   BRUTALIST / INDUSTRIAL FOUNDATION
+   Square corners, hard borders, hard offset shadows,
+   monospace data, near-zero motion. Applied via tokens
+   so all 7 themes inherit the same structural language.
    ============================================ */
-
-/* --- Noise Texture Overlay --- */
-/* Very subtle grain for premium matte finish */
-.noise-overlay::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 80;
-  opacity: 0.015;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-  background-repeat: repeat;
-  mix-blend-mode: overlay;
-}
 
 /* --- Custom Scrollbar (themed to palette) --- */
 ::-webkit-scrollbar {
@@ -30,7 +19,7 @@
 }
 ::-webkit-scrollbar-thumb {
   background: var(--rp-highlight-med);
-  border-radius: 4px;
+  border-radius: 0;
   border: 2px solid transparent;
   background-clip: content-box;
 }
@@ -56,107 +45,50 @@ body, .bg-background, .bg-card, .bg-popover {
   transition: color 0.3s ease;
 }
 
-/* --- Staggered Card Animations --- */
-@keyframes card-fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/* --- Brutalist building blocks --- */
+/* A flat, square, hard-bordered surface. Elevation comes from a hard
+   offset shadow on hover/active, never from blur. */
+.brutal-box {
+  border: var(--bw-2) solid hsl(var(--border));
+  border-radius: var(--radius);
+  background: hsl(var(--card));
+  box-shadow: none;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease, transform 0.12s ease;
+}
+.brutal-interactive:hover {
+  border-color: hsl(var(--primary));
+  box-shadow: var(--shadow-hard);
+  transform: translate(-2px, -2px);
+}
+.brutal-interactive:active {
+  box-shadow: var(--shadow-hard-sm);
+  transform: translate(-1px, -1px);
 }
 
-.card-stagger {
-  animation: card-fade-in 0.4s ease-out both;
-}
-.card-stagger:nth-child(1) { animation-delay: 0ms; }
-.card-stagger:nth-child(2) { animation-delay: 50ms; }
-.card-stagger:nth-child(3) { animation-delay: 100ms; }
-.card-stagger:nth-child(4) { animation-delay: 150ms; }
-.card-stagger:nth-child(5) { animation-delay: 200ms; }
-.card-stagger:nth-child(6) { animation-delay: 250ms; }
-.card-stagger:nth-child(7) { animation-delay: 300ms; }
-.card-stagger:nth-child(8) { animation-delay: 350ms; }
-
-/* --- Premium Card Hover States --- */
-.premium-card {
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-  will-change: transform;
-}
-.premium-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 30px -12px rgba(0, 0, 0, 0.3);
+/* Uppercase, tracked, monospace label — the brutalist section/field marker. */
+.brutal-label {
+  font-family: theme('fontFamily.mono');
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: hsl(var(--muted-foreground));
 }
 
-/* --- Spotlight Effect Variables --- */
-.spotlight-card {
-  --spotlight-x: 50%;
-  --spotlight-y: 50%;
-  --spotlight-opacity: 0;
-  position: relative;
-  overflow: visible;
-}
-
-.spotlight-card::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  border-radius: inherit;
-  opacity: var(--spotlight-opacity);
-  background: radial-gradient(
-    400px circle at var(--spotlight-x) var(--spotlight-y),
-    hsla(var(--primary) / 0.12),
-    transparent 60%
-  );
-  transition: opacity 0.3s ease;
-}
-.spotlight-card:hover::after {
-  --spotlight-opacity: 1;
-}
-
-.spotlight-card.premium-card:hover {
-  transform: none;
+/* Optional static 1px structural grid (no animation, no glow). */
+.brutal-grid {
+  background-image:
+    linear-gradient(90deg, color-mix(in srgb, hsl(var(--foreground)) 5%, transparent) 1px, transparent 1px),
+    linear-gradient(0deg, color-mix(in srgb, hsl(var(--foreground)) 5%, transparent) 1px, transparent 1px);
+  background-size: 2rem 2rem;
 }
 
 /* --- Button Press Effect --- */
 .btn-press {
-  transition: transform 0.1s ease;
+  transition: transform 0.08s ease;
 }
 .btn-press:active {
-  transform: scale(0.98) translateY(1px);
-}
-
-/* --- Gradient Text Utility --- */
-.gradient-text {
-  background: linear-gradient(135deg, var(--rp-iris) 0%, var(--rp-foam) 50%, var(--rp-rose) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.hero-panel {
-  position: relative;
-  overflow: hidden;
-  background:
-    radial-gradient(circle at 8% 0%, var(--hero-glow-start), transparent 34%),
-    radial-gradient(circle at 92% 0%, var(--hero-glow-end), transparent 32%),
-    linear-gradient(135deg, var(--hero-panel-start), var(--hero-panel-end));
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, var(--rp-text) 8%, transparent),
-    0 24px 80px color-mix(in srgb, var(--rp-base) 62%, transparent);
-}
-
-.hero-title {
-  display: inline-block;
-  color: var(--hero-title-solid);
-  background: linear-gradient(110deg, var(--hero-title-start), var(--hero-title-mid), var(--hero-title-end));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  text-shadow: 0 14px 34px var(--hero-title-shadow);
+  transform: translateY(1px);
 }
 
 .brand-mark {
@@ -194,302 +126,10 @@ body, .bg-background, .bg-card, .bg-popover {
   fill: var(--brand-mark-dot);
 }
 
-.home-shell {
-  isolation: isolate;
-  position: relative;
-}
-
-.home-shell > section {
-  position: relative;
-  z-index: 1;
-}
-
-.home-hero {
-  position: relative;
-}
-
-.home-shell::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background:
-    linear-gradient(90deg, color-mix(in srgb, hsl(var(--primary)) 9%, transparent) 1px, transparent 1px),
-    linear-gradient(0deg, color-mix(in srgb, hsl(var(--primary)) 7%, transparent) 1px, transparent 1px),
-    linear-gradient(90deg, color-mix(in srgb, var(--rp-text) 4%, transparent) 1px, transparent 1px),
-    linear-gradient(0deg, color-mix(in srgb, var(--rp-text) 4%, transparent) 1px, transparent 1px);
-  background-position:
-    0 0,
-    0 0,
-    1.25rem 1.25rem,
-    1.25rem 1.25rem;
-  background-size:
-    7rem 7rem,
-    7rem 7rem,
-    1.75rem 1.75rem,
-    1.75rem 1.75rem;
-  mask-image: radial-gradient(circle at 50% 12%, black 0%, transparent 72%);
-  opacity: 0.42;
-  animation: home-grid-drift 18s linear infinite;
-}
-
-.home-shell::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background:
-    radial-gradient(circle at 24% 12%, color-mix(in srgb, hsl(var(--primary)) 13%, transparent), transparent 28rem),
-    radial-gradient(circle at 78% 28%, color-mix(in srgb, var(--rp-foam) 9%, transparent), transparent 26rem);
-  opacity: 0.8;
-}
-
-@keyframes home-grid-drift {
-  from {
-    background-position:
-      0 0,
-      0 0,
-      1.25rem 1.25rem,
-      1.25rem 1.25rem;
-  }
-  to {
-    background-position:
-      7rem 7rem,
-      7rem 7rem,
-      3rem 3rem,
-      3rem 3rem;
-  }
-}
-
-.home-hero::before {
-  content: '';
-  position: absolute;
-  inset: 2rem 0 auto;
-  z-index: -1;
-  height: 36rem;
-  border-radius: 4rem;
-  background:
-    radial-gradient(circle at 20% 20%, color-mix(in srgb, var(--rp-foam) 18%, transparent), transparent 34%),
-    radial-gradient(circle at 78% 18%, color-mix(in srgb, var(--rp-gold) 18%, transparent), transparent 34%),
-    linear-gradient(135deg, color-mix(in srgb, var(--rp-surface) 80%, transparent), transparent);
-  opacity: 0.88;
-  filter: blur(0.2px);
-}
-
-.home-kicker {
-  width: fit-content;
-  border-left: 3px solid hsl(var(--primary));
-  padding-left: 0.75rem;
-  color: hsl(var(--primary));
-  font-size: 0.78rem;
-  font-weight: 800;
-  line-height: 1;
-  text-transform: none;
-}
-
-.home-display {
-  letter-spacing: 0;
-}
-
-.home-primary-cta {
-  background: hsl(var(--primary));
-  color: hsl(var(--primary-foreground));
-  box-shadow: 0 20px 50px color-mix(in srgb, var(--rp-base) 44%, transparent);
-}
-
-.home-primary-cta:hover {
-  background: color-mix(in srgb, hsl(var(--primary)) 88%, hsl(var(--foreground)) 12%);
-}
-
-.home-secondary-cta {
-  border-color: color-mix(in srgb, var(--rp-text) 16%, transparent);
-  background: color-mix(in srgb, var(--rp-surface) 60%, transparent);
-  color: hsl(var(--foreground));
-}
-
-.home-secondary-cta:hover {
-  border-color: hsl(var(--primary));
-  background: color-mix(in srgb, hsl(var(--primary)) 14%, transparent);
-  color: hsl(var(--foreground));
-}
-
-.home-console {
-  transform: translateZ(0);
-}
-
-.home-console::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(135deg, transparent, color-mix(in srgb, var(--rp-text) 8%, transparent)),
-    radial-gradient(circle at 30% 20%, color-mix(in srgb, hsl(var(--primary)) 24%, transparent), transparent 36%);
-  opacity: 0.85;
-}
-
-.home-console-media {
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(120deg, color-mix(in srgb, var(--rp-base) 70%, transparent), color-mix(in srgb, hsl(var(--primary)) 12%, transparent)),
-    repeating-linear-gradient(90deg, color-mix(in srgb, var(--rp-text) 8%, transparent) 0 1px, transparent 1px 4.25rem),
-    repeating-linear-gradient(0deg, color-mix(in srgb, var(--rp-text) 6%, transparent) 0 1px, transparent 1px 4.25rem);
-  opacity: 0.34;
-  transition: opacity 700ms ease;
-}
-
-.home-console:hover .home-console-media {
-  opacity: 0.46;
-}
-
-.home-command-row {
-  display: flex;
-  min-height: 4.75rem;
-  align-items: center;
-  gap: 0.9rem;
-  border-radius: 1rem;
-  border: 1px solid color-mix(in srgb, var(--rp-text) 10%, transparent);
-  background: color-mix(in srgb, var(--rp-surface) 64%, transparent);
-  padding: 0.85rem;
-  text-decoration: none;
-  transition: transform 220ms ease, border-color 220ms ease, background 220ms ease;
-}
-
-.home-command-row:hover,
-.home-command-row:focus-visible {
-  border-color: color-mix(in srgb, hsl(var(--primary)) 54%, transparent);
-  background: color-mix(in srgb, hsl(var(--primary)) 10%, var(--rp-surface));
-  transform: translateY(-2px);
-  outline: none;
-}
-
-.home-command-row:focus-visible,
-.home-bento-card:focus-visible,
-.workflow-panel:focus-visible {
-  box-shadow: 0 0 0 3px color-mix(in srgb, hsl(var(--primary)) 34%, transparent);
-}
-
-.home-mini-panel {
-  min-height: 6rem;
-  border-radius: 1.1rem;
-  border: 1px solid color-mix(in srgb, var(--rp-text) 10%, transparent);
-  background:
-    linear-gradient(135deg, color-mix(in srgb, hsl(var(--primary)) 14%, transparent), transparent),
-    color-mix(in srgb, var(--rp-surface) 58%, transparent);
-  padding: 1rem;
-}
-
-.home-mini-panel span,
-.home-mini-panel strong {
-  display: block;
-}
-
-.home-mini-panel span {
-  color: hsl(var(--muted-foreground));
-  font-size: 0.78rem;
-  font-weight: 800;
-}
-
-.home-mini-panel strong {
-  margin-top: 0.3rem;
-  color: hsl(var(--foreground));
-  font-size: 1.5rem;
-  line-height: 1;
-}
-
-.home-bento-card {
-  position: relative;
-  display: flex;
-  min-height: 18rem;
-  height: 100%;
-  overflow: hidden;
-  border-radius: 1.25rem;
-  border: 1px solid color-mix(in srgb, var(--rp-text) 10%, transparent);
-  background: color-mix(in srgb, hsl(var(--card)) 94%, hsl(var(--background)) 6%);
-  padding: 1.35rem;
-  text-decoration: none;
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, var(--rp-text) 5%, transparent),
-    0 16px 44px color-mix(in srgb, var(--rp-base) 28%, transparent);
-  transform: translateZ(0);
-  transition: transform 260ms ease, border-color 260ms ease, background 260ms ease, box-shadow 260ms ease;
-}
-
-.home-bento-card:hover {
-  border-color: color-mix(in srgb, hsl(var(--primary)) 48%, transparent);
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, hsl(var(--primary)) 18%, transparent),
-    0 24px 72px color-mix(in srgb, var(--rp-base) 42%, transparent);
-  transform: translateY(-3px);
-}
-
-.workflow-accordion {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1.5rem;
-}
-
-.workflow-panel {
-  position: relative;
-  min-height: 26rem;
-  overflow: hidden;
-  border-radius: 1.75rem;
-  border: 1px solid color-mix(in srgb, var(--rp-text) 12%, transparent);
-  background: color-mix(in srgb, hsl(var(--card)) 94%, hsl(var(--background)) 6%);
-  padding: 1.5rem;
-  text-decoration: none;
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, var(--rp-text) 5%, transparent),
-    0 18px 48px color-mix(in srgb, var(--rp-base) 30%, transparent);
-  transform: translateZ(0);
-  transition: flex 500ms ease, border-color 260ms ease, transform 260ms ease, box-shadow 260ms ease;
-}
-
-.workflow-panel:hover {
-  border-color: color-mix(in srgb, hsl(var(--primary)) 54%, transparent);
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, hsl(var(--primary)) 18%, transparent),
-    0 26px 76px color-mix(in srgb, var(--rp-base) 44%, transparent);
-  transform: translateY(-2px);
-}
-
-.home-action-panel {
-  position: relative;
-  overflow: hidden;
-  background:
-    radial-gradient(circle at 18% 18%, color-mix(in srgb, hsl(var(--primary)) 22%, transparent), transparent 34%),
-    radial-gradient(circle at 82% 16%, color-mix(in srgb, var(--rp-gold) 18%, transparent), transparent 34%),
-    color-mix(in srgb, hsl(var(--card)) 86%, transparent);
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, var(--rp-text) 12%, transparent),
-    0 24px 80px color-mix(in srgb, var(--rp-base) 54%, transparent);
-}
-
+/* Flat, square footer surface (brutalist). */
 .footer-panel {
-  background:
-    radial-gradient(circle at 8% 12%, color-mix(in srgb, hsl(var(--primary)) 18%, transparent), transparent 28%),
-    color-mix(in srgb, hsl(var(--card)) 78%, transparent);
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, var(--rp-text) 10%, transparent),
-    0 20px 60px color-mix(in srgb, var(--rp-base) 42%, transparent);
-}
-
-@media (min-width: 1024px) {
-  .workflow-accordion {
-    display: flex;
-    min-height: 30rem;
-  }
-
-  .workflow-panel {
-    flex: 1;
-  }
-
-  .workflow-panel:hover,
-  .workflow-panel:focus-visible {
-    flex: 1.42;
-  }
+  background: hsl(var(--card));
+  border-top: var(--bw-2) solid hsl(var(--border));
 }
 
 /* --- Reduced Motion --- */
@@ -497,35 +137,15 @@ body, .bg-background, .bg-card, .bg-popover {
   html {
     scroll-behavior: auto;
   }
-  .card-stagger {
-    animation: none;
-    opacity: 1;
-    transform: none;
-  }
-  .premium-card:hover {
-    transform: none;
-  }
   html, body, .bg-background, .bg-card, .bg-popover,
   .text-foreground, .text-muted-foreground, .text-primary {
     transition: none;
   }
-  .spotlight-card::after {
-    display: none;
-  }
-  .home-console-media,
-  .workflow-panel,
-  .home-command-row,
-  .home-bento-card,
-  .home-shell::before {
-    animation: none;
-    transition: none;
+  .brutal-interactive:hover,
+  .brutal-interactive:active {
     transform: none;
   }
 }
-
-/* ============================================
-   END PREMIUM POLISH
-   ============================================ */
 
 @keyframes nav-progress {
   0% {
@@ -687,6 +307,7 @@ body, .bg-background, .bg-card, .bg-popover {
   --rp-rose: #d7827e;
   --rp-pine: #286983;
   --rp-foam: #56949f;
+  --rp-iris: #907aa9;
   --rp-highlight-low: #f4ede8;
   --rp-highlight-med: #dfdad9;
   --rp-highlight-high: #cecacd;
@@ -938,13 +559,25 @@ body, .bg-background, .bg-card, .bg-popover {
   --brand-mark-ring: color-mix(in srgb, var(--rp-pine) 26%, transparent);
 }
 
+/* Brutalist structural ink: --rp-text is always the high-contrast
+   foreground (near-white on dark themes, near-black on light), so it
+   reads as a strong hard offset shadow on every theme. Set once for
+   all themed roots; the hard-shadow tokens below reference it. */
+:root[data-theme] {
+  --brutal-ink: var(--rp-text);
+  --shadow-hard: 4px 4px 0 0 var(--brutal-ink);
+  --shadow-hard-sm: 2px 2px 0 0 var(--brutal-ink);
+  --shadow-hard-lg: 6px 6px 0 0 var(--brutal-ink);
+}
+
 html, body {
   font-family: theme('fontFamily.sans');
 }
+/* Hard, flat, high-contrast focus signal (no soft glow). */
 :focus-visible {
-  outline: 2px solid var(--rp-iris);
-  outline-offset: 2px;
-  box-shadow: 0 0 0 4px color-mix(in oklab, var(--rp-iris) 20%, transparent);
+  outline: 3px solid var(--rp-iris);
+  outline-offset: 0;
+  box-shadow: none;
 }
 
 html {
@@ -953,84 +586,6 @@ html {
 
 body {
   color: var(--rp-text);
-}
-
-/* Keep brand marks circular without overriding their rendered size. */
-.logo-img-strict {
-  object-fit: cover !important;
-  border-radius: 50% !important;
-}
-
-/* Keep profile thumbnails circular without overriding their rendered size. */
-.profile-img-strict {
-  object-fit: cover !important;
-  border-radius: 50% !important;
-}
-
-/* --- Footer Glassmorphic Styles --- */
-.footer-glass {
-  position: relative;
-  width: 100%;
-  min-height: 320px;
-  background: none;
-  z-index: 20;
-  margin-top: 8rem;
-  display: flex;
-  flex-direction: row;
-  justify-content: space-evenly;
-  align-items: flex-end;
-  padding: 5rem 2vw;
-}
-.footer-glass::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(rgba(0,0,0,0) 5%,rgba(0,0,0,0.3) 20%,rgba(0,0,0,0.6) 30%,rgba(0,0,0,0.8) 40%,rgba(0,0,0,1) 50%,rgb(0,0,0));
-  z-index: -7;
-}
-.backdrop {
-  z-index: -5;
-  position: absolute;
-  inset: 0;
-  backdrop-filter: blur(40px);
-  -webkit-backdrop-filter: blur(40px);
-  mask-image: linear-gradient(rgba(0,0,0,0),rgba(0,0,0,0.5) 10%,rgba(0,0,0,0.8) 20%,rgba(0,0,0,1) 30%,rgb(0,0,0));
-  -webkit-mask-image: linear-gradient(rgba(0,0,0,0),rgba(0,0,0,0.5) 10%,rgba(0,0,0,0.8) 20%,rgba(0,0,0,1) 30%,rgb(0,0,0));
-}
-.col {
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: flex-start;
-  padding: 1rem 2rem;
-  width: 28%;
-}
-.col2, .col3 {
-  background-color: #121212;
-  border-radius: 1rem;
-}
-.social {
-  display: flex;
-  flex-direction: row;
-  gap: 1rem;
-}
-.link {
-  width: 2rem;
-  height: 2rem;
-  background-color: rgba(255,255,255,0.1);
-  border-radius: 0.3rem;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-@media screen and (max-width: 1000px) {
-  .footer-glass {
-    flex-direction: column;
-    padding: 5rem 10vw;
-  }
-  .col {
-    width: 100%;
-    margin-bottom: 2rem;
-  }
 }
 
 @layer base {
@@ -1059,7 +614,16 @@ body {
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
-    --radius: 0.5rem;
+    /* Brutalist structural tokens (square corners, 2px borders, hard ink).
+       Per-theme blocks above refine --brutal-ink; these are the fallbacks
+       that also apply before a data-theme is set. */
+    --radius: 0px;
+    --bw-1: 1px;
+    --bw-2: 2px;
+    --brutal-ink: 0 0% 8%;
+    --shadow-hard: 4px 4px 0 0 hsl(var(--brutal-ink));
+    --shadow-hard-sm: 2px 2px 0 0 hsl(var(--brutal-ink));
+    --shadow-hard-lg: 6px 6px 0 0 hsl(var(--brutal-ink));
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
     --sidebar-primary: 240 5.9% 10%;
@@ -1109,12 +673,12 @@ body {
   input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
   select,
   textarea {
-    @apply rounded-xl border border-rp-highlight-high bg-rp-surface text-rp-text transition-colors placeholder:text-rp-muted focus:outline-none focus:ring-2 focus:ring-rp-iris focus:border-rp-iris disabled:cursor-not-allowed disabled:opacity-60;
-    background-color: color-mix(in oklab, var(--rp-surface) 80%, transparent);
+    @apply rounded-none border-2 border-rp-highlight-high bg-rp-surface text-rp-text transition-colors placeholder:text-rp-muted focus:outline-none focus:border-rp-iris disabled:cursor-not-allowed disabled:opacity-60;
+    background-color: var(--rp-surface);
   }
 
   textarea {
-    @apply resize-y;
+    @apply resize-y font-mono;
   }
 
   select {
@@ -1141,3 +705,5 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+/* brutalist build 1781495285 */

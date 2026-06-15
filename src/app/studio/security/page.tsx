@@ -1,7 +1,16 @@
 "use client";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Eraser, Loader2 } from "lucide-react";
 
 import ToolPage from "@/components/layout/ToolPage";
+import ToolShell from "@/components/tool/ToolShell";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { CopyButton } from "@/components/ui/copy-button";
+import { Field } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Alert } from "@/components/ui/alert";
+import { ResultPanel } from "@/components/ui/result-panel";
 
 // --- Helpers: encoding/decoding ---
 const te = new TextEncoder();
@@ -178,82 +187,131 @@ function decodePart(part: string) {
   }
 }
 
+type VerifyState =
+  | { checked: false }
+  | { checked: true; ok: boolean; expected?: string; actual?: string; note?: string };
+
+// Known-valid HS256 token (jwt.io sample). It is signed with the secret below;
+// supplying both as defaults makes the first-load "Verify" succeed.
+const DEFAULT_JWT =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9." +
+  "eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ." +
+  "SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
+const DEFAULT_SECRET = "your-256-bit-secret";
+
 export default function SecurityTokens() {
   const [tab, setTab] = useState<"jwt" | "hash" | "hmac">("jwt");
 
   // JWT state
-  const [jwt, setJwt] = useState<string>(
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9." +
-      "eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkFsY2UifQ." +
-      "YvJx3K2I0tQK9qgVQ5f2I8l9KiQW2IlZKqH5OnZcBCQ"
-  );
-  const [secret, setSecret] = useState<string>("secret");
+  const [jwt, setJwt] = useState<string>(DEFAULT_JWT);
+  const [secret, setSecret] = useState<string>(DEFAULT_SECRET);
   const [publicKey, setPublicKey] = useState<string>("");
-  const [jwtError, setJwtError] = useState<string | null>(null);
-  const [header, setHeader] = useState<any>(null);
-  const [payload, setPayload] = useState<any>(null);
-  const [verifyState, setVerifyState] = useState<
-    | { checked: false }
-    | { checked: true; ok: boolean; expected?: string; actual?: string; note?: string }
-  >({ checked: false });
+  const [verifyState, setVerifyState] = useState<VerifyState>({ checked: false });
+  const [verifying, setVerifying] = useState(false);
 
-  function onDecode() {
-    setVerifyState({ checked: false });
-    setJwtError(null);
-    const parts = jwt.trim().split(".");
-    if (parts.length !== 3) {
-      setJwtError("JWT must have 3 parts (header.payload.signature)");
-      setHeader(null);
-      setPayload(null);
-      return;
+  // Auto-decode header/payload live as the token changes.
+  const decoded = useMemo(() => {
+    const trimmed = jwt.trim();
+    if (!trimmed) {
+      return { header: null as any, payload: null as any, error: null as string | null };
     }
-    const [h, p] = parts;
-    const hd = decodePart(h);
-    const pd = decodePart(p);
-    if (!hd.ok) setJwtError(`Header error: ${hd.error}`);
-    if (!pd.ok) setJwtError((prev) => (prev ? `${prev}; Payload error: ${pd.error}` : `Payload error: ${pd.error}`));
-    setHeader(hd.ok ? hd.value : null);
-    setPayload(pd.ok ? pd.value : null);
-  }
+    const parts = trimmed.split(".");
+    if (parts.length !== 3) {
+      return {
+        header: null as any,
+        payload: null as any,
+        error: "JWT must have 3 parts (header.payload.signature)",
+      };
+    }
+    const hd = decodePart(parts[0]);
+    const pd = decodePart(parts[1]);
+    let error: string | null = null;
+    if (!hd.ok) error = `Header error: ${hd.error}`;
+    if (!pd.ok) error = error ? `${error}; Payload error: ${pd.error}` : `Payload error: ${pd.error}`;
+    return {
+      header: hd.ok ? hd.value : null,
+      payload: pd.ok ? pd.value : null,
+      error,
+    };
+  }, [jwt]);
+
+  const header = decoded.header;
+  const payload = decoded.payload;
+  const jwtError = decoded.error;
+
+  // Monotonic generation counter: bumped whenever inputs change, so an async
+  // verification started against an older input can detect it is stale and bail.
+  const verifyGen = useRef(0);
+
+  // Invalidate any prior verification result whenever inputs change so a stale
+  // "Verified" can never be shown against a mutated token/secret/key.
+  useEffect(() => {
+    verifyGen.current += 1;
+    setVerifyState({ checked: false });
+  }, [jwt, secret, publicKey]);
 
   async function onVerify() {
+    const gen = verifyGen.current;
+    const apply = (next: VerifyState) => {
+      // Drop the result if inputs changed while crypto was running.
+      if (gen === verifyGen.current) setVerifyState(next);
+    };
     setVerifyState({ checked: false });
+    setVerifying(true);
     try {
       const token = jwt.trim();
       const parts = token.split(".");
       if (parts.length !== 3) {
-        setVerifyState({ checked: true, ok: false, expected: "", actual: "", note: "Malformed JWT" });
+        apply({ checked: true, ok: false, note: "Malformed JWT" });
         return;
       }
       const hd = decodePart(parts[0]);
       if (!hd.ok) {
-        setVerifyState({ checked: true, ok: false, note: "Invalid header" });
+        apply({ checked: true, ok: false, note: "Invalid header" });
         return;
       }
       const alg = (hd.value?.alg as string) || "";
       if (alg === "HS256") {
         const res = await verifyHS256(token, secret);
-        setVerifyState({ checked: true, ok: res.ok, expected: res.expected, actual: res.actual });
+        apply({ checked: true, ok: res.ok, expected: res.expected, actual: res.actual });
       } else if (alg === "RS256") {
         try {
           const res: any = await verifyRS256(token, publicKey);
-          setVerifyState({ checked: true, ok: !!res.ok, note: "Checked with RSASSA-PKCS1-v1_5/SHA-256" });
+          apply({ checked: true, ok: !!res.ok, note: "Checked with RSASSA-PKCS1-v1_5 / SHA-256" });
         } catch (e: any) {
-          setVerifyState({ checked: true, ok: false, note: e?.message || "RS256 verify failed" });
+          apply({ checked: true, ok: false, note: e?.message || "RS256 verify failed" });
         }
       } else if (alg === "ES256") {
         try {
           const res: any = await verifyES256(token, publicKey);
-          setVerifyState({ checked: true, ok: !!res.ok, note: "Checked with ECDSA P-256/SHA-256" });
+          apply({ checked: true, ok: !!res.ok, note: "Checked with ECDSA P-256 / SHA-256" });
         } catch (e: any) {
-          setVerifyState({ checked: true, ok: false, note: e?.message || "ES256 verify failed" });
+          apply({ checked: true, ok: false, note: e?.message || "ES256 verify failed" });
         }
       } else {
-        setVerifyState({ checked: true, ok: false, note: `Unsupported alg: ${alg || "(missing)"}` });
+        apply({ checked: true, ok: false, note: `Unsupported alg: ${alg || "(missing)"}` });
       }
     } catch (e: any) {
-      setVerifyState({ checked: true, ok: false, expected: "", actual: "", note: e?.message || "Verify error" });
+      apply({ checked: true, ok: false, note: e?.message || "Verify error" });
+    } finally {
+      // Always clear the loading flag — even when inputs changed mid-flight and
+      // the (stale) result was dropped — so Verify can't get stuck disabled.
+      setVerifying(false);
     }
+  }
+
+  function onResetJwt() {
+    setJwt("");
+    setSecret("");
+    setPublicKey("");
+    setVerifyState({ checked: false });
+  }
+
+  function onSampleJwt() {
+    setJwt(DEFAULT_JWT);
+    setSecret(DEFAULT_SECRET);
+    setPublicKey("");
+    setVerifyState({ checked: false });
   }
 
   // Hash state
@@ -261,9 +319,19 @@ export default function SecurityTokens() {
   const [hashAlg, setHashAlg] = useState<"SHA-256" | "SHA-512">("SHA-256");
   const [hashOut, setHashOut] = useState<{ hex: string; b64url: string } | null>(null);
 
+  // Clear stale output when the input or algorithm changes.
+  useEffect(() => {
+    setHashOut(null);
+  }, [hashInput, hashAlg]);
+
   async function onHash() {
     const res = await sha(hashAlg, hashInput);
     setHashOut(res);
+  }
+
+  function onClearHash() {
+    setHashInput("");
+    setHashOut(null);
   }
 
   // HMAC state
@@ -272,13 +340,24 @@ export default function SecurityTokens() {
   const [hmacAlg, setHmacAlg] = useState<"SHA-256" | "SHA-512">("SHA-256");
   const [hmacOut, setHmacOut] = useState<{ hex: string; b64url: string } | null>(null);
 
+  // Clear stale output when the message, secret, or algorithm changes.
+  useEffect(() => {
+    setHmacOut(null);
+  }, [hmacInput, hmacSecret, hmacAlg]);
+
   async function onHmac() {
     const res = await hmac(hmacAlg, hmacSecret, hmacInput);
     setHmacOut(res);
   }
 
+  function onClearHmac() {
+    setHmacInput("");
+    setHmacSecret("");
+    setHmacOut(null);
+  }
+
   function tsToLocal(ts?: number): string | null {
-    if (!ts || !Number.isFinite(ts)) return null;
+    if (ts == null || !Number.isFinite(ts)) return null;
     try {
       const d = new Date(ts * 1000);
       return `${d.toLocaleString()} (${d.toISOString()})`;
@@ -287,256 +366,310 @@ export default function SecurityTokens() {
     }
   }
 
-  async function copy(text: string) {
-    try {
-      await navigator.clipboard.writeText(text);
-    } catch {}
-  }
+  const taClass =
+    "flex w-full rounded-none border-2 border-input bg-background px-3 py-2 font-mono text-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-ring disabled:cursor-not-allowed disabled:opacity-50";
+  const selectClass =
+    "h-9 rounded-none border-2 border-input bg-background px-3 py-1 font-mono text-sm transition-colors focus-visible:outline-none focus-visible:border-ring";
 
   return (
     <ToolPage contentClassName="mx-auto max-w-6xl">
-      <div
-        className="rounded-3xl border border-rp-highlight-high shadow-2xl px-6 md:px-8 py-8 flex flex-col gap-6 text-rp-text"
-        style={{
-          backdropFilter: "blur(24px)",
-          WebkitBackdropFilter: "blur(24px)",
-          backgroundColor: "color-mix(in oklab, var(--rp-surface) 88%, transparent)",
-        }}
-      >
+      <div className="flex flex-col gap-6 text-foreground">
         <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-bold text-rp-iris drop-shadow">Security & Tokens</h1>
-          <p className="text-sm text-rp-subtle max-w-3xl">Decode and verify JWTs (HS256/RS256/ES256), compute hashes, and generate HMACs using Web Crypto. No secrets leave the browser.</p>
+          <h1 className="text-3xl font-bold text-foreground">Security &amp; Tokens</h1>
+          <p className="max-w-3xl text-sm text-muted-foreground">
+            Decode and verify JWTs (HS256/RS256/ES256), compute hashes, and generate HMACs using
+            Web Crypto. No secrets leave the browser.
+          </p>
         </div>
 
-        <div className="rounded-xl border border-rp-gold bg-rp-highlight-low text-rp-gold text-sm p-3">
-          All operations run locally in your browser. Do not paste production secrets or private keys.
-        </div>
+        <Alert variant="warning">
+          All operations run locally in your browser. Do not paste production secrets or private
+          keys.
+        </Alert>
 
-        {/* Tabs */}
-        <div className="flex flex-wrap gap-2">
-          {[
-            { k: "jwt", label: "JWT" },
-            { k: "hash", label: "Hash" },
-            { k: "hmac", label: "HMAC" },
-          ].map((t) => (
-            <button
-              key={t.k}
-              className={`px-4 py-2 rounded-xl border transition-colors ${
-                tab === (t.k as any)
-                  ? "border-rp-iris text-rp-text bg-rp-overlay"
-                  : "border-rp-highlight-high text-rp-subtle bg-rp-surface"
-              }`}
-              onClick={() => setTab(t.k as any)}
+        <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
+          <TabsList>
+            <TabsTrigger value="jwt">JWT</TabsTrigger>
+            <TabsTrigger value="hash">Hash</TabsTrigger>
+            <TabsTrigger value="hmac">HMAC</TabsTrigger>
+          </TabsList>
+
+          {/* JWT */}
+          <TabsContent value="jwt">
+            <ToolShell
+              eyebrow="JWT decode / verify"
+              toolbar={
+                <>
+                  <Button variant="default" size="sm" onClick={onVerify} disabled={verifying}>
+                    {verifying ? (
+                      <>
+                        <Loader2 className="size-4 animate-spin" aria-hidden="true" /> Verifying…
+                      </>
+                    ) : (
+                      "Verify"
+                    )}
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={onSampleJwt}>
+                    Sample
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={onResetJwt}>
+                    <Eraser className="size-4" aria-hidden="true" /> Reset
+                  </Button>
+                </>
+              }
             >
-              {t.label}
-            </button>
-          ))}
-        </div>
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <div className="flex flex-col gap-4">
+                  <Field
+                    label="JWT token"
+                    htmlFor="jwt-token"
+                    hint="Decoding happens live as you type; signature verification is an explicit action."
+                  >
+                    <textarea
+                      id="jwt-token"
+                      className={`${taClass} min-h-[160px] break-all`}
+                      value={jwt}
+                      onChange={(e) => setJwt(e.target.value)}
+                      placeholder="Paste JWT (header.payload.signature)"
+                    />
+                  </Field>
 
-        {/* JWT */}
-        {tab === "jwt" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <h2 className="text-rp-iris font-semibold mb-2">JWT</h2>
-	              <textarea
-	                aria-label="JWT token"
-	                className="w-full min-h-[160px] rounded-xl px-4 py-3 bg-rp-surface/70 border border-rp-highlight-high text-rp-text focus:outline-none focus:ring-2 focus:ring-rp-iris"
-                value={jwt}
-                onChange={(e) => setJwt(e.target.value)}
-                placeholder="Paste JWT (header.payload.signature)"
-              />
-              <div className="mt-2 flex gap-2 flex-wrap">
-                <button className="px-4 py-2 rounded-xl border border-rp-iris text-rp-text bg-rp-overlay/80" onClick={onDecode}>
-                  Decode
-                </button>
-                <button className="px-4 py-2 rounded-xl border border-rp-iris text-rp-text bg-rp-overlay/80" onClick={onVerify}>
-                  Verify (auto by alg)
-                </button>
-              </div>
-              <div className="mt-3 grid grid-cols-1 gap-3">
-                <div>
-                  <label className="text-rp-subtle text-sm">Secret (HS256)</label>
-	                  <input
-	                    aria-label="HS256 shared secret"
-	                    className="w-full rounded-xl px-4 py-2 bg-rp-surface/70 border border-rp-highlight-high text-rp-text focus:outline-none focus:ring-2 focus:ring-rp-iris"
-                    value={secret}
-                    onChange={(e) => setSecret(e.target.value)}
-                    placeholder="Shared secret for HS256"
-                  />
+                  <Field label="Secret (HS256)" htmlFor="jwt-secret">
+                    <Input
+                      id="jwt-secret"
+                      className="font-mono"
+                      value={secret}
+                      onChange={(e) => setSecret(e.target.value)}
+                      placeholder="Shared secret for HS256"
+                    />
+                  </Field>
+
+                  <Field
+                    label="Public key (RS256 / ES256)"
+                    htmlFor="jwt-pubkey"
+                    hint="SPKI PEM (-----BEGIN PUBLIC KEY-----) or JWK JSON (kty, n, e / crv, x, y)."
+                  >
+                    <textarea
+                      id="jwt-pubkey"
+                      className={`${taClass} min-h-[120px] break-all`}
+                      value={publicKey}
+                      onChange={(e) => setPublicKey(e.target.value)}
+                      placeholder="-----BEGIN PUBLIC KEY-----... or JWK JSON"
+                    />
+                  </Field>
+
+                  {jwtError ? <Alert variant="error">{jwtError}</Alert> : null}
+
+                  {verifyState.checked ? (
+                    verifyState.ok ? (
+                      <Alert variant="success">
+                        <span className="font-semibold">Verified</span>
+                        {verifyState.note ? (
+                          <div className="mt-1 text-xs opacity-90">{verifyState.note}</div>
+                        ) : null}
+                      </Alert>
+                    ) : (
+                      <Alert variant="error">
+                        <span className="font-semibold">Invalid signature</span>
+                        {/* expected/actual only exist for HS256 */}
+                        {verifyState.expected != null && verifyState.actual != null ? (
+                          <div className="mt-1 break-all font-mono text-xs">
+                            expected: {verifyState.expected}
+                            <br />
+                            actual: {verifyState.actual}
+                          </div>
+                        ) : null}
+                        {verifyState.note ? (
+                          <div className="mt-1 text-xs opacity-90">{verifyState.note}</div>
+                        ) : null}
+                      </Alert>
+                    )
+                  ) : null}
                 </div>
-                <div>
-                  <label className="text-rp-subtle text-sm">Public Key (PEM SPKI or JWK JSON) for RS256/ES256</label>
-	                  <textarea
-	                    aria-label="RS256 or ES256 public key"
-	                    className="w-full min-h-[120px] rounded-xl px-4 py-2 bg-rp-surface/70 border border-rp-highlight-high text-rp-text focus:outline-none focus:ring-2 focus:ring-rp-iris"
-                    value={publicKey}
-                    onChange={(e) => setPublicKey(e.target.value)}
-                    placeholder="-----BEGIN PUBLIC KEY-----... or JWK JSON (kty, n, e / crv, x, y)"
-                  />
-                </div>
-              </div>
-              {jwtError && <div className="mt-2 text-rp-love text-sm">{jwtError}</div>}
-              {"checked" in verifyState && verifyState.checked && (
-                <div className={`mt-3 rounded-xl border p-3 bg-rp-overlay/70 ${verifyState.ok ? "border-rp-foam" : "border-rp-love"}`}>
-                  <div className={verifyState.ok ? "text-rp-foam" : "text-rp-love"}>
-                    {verifyState.ok ? "Signature Verified OK" : "Invalid Signature"}
-                  </div>
-                  {!verifyState.ok && (
-                    <div className="text-xs text-rp-muted mt-1 break-all">
-                      expected: {verifyState.expected}
-                      <br />
-                      actual: {verifyState.actual}
+
+                <div className="flex flex-col gap-4">
+                  <ResultPanel
+                    title="Header"
+                    copyValue={() => (header ? JSON.stringify(header, null, 2) : "")}
+                    mono
+                    bodyClassName="min-h-[120px]"
+                  >
+                    {header ? JSON.stringify(header, null, 2) : "(awaiting valid token)"}
+                  </ResultPanel>
+
+                  <ResultPanel
+                    title="Payload"
+                    copyValue={() => (payload ? JSON.stringify(payload, null, 2) : "")}
+                    mono
+                    bodyClassName="min-h-[160px]"
+                  >
+                    {payload ? JSON.stringify(payload, null, 2) : "(awaiting valid token)"}
+                  </ResultPanel>
+
+                  {payload ? (
+                    <div className="border-2 border-border bg-card p-3 text-xs">
+                      <div className="brutal-label mb-2">Claims</div>
+                      <ul className="list-disc space-y-1 pl-5 font-mono">
+                        {typeof payload.exp === "number" ? (
+                          <li>
+                            exp: {payload.exp} {"->"} {tsToLocal(payload.exp) || "(invalid)"}
+                            {Date.now() / 1000 > payload.exp ? (
+                              <span className="ml-2 text-destructive">(expired)</span>
+                            ) : null}
+                          </li>
+                        ) : null}
+                        {typeof payload.iat === "number" ? (
+                          <li>
+                            iat: {payload.iat} {"->"} {tsToLocal(payload.iat) || "(invalid)"}
+                          </li>
+                        ) : null}
+                        {typeof payload.nbf === "number" ? (
+                          <li>
+                            nbf: {payload.nbf} {"->"} {tsToLocal(payload.nbf) || "(invalid)"}
+                            {Date.now() / 1000 < payload.nbf ? (
+                              <span className="ml-2 text-rp-gold">(not yet valid)</span>
+                            ) : null}
+                          </li>
+                        ) : null}
+                      </ul>
                     </div>
-                  )}
-                  {verifyState.note && (
-                    <div className="text-xs text-rp-muted mt-1">{verifyState.note}</div>
-                  )}
-                </div>
-              )}
-            </div>
-            <div className="grid grid-cols-1 gap-4">
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <h3 className="text-rp-subtle font-semibold">Header</h3>
-                  <button
-                    className="text-xs text-rp-iris hover:text-rp-rose"
-                    onClick={() => header && copy(JSON.stringify(header, null, 2))}
-                  >
-                    Copy
-                  </button>
-                </div>
-                <pre className="w-full min-h-[120px] rounded-xl px-4 py-3 bg-rp-base border border-rp-highlight-low text-rp-text whitespace-pre-wrap break-words">
-                  {header ? JSON.stringify(header, null, 2) : "(decode to view)"}
-                </pre>
-              </div>
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <h3 className="text-rp-subtle font-semibold">Payload</h3>
-                  <button
-                    className="text-xs text-rp-iris hover:text-rp-rose"
-                    onClick={() => payload && copy(JSON.stringify(payload, null, 2))}
-                  >
-                    Copy
-                  </button>
-                </div>
-                <pre className="w-full min-h-[160px] rounded-xl px-4 py-3 bg-rp-base border border-rp-highlight-low text-rp-text whitespace-pre-wrap break-words">
-                  {payload ? JSON.stringify(payload, null, 2) : "(decode to view)"}
-                </pre>
-                {payload && (
-                  <div className="mt-2 text-xs text-rp-subtle rounded-xl border border-rp-highlight-high bg-rp-overlay/60 p-3">
-                    <div className="mb-1 text-rp-muted">Claims</div>
-                    <ul className="list-disc pl-5 space-y-1">
-                      {payload.exp && (
-                        <li>
-                          exp: {payload.exp} {'->'} {tsToLocal(payload.exp) || "(invalid)"}
-                          {typeof payload.exp === "number" && Date.now() / 1000 > payload.exp ? (
-                            <span className="ml-2 text-rp-love">(expired)</span>
-                          ) : null}
-                        </li>
-                      )}
-                      {payload.iat && <li>iat: {payload.iat} {'->'} {tsToLocal(payload.iat) || "(invalid)"}</li>}
-                      {payload.nbf && (
-                        <li>
-                          nbf: {payload.nbf} {'->'} {tsToLocal(payload.nbf) || "(invalid)"}
-                          {typeof payload.nbf === "number" && Date.now() / 1000 < payload.nbf ? (
-                            <span className="ml-2 text-rp-gold">(not yet valid)</span>
-                          ) : null}
-                        </li>
-                      )}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
+                  ) : null}
 
-        {/* Hash */}
-        {tab === "hash" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <h2 className="text-rp-iris font-semibold mb-2">Hash</h2>
-	              <textarea
-	                aria-label="Hash input"
-	                className="w-full min-h-[160px] rounded-xl px-4 py-3 bg-rp-surface/70 border border-rp-highlight-high text-rp-text focus:outline-none focus:ring-2 focus:ring-rp-iris"
-                value={hashInput}
-                onChange={(e) => setHashInput(e.target.value)}
-                placeholder="Text to hash"
-              />
-              <div className="mt-2 flex items-center gap-3">
-                <label className="text-rp-subtle text-sm">Algorithm</label>
-	                <select
-	                  aria-label="Hash algorithm"
-	                  className="rounded-xl px-3 py-2 bg-rp-surface/70 border border-rp-highlight-high text-rp-text"
-                  value={hashAlg}
-                  onChange={(e) => setHashAlg(e.target.value as any)}
-                >
-                  <option value="SHA-256">SHA-256</option>
-                  <option value="SHA-512">SHA-512</option>
-                </select>
-                <button className="px-4 py-2 rounded-xl border border-rp-iris text-rp-text bg-rp-overlay/80" onClick={onHash}>
-                  Compute
-                </button>
-              </div>
-              {hashOut && (
-                <div className="mt-3 rounded-xl border border-rp-highlight-high bg-rp-overlay/70 p-3 text-sm">
-                  <div className="text-rp-subtle">Hex</div>
-                  <div className="font-mono break-all text-rp-text">{hashOut.hex}</div>
-                  <div className="text-rp-subtle mt-2">Base64url</div>
-                  <div className="font-mono break-all text-rp-text">{hashOut.b64url}</div>
+                  <p className="text-xs text-muted-foreground">
+                    For RS256/ES256, paste the signer&apos;s public key (SPKI PEM or JWK) above, then
+                    Verify. HS256 uses the shared secret instead.
+                  </p>
                 </div>
-              )}
-            </div>
-          </div>
-        )}
+              </div>
+            </ToolShell>
+          </TabsContent>
 
-        {/* HMAC */}
-        {tab === "hmac" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <h2 className="text-rp-iris font-semibold mb-2">HMAC</h2>
-	              <textarea
-	                aria-label="HMAC message"
-	                className="w-full min-h-[160px] rounded-xl px-4 py-3 bg-rp-surface/70 border border-rp-highlight-high text-rp-text focus:outline-none focus:ring-2 focus:ring-rp-iris"
-                value={hmacInput}
-                onChange={(e) => setHmacInput(e.target.value)}
-                placeholder="Message"
-              />
-              <div className="mt-2">
-                <label className="text-rp-subtle text-sm">Secret</label>
-	                <input
-	                  aria-label="HMAC secret"
-	                  className="w-full rounded-xl px-4 py-2 bg-rp-surface/70 border border-rp-highlight-high text-rp-text focus:outline-none focus:ring-2 focus:ring-rp-iris"
-                  value={hmacSecret}
-                  onChange={(e) => setHmacSecret(e.target.value)}
-                />
-              </div>
-              <div className="mt-2 flex items-center gap-3">
-                <label className="text-rp-subtle text-sm">Algorithm</label>
-	                <select
-	                  aria-label="HMAC algorithm"
-	                  className="rounded-xl px-3 py-2 bg-rp-surface/70 border border-rp-highlight-high text-rp-text"
-                  value={hmacAlg}
-                  onChange={(e) => setHmacAlg(e.target.value as any)}
-                >
-                  <option value="SHA-256">HMAC-SHA-256</option>
-                  <option value="SHA-512">HMAC-SHA-512</option>
-                </select>
-                <button className="px-4 py-2 rounded-xl border border-rp-iris text-rp-text bg-rp-overlay/80" onClick={onHmac}>
-                  Compute
-                </button>
-              </div>
-              {hmacOut && (
-                <div className="mt-3 rounded-xl border border-rp-highlight-high bg-rp-overlay/70 p-3 text-sm">
-                  <div className="text-rp-subtle">Hex</div>
-                  <div className="font-mono break-all text-rp-text">{hmacOut.hex}</div>
-                  <div className="text-rp-subtle mt-2">Base64url</div>
-                  <div className="font-mono break-all text-rp-text">{hmacOut.b64url}</div>
+          {/* Hash */}
+          <TabsContent value="hash">
+            <ToolShell
+              eyebrow="Digest"
+              toolbar={
+                <>
+                  <Button variant="default" size="sm" onClick={onHash}>
+                    Compute
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={onClearHash}>
+                    <Eraser className="size-4" aria-hidden="true" /> Clear
+                  </Button>
+                </>
+              }
+            >
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <div className="flex flex-col gap-4">
+                  <Field label="Input" htmlFor="hash-input">
+                    <textarea
+                      id="hash-input"
+                      className={`${taClass} min-h-[160px]`}
+                      value={hashInput}
+                      onChange={(e) => setHashInput(e.target.value)}
+                      placeholder="Text to hash"
+                    />
+                  </Field>
+                  <Field label="Algorithm" htmlFor="hash-alg">
+                    <select
+                      id="hash-alg"
+                      className={selectClass}
+                      value={hashAlg}
+                      onChange={(e) => setHashAlg(e.target.value as typeof hashAlg)}
+                    >
+                      <option value="SHA-256">SHA-256</option>
+                      <option value="SHA-512">SHA-512</option>
+                    </select>
+                  </Field>
                 </div>
-              )}
-            </div>
-          </div>
-        )}
+
+                <div className="flex flex-col gap-4">
+                  {hashOut ? (
+                    <>
+                      <ResultPanel title="Hex" copyValue={hashOut.hex} mono>
+                        {hashOut.hex}
+                      </ResultPanel>
+                      <ResultPanel title="Base64url" copyValue={hashOut.b64url} mono>
+                        {hashOut.b64url}
+                      </ResultPanel>
+                    </>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      Compute a digest to see hex and base64url output.
+                    </p>
+                  )}
+                </div>
+              </div>
+            </ToolShell>
+          </TabsContent>
+
+          {/* HMAC */}
+          <TabsContent value="hmac">
+            <ToolShell
+              eyebrow="HMAC"
+              toolbar={
+                <>
+                  <Button variant="default" size="sm" onClick={onHmac}>
+                    Compute
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={onClearHmac}>
+                    <Eraser className="size-4" aria-hidden="true" /> Clear
+                  </Button>
+                </>
+              }
+            >
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <div className="flex flex-col gap-4">
+                  <Field label="Message" htmlFor="hmac-input">
+                    <textarea
+                      id="hmac-input"
+                      className={`${taClass} min-h-[160px]`}
+                      value={hmacInput}
+                      onChange={(e) => setHmacInput(e.target.value)}
+                      placeholder="Message"
+                    />
+                  </Field>
+                  <Field label="Secret" htmlFor="hmac-secret">
+                    <Input
+                      id="hmac-secret"
+                      className="font-mono"
+                      value={hmacSecret}
+                      onChange={(e) => setHmacSecret(e.target.value)}
+                    />
+                  </Field>
+                  <Field label="Algorithm" htmlFor="hmac-alg">
+                    <select
+                      id="hmac-alg"
+                      className={selectClass}
+                      value={hmacAlg}
+                      onChange={(e) => setHmacAlg(e.target.value as typeof hmacAlg)}
+                    >
+                      <option value="SHA-256">HMAC-SHA-256</option>
+                      <option value="SHA-512">HMAC-SHA-512</option>
+                    </select>
+                  </Field>
+                </div>
+
+                <div className="flex flex-col gap-4">
+                  {hmacOut ? (
+                    <>
+                      <ResultPanel title="Hex" copyValue={hmacOut.hex} mono>
+                        {hmacOut.hex}
+                      </ResultPanel>
+                      <ResultPanel title="Base64url" copyValue={hmacOut.b64url} mono>
+                        {hmacOut.b64url}
+                      </ResultPanel>
+                    </>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      Compute an HMAC to see hex and base64url output.
+                    </p>
+                  )}
+                </div>
+              </div>
+            </ToolShell>
+          </TabsContent>
+        </Tabs>
       </div>
     </ToolPage>
   );

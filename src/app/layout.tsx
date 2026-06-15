@@ -1,18 +1,44 @@
 import './globals.css';
 import type { Metadata } from 'next';
-import Image from 'next/image';
+import localFont from 'next/font/local';
 import type { ReactNode } from 'react';
 
+import AppHeader from '@/components/AppHeader';
+import { CommandMenuProvider } from '@/components/CommandMenu';
 import Footer from '@/components/Footer';
 import AppSidebar, { AppSidebarProvider } from '@/components/Sidebar';
-import ThemeToggle from '@/components/ThemeToggle';
 import {
   NavigationProgressBar,
   NavigationProgressProvider,
 } from '@/components/layout/NavigationProgress';
 import { ThemeProvider } from '@/components/theme-provider';
-import { SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
+import { RecentToolsProvider } from '@/hooks/use-recent-tools';
+import { SidebarInset } from '@/components/ui/sidebar';
 import { siteConfig, toolPages } from '@/lib/site';
+
+// Self-hosted (vendored) variable fonts — no build-time network fetch, so the
+// static export builds reliably in any CI sandbox (e.g. Cloudflare Pages) and
+// the fonts are served same-origin (satisfies the strict font-src 'self' CSP).
+const fontSans = localFont({
+  src: './fonts/inter-latin-variable.woff2',
+  variable: '--font-sans',
+  display: 'swap',
+  weight: '100 900',
+});
+
+const fontDisplay = localFont({
+  src: './fonts/space-grotesk-latin-variable.woff2',
+  variable: '--font-display',
+  display: 'swap',
+  weight: '300 700',
+});
+
+const fontMono = localFont({
+  src: './fonts/jetbrains-mono-latin-variable.woff2',
+  variable: '--font-mono',
+  display: 'swap',
+  weight: '100 800',
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
@@ -126,51 +152,45 @@ const jsonLd = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${fontSans.variable} ${fontDisplay.variable} ${fontMono.variable}`}
+    >
       <head>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
-      <body className="noise-overlay bg-background text-foreground font-sans antialiased">
+      <body className="bg-background text-foreground font-sans antialiased">
         <ThemeProvider>
           <NavigationProgressProvider>
             <NavigationProgressBar />
-            <AppSidebarProvider>
-              <a
-                href="#main-content"
-                className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-background focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-foreground focus:shadow-lg"
-              >
-                Skip to content
-              </a>
-              <div className="flex w-full min-w-0 bg-background">
-                <AppSidebar />
-                <SidebarInset id="main-content" tabIndex={-1} className="flex min-w-0 flex-1 flex-col">
-                  <header className="sticky top-0 z-30 flex items-center justify-between border-b border-border/40 bg-background/70 px-6 py-4 backdrop-blur-md">
-                    <div className="flex items-center gap-3">
-                      <SidebarTrigger className="size-11 border border-border/60 bg-card/60" />
-                      <Image
-                        src="/simple_dev_tools_logo_assets/simple-dev-tools-logo-normal-512w.png"
-                        alt={siteConfig.name}
-                        width={200}
-                        height={67}
-                        className="h-8 w-auto"
-                        unoptimized
-                        priority
-                      />
-                    </div>
-                    <ThemeToggle />
-                  </header>
-                  <div className="flex min-w-0 flex-col overflow-x-hidden">
-                    <div className="px-6 py-6">
-                      {children}
-                    </div>
-                    <Footer />
+            <RecentToolsProvider>
+              <AppSidebarProvider>
+                <CommandMenuProvider>
+                  <a
+                    href="#main-content"
+                    className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:border-2 focus:border-border focus:bg-background focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-foreground"
+                  >
+                    Skip to content
+                  </a>
+                  <div className="flex w-full min-w-0 bg-background">
+                    <AppSidebar />
+                    <SidebarInset id="main-content" tabIndex={-1} className="flex min-w-0 flex-1 flex-col">
+                      <AppHeader />
+                      <div className="flex min-w-0 flex-col overflow-x-hidden">
+                        <div className="px-4 py-5 sm:px-6">
+                          {children}
+                        </div>
+                        <Footer />
+                      </div>
+                    </SidebarInset>
                   </div>
-                </SidebarInset>
-              </div>
-            </AppSidebarProvider>
+                </CommandMenuProvider>
+              </AppSidebarProvider>
+            </RecentToolsProvider>
           </NavigationProgressProvider>
         </ThemeProvider>
       </body>

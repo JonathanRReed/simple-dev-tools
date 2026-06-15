@@ -20,11 +20,11 @@ export default function ToolLoading({ message }: ToolLoadingProps) {
   return (
     <ToolPage contentClassName="mx-auto max-w-5xl">
       <div
-        className="rounded-3xl border border-rp-highlight-high bg-rp-overlay/70 p-8 text-sm text-rp-subtle shadow-lg flex flex-col items-center gap-4"
+        className="flex flex-col items-center gap-4 border-2 border-border bg-card p-8 text-sm text-muted-foreground"
         aria-live="polite"
         aria-busy="true"
       >
-        <div className="flex items-center gap-3 text-rp-text">
+        <div className="flex items-center gap-3 text-foreground">
           <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
           <span>{message}</span>
         </div>

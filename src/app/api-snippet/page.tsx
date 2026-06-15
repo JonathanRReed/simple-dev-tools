@@ -31,7 +31,7 @@ export default function ApiSnippetPage() {
         </p>
       </header>
       <ApiSnippetClientOnly />
-      <section className="rounded-xl border border-border/60 bg-card/50 p-5 text-sm leading-7 text-muted-foreground">
+      <section className="border-2 border-border bg-card p-5 text-sm leading-7 text-muted-foreground">
         <h2 className="text-lg font-semibold text-foreground">
           Why generate snippets in one place
         </h2>
