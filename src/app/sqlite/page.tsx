@@ -16,7 +16,7 @@ export default function SQLitePage() {
   return (
     <ToolPage contentClassName="mx-auto max-w-5xl space-y-6">
       <header className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+        <h1 className="font-display text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
           SQLite Playground
         </h1>
         <p className="text-muted-foreground">

@@ -30,13 +30,35 @@ const CopyButton = React.forwardRef<HTMLButtonElement, CopyButtonProps>(
     }, []);
 
     const onCopy = React.useCallback(async () => {
-      const text = typeof value === "function" ? value() : value;
+      const text = (typeof value === "function" ? value() : value) ?? "";
+      let copied = false;
       try {
-        await navigator.clipboard.writeText(text ?? "");
-        setState("copied");
+        if (navigator.clipboard?.writeText) {
+          await navigator.clipboard.writeText(text);
+          copied = true;
+        }
       } catch {
-        setState("error");
+        copied = false;
       }
+      if (!copied) {
+        // Fallback for non-secure contexts (file://, plain http on non-localhost)
+        // where navigator.clipboard is unavailable or rejects.
+        try {
+          const textarea = document.createElement("textarea");
+          textarea.value = text;
+          textarea.setAttribute("readonly", "");
+          textarea.style.position = "fixed";
+          textarea.style.top = "-9999px";
+          textarea.style.left = "-9999px";
+          document.body.appendChild(textarea);
+          textarea.select();
+          copied = document.execCommand("copy");
+          document.body.removeChild(textarea);
+        } catch {
+          copied = false;
+        }
+      }
+      setState(copied ? "copied" : "error");
       if (timer.current) clearTimeout(timer.current);
       timer.current = setTimeout(() => setState("idle"), 1400);
     }, [value]);

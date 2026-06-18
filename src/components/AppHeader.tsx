@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronRight, Search } from "lucide-react";
 
@@ -29,9 +30,12 @@ export default function AppHeader() {
       <div className="flex min-w-0 items-center gap-2">
         <SidebarTrigger className="size-9 shrink-0 rounded-none border-2 border-border" />
         <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-1.5 font-mono text-xs">
-          <span className="shrink-0 uppercase tracking-wider text-muted-foreground">
+          <Link
+            href="/"
+            className="shrink-0 uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground focus-visible:text-foreground"
+          >
             {siteConfig.shortName}
-          </span>
+          </Link>
           {activeTitle ? (
             <>
               <ChevronRight className="size-3.5 shrink-0 text-muted-foreground/60" aria-hidden="true" />

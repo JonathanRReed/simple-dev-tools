@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Check, Command, Gem, Moon, Palette, Sun, Sunrise } from 'lucide-react';
+import { Check, Command, Gem, Monitor, Moon, Palette, Sun, Sunrise } from 'lucide-react';
 import { useTheme } from 'next-themes';
 
 import { Badge } from '@/components/ui/badge';
@@ -34,7 +34,8 @@ export default function ThemeToggle() {
     setMounted(true);
   }, []);
 
-  const current = (theme ?? resolvedTheme ?? 'art-deco') as AppThemeId;
+  const isSystem = mounted ? theme === 'system' : false;
+  const current = ((isSystem ? resolvedTheme : theme) ?? resolvedTheme ?? 'art-deco') as AppThemeId;
   const currentTheme = getAppTheme(current) ?? appThemes[0];
 
   return (
@@ -50,25 +51,45 @@ export default function ThemeToggle() {
           Theme
           {mounted && (
             <Badge variant="secondary" className="bg-secondary/60 text-secondary-foreground">
-              {currentTheme.label}
+              {isSystem ? `System · ${currentTheme.label}` : currentTheme.label}
             </Badge>
           )}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <div className="grid gap-1">
+          <DropdownMenuItem
+            role="menuitemradio"
+            aria-checked={isSystem}
+            onSelect={(event) => {
+              event.preventDefault();
+              setTheme('system');
+            }}
+            className="flex items-center gap-3 rounded-none border-2 border-transparent px-3 py-2 focus:border-border focus:bg-muted"
+          >
+            <div className="flex size-9 items-center justify-center rounded-none border-2 border-border bg-card text-primary">
+              <Monitor className="h-4 w-4" />
+            </div>
+            <div className="flex flex-1 flex-col items-start">
+              <span className="text-sm font-semibold leading-tight">System</span>
+              <span className="text-xs text-muted-foreground">Match your OS appearance</span>
+            </div>
+            {isSystem && <Check className="h-4 w-4 text-primary" />}
+          </DropdownMenuItem>
           {appThemes.map((option) => {
             const Icon = THEME_ICONS[option.id];
-            const active = mounted ? current === option.id : option.id === 'art-deco';
+            const active = mounted ? !isSystem && current === option.id : false;
             return (
               <DropdownMenuItem
                 key={option.id}
+                role="menuitemradio"
+                aria-checked={active}
                 onSelect={(event) => {
                   event.preventDefault();
                   setTheme(option.id);
                 }}
-                className="flex items-center gap-3 rounded-md border border-transparent px-3 py-2 focus:bg-muted"
+                className="flex items-center gap-3 rounded-none border-2 border-transparent px-3 py-2 focus:border-border focus:bg-muted"
               >
-                <div className="flex size-9 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <div className="flex size-9 items-center justify-center rounded-none border-2 border-border bg-card text-primary">
                   <Icon className="h-4 w-4" />
                 </div>
                 <div className="flex flex-1 flex-col items-start">
@@ -79,8 +100,8 @@ export default function ThemeToggle() {
                         <span
                           key={swatch}
                           className={cn(
-                            'size-2.5 rounded-full border border-border/70',
-                            active && 'ring-1 ring-primary/60'
+                            'size-2.5 rounded-none border border-border',
+                            active && 'border-primary'
                           )}
                           style={{ backgroundColor: swatch }}
                         />

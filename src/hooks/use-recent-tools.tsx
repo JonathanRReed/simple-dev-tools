@@ -7,7 +7,7 @@ import { toolPages } from "@/lib/site";
 
 const RECENT_KEY = "sdt:recent-tools";
 const PINNED_KEY = "sdt:pinned-tools";
-const MAX_RECENT = 5;
+export const MAX_RECENT = 5;
 
 function readList(key: string): string[] {
   if (typeof window === "undefined") return [];
@@ -38,6 +38,9 @@ type RecentToolsValue = {
   recordVisit: (href: string) => void;
   togglePin: (href: string) => void;
   isPinned: (href: string) => boolean;
+  clearRecent: () => void;
+  /** True once localStorage has been read on the client (avoids first-paint flash). */
+  hydrated: boolean;
 };
 
 const RecentToolsContext = React.createContext<RecentToolsValue | null>(null);
@@ -46,10 +49,12 @@ export function RecentToolsProvider({ children }: { children: React.ReactNode })
   const pathname = usePathname();
   const [recent, setRecent] = React.useState<string[]>([]);
   const [pinned, setPinned] = React.useState<string[]>([]);
+  const [hydrated, setHydrated] = React.useState(false);
 
   React.useEffect(() => {
     setRecent(readList(RECENT_KEY));
     setPinned(readList(PINNED_KEY));
+    setHydrated(true);
   }, []);
 
   const recordVisit = React.useCallback((href: string) => {
@@ -79,9 +84,14 @@ export function RecentToolsProvider({ children }: { children: React.ReactNode })
 
   const isPinned = React.useCallback((href: string) => pinned.includes(normalize(href)), [pinned]);
 
+  const clearRecent = React.useCallback(() => {
+    setRecent([]);
+    writeList(RECENT_KEY, []);
+  }, []);
+
   const value = React.useMemo<RecentToolsValue>(
-    () => ({ recent, pinned, recordVisit, togglePin, isPinned }),
-    [recent, pinned, recordVisit, togglePin, isPinned]
+    () => ({ recent, pinned, recordVisit, togglePin, isPinned, clearRecent, hydrated }),
+    [recent, pinned, recordVisit, togglePin, isPinned, clearRecent, hydrated]
   );
 
   return <RecentToolsContext.Provider value={value}>{children}</RecentToolsContext.Provider>;
@@ -97,6 +107,8 @@ export function useRecentTools(): RecentToolsValue {
       recordVisit: () => {},
       togglePin: () => {},
       isPinned: () => false,
+      clearRecent: () => {},
+      hydrated: false,
     };
   }
   return ctx;

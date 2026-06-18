@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -8,7 +9,9 @@ import {
   Clock,
   Code2,
   Database,
+  FileJson,
   Home,
+  Palette,
   Pin,
   PinOff,
   QrCode,
@@ -31,6 +34,7 @@ import {
   SidebarMenuItem,
   SidebarProvider,
   SidebarRail,
+  useSidebar,
 } from '@/components/ui/sidebar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import BrandMark from '@/components/BrandMark';
@@ -41,8 +45,11 @@ import { cn } from '@/lib/utils';
 const iconMap = {
   braces: Braces,
   calendarClock: CalendarClock,
+  clock: Clock,
   code: Code2,
+  color: Palette,
   database: Database,
+  json: FileJson,
   qr: QrCode,
   searchCode: SearchCode,
   shield: ShieldCheck,
@@ -84,7 +91,14 @@ const activeRowClass = cn(
 
 export default function AppSidebar() {
   const pathname = usePathname();
+  const { isMobile, setOpenMobile } = useSidebar();
   const { recent, pinned, togglePin, isPinned } = useRecentTools();
+
+  // Close the offcanvas sidebar after navigating on mobile so the destination
+  // page isn't left hidden under the overlay.
+  useEffect(() => {
+    if (isMobile) setOpenMobile(false);
+  }, [pathname, isMobile, setOpenMobile]);
 
   const isActive = (href: string) => {
     if (!pathname) return false;
@@ -209,7 +223,7 @@ export default function AppSidebar() {
           rel="noopener noreferrer"
           className="flex items-center gap-2.5 border-2 border-sidebar-border bg-sidebar-accent/40 p-2.5 transition-colors hover:border-primary"
         >
-          <BrandMark className="size-7 shrink-0" />
+          <BrandMark className="size-8 shrink-0" />
           <div className="flex min-w-0 flex-col">
             <span className="truncate text-sm font-semibold">{siteConfig.provider.name}</span>
             <span className="brutal-label truncate">helloworldfirm.com</span>

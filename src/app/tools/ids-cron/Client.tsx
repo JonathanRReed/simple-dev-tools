@@ -105,6 +105,19 @@ function uuidVariant(value: string): string {
 
 type GenKind = "uuid" | "ulid";
 
+const LS_EXPR = "sdt:ids-cron:expr";
+const LS_TAB = "sdt:ids-cron:tab";
+const DEFAULT_CRON = "*/5 * * * *";
+
+/** Resolved IANA timezone label for the browser (e.g. "America/New_York"). */
+function localTimeZone(): string {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || "Local";
+  } catch {
+    return "Local";
+  }
+}
+
 export default function IDsCronTool() {
   const [tab, setTab] = useState<"ids" | "cron">("ids");
 
@@ -114,7 +127,9 @@ export default function IDsCronTool() {
 
   // Bulk generation state
   const [bulkKind, setBulkKind] = useState<GenKind>("uuid");
-  const [bulkCount, setBulkCount] = useState<number>(10);
+  // Stored as a raw string so the field can be cleared while editing; the value
+  // is parsed and clamped to 1..50 only at generate time.
+  const [bulkCount, setBulkCount] = useState<string>("10");
   const [bulkOutput, setBulkOutput] = useState<string>("");
   // The kind actually generated (so the result title doesn't relabel when the
   // dropdown changes before regenerating).
@@ -123,6 +138,20 @@ export default function IDsCronTool() {
   useEffect(() => {
     setUuid(randomUUIDv4());
     setUlidValue(ulid());
+  }, []);
+
+  // Hydrate the last-used cron expression and active tab from localStorage.
+  // Guarded for static export; defaults stay if anything is missing/throws.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const savedExpr = window.localStorage.getItem(LS_EXPR);
+      if (savedExpr) setCron(savedExpr);
+      const savedTab = window.localStorage.getItem(LS_TAB);
+      if (savedTab === "ids" || savedTab === "cron") setTab(savedTab);
+    } catch {
+      // ignore unavailable/blocked storage
+    }
   }, []);
 
   const uuidInfo = useMemo(() => {
@@ -153,8 +182,17 @@ export default function IDsCronTool() {
     }
   }, [ulidValue]);
 
+  // Surface the 1..50 clamp before generating: flag NaN/out-of-range input so
+  // the field shows why the count will be adjusted.
+  const bulkCountNum = Number(bulkCount);
+  const bulkCountValid =
+    bulkCount.trim() !== "" &&
+    Number.isFinite(bulkCountNum) &&
+    bulkCountNum >= 1 &&
+    bulkCountNum <= 50;
+
   function generateBulk() {
-    const n = Math.max(1, Math.min(50, Math.floor(bulkCount) || 1));
+    const n = Math.max(1, Math.min(50, Math.floor(Number(bulkCount)) || 1));
     const lines: string[] = [];
     for (let i = 0; i < n; i++) {
       lines.push(bulkKind === "uuid" ? randomUUIDv4() : ulid());
@@ -164,12 +202,19 @@ export default function IDsCronTool() {
   }
 
   // Cron tab state
-  const [cron, setCron] = useState<string>("*/5 * * * *");
+  const [cron, setCron] = useState<string>(DEFAULT_CRON);
   const cronDesc = useMemo(() => {
     try {
       return { ok: true as const, text: cronstrue.toString(cron, { use24HourTimeFormat: true }) };
     } catch (e) {
-      const message = e instanceof Error ? e.message : "Invalid cron";
+      // cronstrue throws a plain string (e.g. "Error: cron expression is empty"),
+      // not an Error instance, so handle string throws and strip the prefix.
+      const message =
+        typeof e === "string"
+          ? e.replace(/^Error:\s*/, "")
+          : e instanceof Error
+          ? e.message
+          : "Invalid cron";
       return { ok: false as const, error: message };
     }
   }, [cron]);
@@ -180,15 +225,46 @@ export default function IDsCronTool() {
       // label and the timezone-agnostic description above.
       const it = CronExpressionParser.parse(cron, { tz: "UTC" });
       const out: string[] = [];
+      // Same occurrences rendered in the browser's local timezone for quick
+      // "when does this fire for me" reference.
+      const local: string[] = [];
       for (let i = 0; i < 5; i++) {
-        out.push(it.next().toDate().toISOString().replace(".000Z", "Z"));
+        const d = it.next().toDate();
+        out.push(d.toISOString().replace(".000Z", "Z"));
+        local.push(d.toLocaleString(undefined, { hour12: false }));
       }
-      return { ok: true as const, runs: out };
+      return { ok: true as const, runs: out, localRuns: local };
     } catch (e) {
       const message = e instanceof Error ? e.message : "Invalid cron";
       return { ok: false as const, error: message };
     }
   }, [cron]);
+
+  // Resolved lazily on first render; falls back to "Local" during SSR/static
+  // export (or if Intl is unavailable) so the title never disagrees with the
+  // already-local times after hydration.
+  const [localZone] = useState<string>(() =>
+    typeof window === "undefined" ? "Local" : localTimeZone()
+  );
+
+  // Persist the cron expression and active tab (settings only, never secrets).
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(LS_EXPR, cron);
+    } catch {
+      // ignore unavailable/blocked storage
+    }
+  }, [cron]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(LS_TAB, tab);
+    } catch {
+      // ignore unavailable/blocked storage
+    }
+  }, [tab]);
 
   // The description (cronstrue) and the schedule (cron-parser) are independent
   // parsers; treat the expression as valid only when BOTH agree so the two
@@ -202,10 +278,16 @@ export default function IDsCronTool() {
 
   const presets = [
     { label: "Every minute", expr: "* * * * *" },
-    { label: "Every 5 minutes", expr: "*/5 * * * *" },
+    { label: "Every 5 min", expr: "*/5 * * * *" },
+    { label: "Every 15 min", expr: "*/15 * * * *" },
+    { label: "Every 30 min", expr: "*/30 * * * *" },
     { label: "Hourly", expr: "0 * * * *" },
     { label: "Daily at 09:00", expr: "0 9 * * *" },
+    { label: "Twice daily", expr: "0 0,12 * * *" },
+    { label: "Weekdays 09:00", expr: "0 9 * * 1-5" },
     { label: "Mon 09:00", expr: "0 9 * * 1" },
+    { label: "Every Sunday", expr: "0 0 * * 0" },
+    { label: "First of month", expr: "0 0 1 * *" },
   ];
   const activePreset = presets.find((p) => p.expr === cron.trim());
 
@@ -245,7 +327,7 @@ export default function IDsCronTool() {
                     id="uuid-input"
                     className="font-mono"
                     value={uuid}
-                    onChange={(e) => setUuid(e.target.value)}
+                    onChange={(e) => setUuid(e.target.value.trim())}
                     aria-invalid={!uuidInfo.ok}
                     spellCheck={false}
                   />
@@ -332,6 +414,7 @@ export default function IDsCronTool() {
                   label="Count (1-50)"
                   htmlFor="bulk-count"
                   className="w-32"
+                  error={bulkCountValid ? undefined : "Clamped to 1-50."}
                 >
                   <Input
                     id="bulk-count"
@@ -340,7 +423,8 @@ export default function IDsCronTool() {
                     max={50}
                     className="font-mono"
                     value={bulkCount}
-                    onChange={(e) => setBulkCount(Number(e.target.value))}
+                    onChange={(e) => setBulkCount(e.target.value)}
+                    aria-invalid={!bulkCountValid}
                   />
                 </Field>
                 <Button type="button" onClick={generateBulk}>
@@ -367,7 +451,6 @@ export default function IDsCronTool() {
             <Field
               label="Cron expression"
               htmlFor="cron-input"
-              error={cronError ?? undefined}
               action={<CopyButton value={() => cron} disabled={!cron} />}
             >
               <Input
@@ -410,6 +493,13 @@ export default function IDsCronTool() {
                   mono
                 >
                   {cronRuns.runs.join("\n")}
+                </ResultPanel>
+                <ResultPanel
+                  title={`Next 5 runs (${localZone})`}
+                  copyValue={() => cronRuns.localRuns.join("\n")}
+                  mono
+                >
+                  {cronRuns.localRuns.join("\n")}
                 </ResultPanel>
               </>
             ) : (

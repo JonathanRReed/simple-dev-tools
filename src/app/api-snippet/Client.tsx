@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useId, useMemo, useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { Download, Plus, Trash2 } from "lucide-react";
 
 import ToolShell from "@/components/tool/ToolShell";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -22,6 +22,8 @@ const httpMethods = [
 
 type HeaderRow = { id: string; key: string; value: string };
 
+type ParamRow = { id: string; key: string; value: string };
+
 type SnippetSet = {
   curl: string;
   python: string;
@@ -29,13 +31,57 @@ type SnippetSet = {
 };
 
 type GenerateResult =
-  | { ok: true; snippets: SnippetSet }
+  | {
+      ok: true;
+      snippets: SnippetSet;
+      bodyOmitted: boolean;
+      droppedHeaderRows: number;
+    }
   | { ok: false; error: string };
+
+/** Whether the HTTP method permits a request body. */
+function methodAllowsBody(method: string): boolean {
+  return method !== "GET" && method !== "HEAD";
+}
 
 let headerRowCounter = 0;
 function newHeaderRow(key = "", value = ""): HeaderRow {
   headerRowCounter += 1;
   return { id: `hdr-${headerRowCounter}`, key, value };
+}
+
+let paramRowCounter = 0;
+function newParamRow(key = "", value = ""): ParamRow {
+  paramRowCounter += 1;
+  return { id: `param-${paramRowCounter}`, key, value };
+}
+
+/**
+ * Append non-blank, encoded query-param pairs to the URL. Pairs without a key
+ * are skipped. Any "#fragment" is split off before appending so params land in
+ * the query string (not the fragment) and is re-appended afterward. Values are
+ * encoded but NOT trimmed, so intentional whitespace survives.
+ */
+function buildEffectiveUrl(url: string, params: ParamRow[]): string {
+  const pairs: string[] = [];
+  for (const row of params) {
+    const key = row.key.trim();
+    if (!key) continue;
+    pairs.push(`${encodeURIComponent(key)}=${encodeURIComponent(row.value)}`);
+  }
+  if (!pairs.length) return url;
+
+  // Split off any fragment so new params go into the query string, never the
+  // fragment (which the server never sees).
+  const hashIndex = url.indexOf("#");
+  const base = hashIndex === -1 ? url : url.slice(0, hashIndex);
+  const fragment = hashIndex === -1 ? "" : url.slice(hashIndex);
+
+  // Strip a dangling "?"/"&" so we never emit "?&" or "&&".
+  const trimmedBase = base.replace(/[?&]$/, "");
+  const separator = trimmedBase.includes("?") ? "&" : "?";
+
+  return `${trimmedBase}${separator}${pairs.join("&")}${fragment}`;
 }
 
 /** Escape a single-quoted shell string: close, escaped literal quote, reopen. */
@@ -48,13 +94,18 @@ function buildHeaderEntries(
   headers: HeaderRow[],
   authToken: string,
   hasBody: boolean
-): Array<[string, string]> {
+): { entries: Array<[string, string]>; droppedRows: number } {
   const entries: Array<[string, string]> = [];
   const seen = new Set<string>();
+  let droppedRows = 0;
 
   for (const row of headers) {
     const key = row.key.trim();
-    if (!key) continue;
+    if (!key) {
+      // A blank/whitespace key with a real value is dropped; surface this.
+      if (row.value.trim()) droppedRows += 1;
+      continue;
+    }
     const lower = key.toLowerCase();
     if (seen.has(lower)) continue;
     seen.add(lower);
@@ -71,7 +122,7 @@ function buildHeaderEntries(
     entries.push(["Content-Type", "application/json"]);
   }
 
-  return entries;
+  return { entries, droppedRows };
 }
 
 function indentPython(obj: Record<string, string>): string {
@@ -94,16 +145,24 @@ function generateSnippets(
   method: string,
   body: string,
   headers: HeaderRow[],
-  authToken: string
+  authToken: string,
+  params: ParamRow[]
 ): GenerateResult {
+  // Trim once so a pasted URL with surrounding whitespace doesn't leak into
+  // any of the three emitted snippets.
+  const cleanUrl = url.trim();
+
+  // Merge query params once so curl, python, and js all encode the same URL.
+  const effectiveUrl = buildEffectiveUrl(cleanUrl, params);
+
   const trimmedBody = body.trim();
   let parsed: unknown = undefined;
-  let hasBody = false;
+  let hasBodyInput = false;
 
   if (trimmedBody) {
     try {
       parsed = JSON.parse(trimmedBody);
-      hasBody = true;
+      hasBodyInput = true;
     } catch {
       return {
         ok: false,
@@ -112,28 +171,35 @@ function generateSnippets(
     }
   }
 
-  // The single canonical payload all three targets encode.
-  const canonicalJson = hasBody ? JSON.stringify(parsed) : "";
+  // GET/HEAD cannot carry a body, so gate inclusion by method for ALL targets
+  // (curl, python, js) so they emit the same request. A body typed for such a
+  // method is dropped, and the auto Content-Type header is suppressed with it.
+  const includeBody = hasBodyInput && methodAllowsBody(method);
+  const bodyOmitted = hasBodyInput && !includeBody;
 
-  const headerEntries = buildHeaderEntries(headers, authToken, hasBody);
+  // The single canonical payload all three targets encode.
+  const canonicalJson = includeBody ? JSON.stringify(parsed) : "";
+
+  const { entries: headerEntries, droppedRows: droppedHeaderRows } =
+    buildHeaderEntries(headers, authToken, includeBody);
   const headerObj: Record<string, string> = Object.fromEntries(headerEntries);
 
   const methodLower = method.toLowerCase();
 
   // ---- curl ----
-  const curlParts = [`curl -X ${method} ${shellSingleQuote(url)}`];
+  const curlParts = [`curl -X ${method} ${shellSingleQuote(effectiveUrl)}`];
   for (const [k, v] of headerEntries) {
     curlParts.push(`  -H ${shellSingleQuote(`${k}: ${v}`)}`);
   }
-  if (hasBody) {
+  if (includeBody) {
     curlParts.push(`  -d ${shellSingleQuote(canonicalJson)}`);
   }
   const curl = curlParts.join(" \\\n");
 
   // ---- python ----
-  const pyLines = ["import requests", "import json", "", `url = ${JSON.stringify(url)}`];
+  const pyLines = ["import requests", "import json", "", `url = ${JSON.stringify(effectiveUrl)}`];
   pyLines.push(`headers = ${indentPython(headerObj)}`);
-  if (hasBody) {
+  if (includeBody) {
     // JSON.stringify produces a double-quoted string literal whose escaping is
     // also valid Python, so this round-trips any content (incl. quotes/newlines)
     // without the delimiter-collision a raw triple-quoted string can hit.
@@ -148,29 +214,60 @@ function generateSnippets(
   const python = pyLines.join("\n");
 
   // ---- js fetch ----
-  // fetch() throws if a body is supplied with GET/HEAD, so omit it there.
-  const jsBodyAllowed = hasBody && method !== "GET" && method !== "HEAD";
-  const jsLines = [`fetch(${JSON.stringify(url)}, {`, `  method: ${JSON.stringify(method)},`];
+  // fetch() throws if a body is supplied with GET/HEAD; the same method gate
+  // (includeBody) keeps all three targets consistent.
+  const jsLines = [`fetch(${JSON.stringify(effectiveUrl)}, {`, `  method: ${JSON.stringify(method)},`];
   if (headerEntries.length) {
     jsLines.push(`  headers: ${jsObjectLiteral(headerEntries)},`);
   }
-  if (jsBodyAllowed) {
+  if (includeBody) {
     jsLines.push(`  body: JSON.stringify(${canonicalJson}),`);
-  } else if (hasBody) {
-    jsLines.push(`  // body omitted: fetch() does not allow a body with ${method}`);
+  } else if (bodyOmitted) {
+    jsLines.push(`  // body omitted: ${method} requests cannot carry a body`);
   }
   jsLines.push("})");
   jsLines.push("  .then((res) => res.json())");
   jsLines.push("  .then(console.log);");
   const js = jsLines.join("\n");
 
-  return { ok: true, snippets: { curl, python, js } };
+  return {
+    ok: true,
+    snippets: { curl, python, js },
+    bodyOmitted,
+    droppedHeaderRows,
+  };
 }
 
 const SAMPLE_HEADERS: HeaderRow[] = [
   newHeaderRow("Accept", "application/json"),
   newHeaderRow("X-Client", "snippet-gen"),
 ];
+
+const SAMPLE_PARAMS: ParamRow[] = [newParamRow("page", "2")];
+
+const SNIPPET_FILENAMES: Record<"curl" | "python" | "js", string> = {
+  curl: "request.sh",
+  python: "request.py",
+  js: "request.js",
+};
+
+/** Save snippet text to a file via a transient object URL + <a download>. */
+function downloadSnippet(filename: string, contents: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    const blob = new Blob([contents], { type: "text/plain;charset=utf-8" });
+    const objectUrl = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = objectUrl;
+    anchor.download = filename;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 0);
+  } catch {
+    // Best-effort: download is a convenience, never block the UI.
+  }
+}
 
 const SAMPLE_BODY = JSON.stringify(
   {
@@ -195,15 +292,18 @@ export default function ApiSnippetClient() {
   const [body, setBody] = useState("");
   const [authToken, setAuthToken] = useState("");
   const [headers, setHeaders] = useState<HeaderRow[]>([]);
+  const [params, setParams] = useState<ParamRow[]>([]);
   const [tab, setTab] = useState<"curl" | "python" | "js">("curl");
 
   const result = useMemo(
-    () => generateSnippets(url, method, body, headers, authToken),
-    [url, method, body, headers, authToken]
+    () => generateSnippets(url, method, body, headers, authToken, params),
+    [url, method, body, headers, authToken, params]
   );
 
   const parseError = result.ok ? null : result.error;
   const snippets = result.ok ? result.snippets : null;
+  const bodyOmitted = result.ok ? result.bodyOmitted : false;
+  const droppedHeaderRows = result.ok ? result.droppedHeaderRows : 0;
   const hasUrl = url.trim().length > 0;
 
   const handleSample = () => {
@@ -212,6 +312,7 @@ export default function ApiSnippetClient() {
     setBody(SAMPLE_BODY);
     setAuthToken("sk_test_51H8xToken");
     setHeaders(SAMPLE_HEADERS.map((h) => ({ ...h })));
+    setParams(SAMPLE_PARAMS.map((p) => ({ ...p })));
   };
 
   const handleReset = () => {
@@ -220,6 +321,7 @@ export default function ApiSnippetClient() {
     setBody("");
     setAuthToken("");
     setHeaders([]);
+    setParams([]);
   };
 
   const addHeader = () => setHeaders((rows) => [...rows, newHeaderRow()]);
@@ -229,6 +331,14 @@ export default function ApiSnippetClient() {
 
   const updateHeader = (id: string, patch: Partial<Omit<HeaderRow, "id">>) =>
     setHeaders((rows) => rows.map((r) => (r.id === id ? { ...r, ...patch } : r)));
+
+  const addParam = () => setParams((rows) => [...rows, newParamRow()]);
+
+  const removeParam = (id: string) =>
+    setParams((rows) => rows.filter((r) => r.id !== id));
+
+  const updateParam = (id: string, patch: Partial<Omit<ParamRow, "id">>) =>
+    setParams((rows) => rows.map((r) => (r.id === id ? { ...r, ...patch } : r)));
 
   const toolbar = (
     <>
@@ -273,6 +383,60 @@ export default function ApiSnippetClient() {
               />
             </Field>
           </div>
+
+          <Field
+            label="Query parameters"
+            hint="Appended to the endpoint URL. Keys and values are URL-encoded; rows without a name are ignored."
+            action={
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={addParam}
+              >
+                <Plus className="size-4" aria-hidden="true" />
+                Add
+              </Button>
+            }
+          >
+            {params.length === 0 ? (
+              <p className="font-mono text-xs text-muted-foreground">
+                No query parameters.
+              </p>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {params.map((row, i) => (
+                  <div key={row.id} className="flex items-center gap-2">
+                    <Input
+                      aria-label={`Parameter ${i + 1} name`}
+                      placeholder="Key"
+                      className="font-mono"
+                      value={row.key}
+                      onChange={(e) => updateParam(row.id, { key: e.target.value })}
+                    />
+                    <Input
+                      aria-label={`Parameter ${i + 1} value`}
+                      placeholder="Value"
+                      className="font-mono"
+                      value={row.value}
+                      onChange={(e) =>
+                        updateParam(row.id, { value: e.target.value })
+                      }
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      aria-label={`Remove parameter ${i + 1}`}
+                      onClick={() => removeParam(row.id)}
+                    >
+                      <Trash2 className="size-4" aria-hidden="true" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Field>
 
           <Field
             label="Headers"
@@ -326,6 +490,13 @@ export default function ApiSnippetClient() {
                 ))}
               </div>
             )}
+            {droppedHeaderRows > 0 ? (
+              <p className="text-xs text-muted-foreground">
+                {droppedHeaderRows === 1
+                  ? "1 row without a header name is ignored."
+                  : `${droppedHeaderRows} rows without a header name are ignored.`}
+              </p>
+            ) : null}
           </Field>
 
           <Field
@@ -346,7 +517,11 @@ export default function ApiSnippetClient() {
           <Field
             label="Request body (JSON)"
             htmlFor={bodyId}
-            hint="Optional for any method. Parsed as JSON and re-serialized into all snippets."
+            hint={
+              bodyOmitted
+                ? `Body omitted from all snippets: ${method} requests cannot carry a body.`
+                : "Optional for any method. Parsed as JSON and re-serialized into all snippets."
+            }
             error={parseError ?? undefined}
           >
             <textarea
@@ -389,7 +564,20 @@ export default function ApiSnippetClient() {
                             ? "Python requests"
                             : "JavaScript fetch"}
                       </span>
-                      <CopyButton value={snippets[lang]} label="Copy" />
+                      <div className="flex items-center gap-1">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() =>
+                            downloadSnippet(SNIPPET_FILENAMES[lang], snippets[lang])
+                          }
+                        >
+                          <Download className="size-4" aria-hidden="true" />
+                          Download
+                        </Button>
+                        <CopyButton value={snippets[lang]} label="Copy" />
+                      </div>
                     </div>
                     <pre className="overflow-auto p-3 font-mono text-xs leading-relaxed whitespace-pre-wrap break-words sm:text-sm">
                       {snippets[lang]}

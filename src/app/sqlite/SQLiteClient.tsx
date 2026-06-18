@@ -34,6 +34,38 @@ SELECT id, name, email, age, active FROM users ORDER BY id;`;
 
 const SQL_JS_CDN_BASE = "https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.13.0";
 
+/** localStorage key for persisting the SQL editor buffer across reloads. Settings/input
+ *  only — never secrets. Guarded for static export (typeof window + try/catch). */
+const SQL_STORAGE_KEY = "sdt:sqlite:sql";
+
+function loadStoredSql(): string {
+  if (typeof window === "undefined") return DEFAULT_SQL;
+  try {
+    const saved = window.localStorage.getItem(SQL_STORAGE_KEY);
+    return saved ?? DEFAULT_SQL;
+  } catch {
+    return DEFAULT_SQL;
+  }
+}
+
+function persistSql(value: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(SQL_STORAGE_KEY, value);
+  } catch {
+    /* ignore (private mode / quota) */
+  }
+}
+
+function clearStoredSql(): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.removeItem(SQL_STORAGE_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
 const Editor = dynamic(() => import("react-simple-code-editor"), {
   ssr: false,
   loading: () => (
@@ -43,6 +75,7 @@ const Editor = dynamic(() => import("react-simple-code-editor"), {
 
 type SqlStatement = {
   getColumnNames: () => string[];
+  getSQL?: () => string;
   step: () => boolean;
   get: () => unknown[];
   free: () => void;
@@ -58,6 +91,13 @@ type SqlDatabase = {
 type ResultSet = { columns: string[]; values: unknown[][] };
 
 type HighlightFn = (code: string) => string;
+
+/** Escape HTML-special characters. Used as the fallback highlighter so that, before
+ *  Prism loads (or if its chunk fails), typed SQL is rendered as text rather than raw
+ *  HTML — react-simple-code-editor injects the result via dangerouslySetInnerHTML. */
+function escapeHtml(value: string): string {
+  return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
 
 let sqlJsModulePromise: Promise<any> | null = null;
 
@@ -128,6 +168,23 @@ async function ensureSqlJsModule() {
   return sqlJsModulePromise;
 }
 
+/** True when a SQL statement is DML (INSERT/UPDATE/DELETE/REPLACE) and therefore
+ *  actually affects sqlite3_changes(). DDL/PRAGMA do not touch the changes counter,
+ *  so re-reading getRowsModified() after them would double-count the prior DML. */
+function isDmlStatement(sql: string): boolean {
+  // Strip leading whitespace and SQL comments (-- line and /* block */) so we can
+  // read the real leading keyword.
+  let s = sql;
+  let prev;
+  do {
+    prev = s;
+    s = s.replace(/^\s+/, "");
+    s = s.replace(/^--[^\n\r]*/, "");
+    s = s.replace(/^\/\*[\s\S]*?\*\//, "");
+  } while (s !== prev);
+  return /^(insert|update|delete|replace)\b/i.test(s);
+}
+
 /** Render a SQLite cell value, handling NULL, BLOB (Uint8Array), number, string. */
 function renderCell(cell: unknown): React.ReactNode {
   if (cell === null || cell === undefined) {
@@ -142,18 +199,27 @@ function renderCell(cell: unknown): React.ReactNode {
   return String(cell);
 }
 
-/** Plain-text version of a cell, used for CSV/JSON export. */
+/** Encode bytes as base64 so BLOBs export round-trippably instead of being dropped. */
+function blobToBase64(bytes: Uint8Array): string {
+  let binary = "";
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return typeof btoa === "function" ? btoa(binary) : "";
+}
+
+/** Plain-text version of a cell, used for CSV export. BLOBs export as a base64 string. */
 function cellToText(cell: unknown): string {
   if (cell === null || cell === undefined) return "";
-  if (cell instanceof Uint8Array) return `BLOB(${cell.length} bytes)`;
+  if (cell instanceof Uint8Array) return blobToBase64(cell);
   if (typeof cell === "bigint") return cell.toString();
   return String(cell);
 }
 
-/** Export-friendly raw value (BLOB → null, bigint → string) for JSON. */
+/** Export-friendly raw value (BLOB → base64 string, bigint → string) for JSON. */
 function cellToJson(cell: unknown): unknown {
   if (cell === null || cell === undefined) return null;
-  if (cell instanceof Uint8Array) return `BLOB(${cell.length} bytes)`;
+  if (cell instanceof Uint8Array) return blobToBase64(cell);
   if (typeof cell === "bigint") return cell.toString();
   return cell;
 }
@@ -212,8 +278,20 @@ export default function SQLiteClient() {
 
   const dbRef = useRef<SqlDatabase | null>(null);
   const sqlModuleRef = useRef<any>(null);
-  const highlightRef = useRef<HighlightFn>((value: string) => value);
+  const highlightRef = useRef<HighlightFn>(escapeHtml);
   const [highlightReady, setHighlightReady] = useState(false);
+
+  // Hydrate the editor buffer from localStorage after mount so the static-export
+  // markup (DEFAULT_SQL) and first client render match, avoiding a hydration mismatch.
+  useEffect(() => {
+    const stored = loadStoredSql();
+    if (stored !== DEFAULT_SQL) setSql(stored);
+  }, []);
+
+  // Persist the editor buffer whenever it changes (guarded, settings-only).
+  useEffect(() => {
+    persistSql(sql);
+  }, [sql]);
 
   useEffect(() => {
     let cancelled = false;
@@ -286,7 +364,13 @@ export default function SQLiteClient() {
           } else {
             stmt.step(); // execute the write/DDL
             sawWrite = true;
-            changed += db.getRowsModified();
+            // Only DML (INSERT/UPDATE/DELETE/REPLACE) updates sqlite3_changes().
+            // A trailing DDL/PRAGMA leaves the counter at the previous DML's value,
+            // so adding it again would double-count. Guard with isDmlStatement().
+            const stmtSql = stmt.getSQL?.() ?? "";
+            if (isDmlStatement(stmtSql)) {
+              changed += db.getRowsModified();
+            }
           }
         } finally {
           // Finalize each prepared statement so it doesn't keep tables locked
@@ -314,6 +398,20 @@ export default function SQLiteClient() {
   const runQuery = () => runSql(sql);
 
   const loadSample = () => {
+    // Reset to a fresh database before seeding (mirrors reset()) so SAMPLE_SQL's
+    // CREATE TABLE is always re-runnable — without this, a 2nd click (or any prior
+    // table creation) throws "table users already exists" and aborts the batch.
+    const SQL = sqlModuleRef.current;
+    if (SQL) {
+      if (dbRef.current) {
+        try {
+          dbRef.current.close();
+        } catch {
+          /* ignore */
+        }
+      }
+      dbRef.current = new SQL.Database();
+    }
     setSql(SAMPLE_SQL);
     runSql(SAMPLE_SQL);
   };
@@ -331,6 +429,10 @@ export default function SQLiteClient() {
       }
       dbRef.current = new SQL.Database();
     }
+    // Clear the persisted buffer so Reset durably restores the default. (The persist
+    // effect re-writes DEFAULT_SQL on the setSql below, which is equivalent: an absent
+    // key and a stored DEFAULT_SQL both hydrate back to the default on reload.)
+    clearStoredSql();
     setSql(DEFAULT_SQL);
     setResults(null);
     setOkMessage(null);
@@ -340,6 +442,8 @@ export default function SQLiteClient() {
   const handleEditorKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
       event.preventDefault();
+      // Match the Run button's disabled state so keyboard and button behave the same.
+      if (!dbReady || loading) return;
       runQuery();
     }
   };
@@ -362,7 +466,9 @@ export default function SQLiteClient() {
     a.href = url;
     a.download = filename;
     a.click();
-    URL.revokeObjectURL(url);
+    // Defer revocation so the download isn't aborted in stricter browsers that
+    // read the blob URL asynchronously after click().
+    setTimeout(() => URL.revokeObjectURL(url), 0);
   }
 
   const toolbar = (
@@ -425,12 +531,22 @@ export default function SQLiteClient() {
               >
                 <div className="overflow-auto">
                   {results.map((result, idx) => (
-                    <table key={idx} className="min-w-full font-mono text-sm text-foreground mb-4 last:mb-0">
+                    <div key={idx} className="mb-4 last:mb-0">
+                      {results.length > 1 ? (
+                        <p className="brutal-label mb-1">
+                          {`#${idx + 1} · ${result.values.length} row${
+                            result.values.length === 1 ? "" : "s"
+                          } × ${result.columns.length} col${
+                            result.columns.length === 1 ? "" : "s"
+                          }`}
+                        </p>
+                      ) : null}
+                      <table className="min-w-full font-mono text-sm text-foreground">
                       <thead>
                         <tr className="border-b-2 border-border">
-                          {result.columns.map((col) => (
+                          {result.columns.map((col, i) => (
                             <th
-                              key={col}
+                              key={`${col}-${i}`}
                               className="px-3 py-2 text-left font-semibold uppercase tracking-wider text-xs text-muted-foreground"
                             >
                               {col}
@@ -460,7 +576,8 @@ export default function SQLiteClient() {
                           ))
                         )}
                       </tbody>
-                    </table>
+                      </table>
+                    </div>
                   ))}
                 </div>
               </ResultPanel>

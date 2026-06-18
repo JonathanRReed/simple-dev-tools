@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import { Download, RotateCcw } from "lucide-react";
+import { Download, Minus, Plus, RotateCcw } from "lucide-react";
 
 import ToolShell from "@/components/tool/ToolShell";
 import { Button } from "@/components/ui/button";
@@ -36,6 +36,26 @@ const TEMPLATES = [
     label: "Gantt Chart",
     code: `gantt\n  title A Gantt Diagram\n  dateFormat  YYYY-MM-DD\n  section Section\n  A task           :a1, 2022-01-01, 30d\n  Another task     :after a1  , 20d`,
   },
+  {
+    label: "ER Diagram",
+    code: `erDiagram\n  CUSTOMER ||--o{ ORDER : places\n  ORDER ||--|{ LINE_ITEM : contains\n  CUSTOMER {\n    string name\n    string email\n  }\n  ORDER {\n    int id\n    date created\n  }`,
+  },
+  {
+    label: "Git Graph",
+    code: `gitGraph\n  commit\n  branch develop\n  checkout develop\n  commit\n  checkout main\n  merge develop\n  commit`,
+  },
+  {
+    label: "Pie Chart",
+    code: `pie title Pets adopted by volunteers\n  "Dogs" : 386\n  "Cats" : 85\n  "Rats" : 15`,
+  },
+  {
+    label: "Mindmap",
+    code: `mindmap\n  root((mindmap))\n    Origins\n      Tools\n    Research\n    Uses`,
+  },
+  {
+    label: "User Journey",
+    code: `journey\n  title My working day\n  section Go to work\n    Make tea: 5: Me\n    Go upstairs: 3: Me\n  section Do work\n    Code: 5: Me\n    Review: 3: Me`,
+  },
 ];
 
 const Editor = dynamic(() => import("react-simple-code-editor"), {
@@ -61,11 +81,21 @@ function viewBoxDimensions(svg: string): { width: number; height: number } | nul
   return { width, height };
 }
 
+const ZOOM_MIN = 0.5;
+const ZOOM_MAX = 3;
+const ZOOM_STEP = 0.25;
+
+/** Clamp a zoom factor into the supported [ZOOM_MIN, ZOOM_MAX] range. */
+function clampZoom(value: number): number {
+  return Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, value));
+}
+
 export default function MermaidClient() {
   const [code, setCode] = useState(DEFAULT_CODE);
   const [error, setError] = useState<string | null>(null);
   const [mermaid, setMermaid] = useState<MermaidModule["default"] | null>(null);
   const [hasDiagram, setHasDiagram] = useState(false);
+  const [zoom, setZoom] = useState(1);
   const diagramRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<string | null>(null);
   const highlightRef = useRef<HighlightFn>((value: string) => value);
@@ -97,7 +127,15 @@ export default function MermaidClient() {
         import("mermaid"),
       ]);
       if (cancelled) return;
-      mermaidModule.initialize({ startOnLoad: false });
+      // Disable htmlLabels so flowchart node labels render as native SVG <text>
+      // instead of <foreignObject> XHTML. Browsers cannot rasterize
+      // <foreignObject> when the SVG is drawn onto a canvas, which otherwise
+      // produces blank/unstyled labels in the PNG export (see handleExportPNG).
+      mermaidModule.initialize({
+        startOnLoad: false,
+        htmlLabels: false,
+        flowchart: { htmlLabels: false },
+      });
       setMermaid(mermaidModule);
     })();
     return () => {
@@ -131,12 +169,18 @@ export default function MermaidClient() {
 
     const timer = setTimeout(() => {
       (async () => {
+        // Per-render UNIQUE id (Date.now()) so concurrent/overlapping renders
+        // never collide on mermaid's internal temp element. Uniqueness alone
+        // doesn't clean up after a draw-time failure — the finally block below
+        // removes `d${renderId}`, which is what actually prevents orphan temp
+        // nodes from accumulating in the DOM on every failing keystroke.
+        const renderId = `mermaid-svg-${Date.now()}`;
         try {
           // Let parse throw its descriptive error (e.g. "Parse error on line 2…")
           // so the Alert shows the actual problem rather than a generic message.
           await mermaid.parse(code);
           if (cancelled) return;
-          const { svg } = await mermaid.render(`mermaid-svg-${Date.now()}`, code);
+          const { svg } = await mermaid.render(renderId, code);
           if (cancelled) return;
           svgRef.current = svg;
           if (diagramRef.current) diagramRef.current.innerHTML = svg;
@@ -148,6 +192,11 @@ export default function MermaidClient() {
           if (diagramRef.current) diagramRef.current.innerHTML = "";
           svgRef.current = null;
           setHasDiagram(false);
+        } finally {
+          // mermaid appends a detached container (#d<id>) to the body while
+          // rendering and only removes it on success; clean up any orphan it
+          // leaves behind on a draw-time failure.
+          document.getElementById(`d${renderId}`)?.remove();
         }
       })();
     }, 250);
@@ -174,6 +223,15 @@ export default function MermaidClient() {
   const handleExportPNG = () => {
     const svg = svgRef.current;
     if (!svg) return;
+
+    // Some diagram types (e.g. User Journey) render their text via XHTML inside
+    // <foreignObject>, which browsers refuse to rasterize when the SVG is drawn
+    // onto a canvas — producing a PNG with blank labels. Detect it on the live
+    // SVG and refuse rather than emit a broken image; SVG export still works.
+    if (diagramRef.current?.querySelector("foreignObject")) {
+      setError("PNG export isn't supported for this diagram type — use SVG export.");
+      return;
+    }
 
     // Determine real diagram dimensions. SVGs rendered by mermaid often have no
     // intrinsic width/height, so img.width/height would be 0 and produce a blank
@@ -223,6 +281,11 @@ export default function MermaidClient() {
         URL.revokeObjectURL(url);
       }, "image/png");
     };
+    img.onerror = function () {
+      // Surface the failure via the same Alert used by the render path instead
+      // of silently doing nothing when the SVG can't be loaded as an image.
+      setError("Could not export PNG: the diagram image failed to load.");
+    };
     img.src = image64;
   };
 
@@ -236,6 +299,10 @@ export default function MermaidClient() {
   const handleReset = () => {
     setCode(DEFAULT_CODE);
   };
+
+  const handleZoomIn = () => setZoom((z) => clampZoom(z + ZOOM_STEP));
+  const handleZoomOut = () => setZoom((z) => clampZoom(z - ZOOM_STEP));
+  const handleZoomReset = () => setZoom(1);
 
   const toolbar = (
     <>
@@ -302,19 +369,61 @@ export default function MermaidClient() {
           className="min-w-0"
           bodyClassName="min-h-[260px]"
         >
+          {hasDiagram ? (
+            <div className="mb-2 flex items-center justify-end gap-1">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handleZoomOut}
+                disabled={zoom <= ZOOM_MIN}
+                aria-label="Zoom out"
+                title="Zoom out"
+              >
+                <Minus className="size-4" aria-hidden="true" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleZoomReset}
+                aria-label="Reset zoom"
+                title="Reset zoom"
+              >
+                <span className="font-mono tabular-nums">{Math.round(zoom * 100)}%</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handleZoomIn}
+                disabled={zoom >= ZOOM_MAX}
+                aria-label="Zoom in"
+                title="Zoom in"
+              >
+                <Plus className="size-4" aria-hidden="true" />
+              </Button>
+            </div>
+          ) : null}
           {/* White canvas (only when a diagram is present) keeps Mermaid's
               default light theme legible on dark app themes and matches the
-              white-background PNG export. */}
+              white-background PNG export. The zoom transform scales an inner
+              wrapper so the outer container stays scrollable when enlarged. */}
           <div
-            ref={diagramRef}
-            role="img"
-            aria-label="Rendered Mermaid diagram"
-            aria-live="polite"
             className={cn(
-              "flex w-full flex-1 items-center justify-center overflow-auto [&_svg]:max-w-full",
-              hasDiagram && "bg-white p-3"
+              "flex w-full flex-1 overflow-auto",
+              hasDiagram ? "items-start justify-start bg-white p-3" : "items-center justify-center"
             )}
-          />
+          >
+            <div
+              ref={diagramRef}
+              role="img"
+              aria-label="Rendered Mermaid diagram"
+              className="flex w-full flex-1 items-center justify-center [&_svg]:max-w-full"
+              style={
+                hasDiagram
+                  ? { transform: `scale(${zoom})`, transformOrigin: "top left" }
+                  : undefined
+              }
+            />
+          </div>
           {!hasDiagram && !error ? (
             <p className="mt-3 text-center font-mono text-sm text-muted-foreground">
               A valid diagram renders here.

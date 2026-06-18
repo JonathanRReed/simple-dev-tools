@@ -1,7 +1,7 @@
-import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowUpRight, ExternalLink } from 'lucide-react';
 
+import BrandMark from '@/components/BrandMark';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { siteConfig, trustPages } from '@/lib/site';
@@ -12,19 +12,17 @@ export default function Footer() {
       <div className="mx-auto grid w-full max-w-6xl gap-8 border-2 border-border bg-card p-6 sm:p-8 lg:grid-cols-[1fr_0.9fr] lg:items-end">
         <div className="space-y-5">
           <div className="flex flex-col gap-3">
-            <Image
-              src="/simple_dev_tools_logo_assets/simple-dev-tools-logo-footer-transparent.png"
-              alt={`${siteConfig.name} by ${siteConfig.provider.name}`}
-              width={512}
-              height={171}
-              className="h-16 w-auto"
-              unoptimized
-            />
+            <Link href="/" className="flex w-fit items-center gap-3" aria-label={`${siteConfig.name} home`}>
+              <BrandMark className="size-11 shrink-0" />
+              <span className="font-display text-2xl font-bold tracking-tight text-foreground">
+                {siteConfig.name}
+              </span>
+            </Link>
             <p className="text-sm text-muted-foreground">Quiet developer tools for focused browser work.</p>
           </div>
           <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
             <Badge variant="secondary" className="bg-secondary/70 text-secondary-foreground">
-              Built by Jonathan Reed
+              Built by Jonathan R Reed
             </Badge>
             <span className="text-xs">© {new Date().getFullYear()} Jonathan R Reed. All rights reserved.</span>
           </div>

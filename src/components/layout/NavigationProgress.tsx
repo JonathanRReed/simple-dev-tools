@@ -187,9 +187,9 @@ export function NavigationProgressBar() {
     <div className="pointer-events-none fixed inset-x-0 top-0 z-50 h-1">
       <div
         className={cn(
-          'h-full origin-left rounded-full bg-gradient-to-r from-primary via-primary/80 to-primary/40 transform transition-opacity duration-200 will-change-transform',
+          'h-full origin-left rounded-none bg-primary transform transition-opacity duration-200 will-change-transform',
           isNavigating
-            ? 'opacity-100 motion-safe:animate-[nav-progress_1.2s_cubic-bezier(0.4,0,0.2,1)_infinite]'
+            ? 'opacity-100 motion-safe:animate-[nav-progress_1.2s_cubic-bezier(0.4,0,0.2,1)_forwards]'
             : 'opacity-0'
         )}
         aria-hidden="true"

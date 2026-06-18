@@ -1,9 +1,9 @@
 export const siteConfig = {
   name: "Simple Dev Tools",
-  shortName: "Simple-Dev-Tools",
+  shortName: "Simple Dev Tools",
   url: "https://dev-tools.helloworldfirm.com",
   description:
-    "Browser-only developer tools by Jonathan R Reed for API snippets, diagrams, SQLite, regex, IDs, QR codes, schemas, and security tokens.",
+    "Quiet, local-first developer tools that run entirely in your browser — API snippets, diagrams, SQLite, regex, schemas, IDs, QR codes, and tokens. No accounts, no servers.",
   author: {
     name: "Jonathan R Reed",
     url: "https://jonathanrreed.com",
@@ -31,8 +31,11 @@ export const siteConfig = {
 export type ToolIcon =
   | "braces"
   | "calendarClock"
+  | "clock"
   | "code"
+  | "color"
   | "database"
+  | "json"
   | "qr"
   | "searchCode"
   | "shield"
@@ -92,6 +95,27 @@ export const toolGroups = [
         description: "Encode payloads, decode Base64 and URLs, and export QR assets.",
         icon: "qr",
         tags: ["Encoding", "Utilities"],
+      },
+      {
+        title: "Timestamp Converter",
+        href: "/tools/timestamp/",
+        description: "Convert Unix epochs, ISO 8601, and time zones, with relative time.",
+        icon: "clock",
+        tags: ["Time", "Dates"],
+      },
+      {
+        title: "JSON Workbench",
+        href: "/tools/json/",
+        description: "Format, validate, and convert between JSON, YAML, and CSV, then query by path.",
+        icon: "json",
+        tags: ["JSON", "Convert"],
+      },
+      {
+        title: "Color & Contrast",
+        href: "/tools/color/",
+        description: "Convert HEX, RGB, HSL, and OKLCH, and check WCAG contrast ratios.",
+        icon: "color",
+        tags: ["Color", "A11y"],
       },
     ],
   },
