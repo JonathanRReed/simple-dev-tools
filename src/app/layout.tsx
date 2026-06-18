@@ -120,18 +120,14 @@ const providerProfile = {
   url: siteConfig.provider.url,
 };
 
-const softwareApplications = toolPages.map((toolPage) => ({
-  '@type': 'SoftwareApplication',
+const toolEntities = toolPages.map((toolPage) => ({
+  '@type': 'CreativeWork',
   name: toolPage.title,
-  applicationCategory: 'DeveloperApplication',
-  operatingSystem: 'Web browser',
   description: toolPage.description,
   url: `${siteConfig.url}${toolPage.href}`,
-  offers: {
-    '@type': 'Offer',
-    price: '0',
-    priceCurrency: 'USD',
-  },
+  creator: authorProfile,
+  publisher: providerProfile,
+  isAccessibleForFree: true,
 }));
 
 const jsonLd = {
@@ -148,7 +144,7 @@ const jsonLd = {
     name: toolPage.title,
     description: toolPage.description,
     url: `${siteConfig.url}${toolPage.href}`,
-    mainEntity: softwareApplications.find((app) => app.url === `${siteConfig.url}${toolPage.href}`),
+    mainEntity: toolEntities.find((tool) => tool.url === `${siteConfig.url}${toolPage.href}`),
   })),
 };
 

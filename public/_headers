@@ -6,6 +6,18 @@
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=()
 
+/Favicon/*
+  X-Robots-Tag: noindex
+
+/simple_dev_tools_logo_assets/*
+  X-Robots-Tag: noindex
+
+/favicon.ico
+  X-Robots-Tag: noindex
+
+/logo.avif
+  X-Robots-Tag: noindex
+
 https://dev-hellworldfirm-com.pages.dev/*
   X-Robots-Tag: noindex
 

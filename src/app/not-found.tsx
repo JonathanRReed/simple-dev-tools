@@ -1,8 +1,17 @@
 import Link from 'next/link';
+import type { Metadata } from 'next';
 import { ArrowRight, Home } from 'lucide-react';
 
 import ToolPage from '@/components/layout/ToolPage';
 import { toolPages } from '@/lib/site';
+
+export const metadata: Metadata = {
+  title: 'Page not found',
+  robots: {
+    index: false,
+    follow: true,
+  },
+};
 
 export default function NotFound() {
   return (

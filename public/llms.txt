@@ -6,20 +6,20 @@ Simple Dev Tools is a Next.js application hosted at `https://dev-tools.helloworl
 
 ## Developer Accelerators
 
-- [API Snippet Generator](https://dev-tools.helloworldfirm.com/api-snippet): Generate cURL, Python requests, and JavaScript fetch snippets from an endpoint, HTTP method, custom headers, bearer token, and JSON body.
-- [Mermaid Editor](https://dev-tools.helloworldfirm.com/mermaid): Sketch sequence diagrams, flowcharts, and architecture visualizations quickly with live preview and export.
-- [SQLite Playground](https://dev-tools.helloworldfirm.com/sqlite): Run SQL experiments against an in-memory SQLite database (sql.js WASM) with instant result tables and CSV/JSON export.
-- [Regex Lab](https://dev-tools.helloworldfirm.com/tools/regex): Iterate on regular expression patterns with explainers, tests, and sharing capabilities.
-- [IDs & Scheduling](https://dev-tools.helloworldfirm.com/tools/ids-cron): Generate ULIDs, UUIDs, and human-friendly CRON expression helpers with descriptions.
-- [Encoders & QR](https://dev-tools.helloworldfirm.com/tools/encode-qr): Encode/decode payloads (Base64, URL encoding) and produce QR code assets (PNG/SVG).
-- [Timestamp Converter](https://dev-tools.helloworldfirm.com/tools/timestamp): Convert between Unix epochs (seconds/milliseconds), ISO 8601, and time zones, with relative time and human-readable formats.
-- [JSON Workbench](https://dev-tools.helloworldfirm.com/tools/json): Format, minify, validate, and convert between JSON, YAML, and CSV, sort keys, and query values by path.
-- [Color & Contrast](https://dev-tools.helloworldfirm.com/tools/color): Convert colors between HEX, RGB, HSL, and OKLCH, build tints/shades, and check WCAG contrast ratios for accessibility.
+- [API Snippet Generator](https://dev-tools.helloworldfirm.com/api-snippet/): Generate cURL, Python requests, and JavaScript fetch snippets from an endpoint, HTTP method, custom headers, bearer token, and JSON body.
+- [Mermaid Editor](https://dev-tools.helloworldfirm.com/mermaid/): Sketch sequence diagrams, flowcharts, and architecture visualizations quickly with live preview and export.
+- [SQLite Playground](https://dev-tools.helloworldfirm.com/sqlite/): Run SQL experiments against an in-memory SQLite database (sql.js WASM) with instant result tables and CSV/JSON export.
+- [Regex Lab](https://dev-tools.helloworldfirm.com/tools/regex/): Iterate on regular expression patterns with explainers, tests, and sharing capabilities.
+- [IDs & Scheduling](https://dev-tools.helloworldfirm.com/tools/ids-cron/): Generate ULIDs, UUIDs, and human-friendly CRON expression helpers with descriptions.
+- [Encoders & QR](https://dev-tools.helloworldfirm.com/tools/encode-qr/): Encode/decode payloads (Base64, URL encoding) and produce QR code assets (PNG/SVG).
+- [Timestamp Converter](https://dev-tools.helloworldfirm.com/tools/timestamp/): Convert between Unix epochs (seconds/milliseconds), ISO 8601, and time zones, with relative time and human-readable formats.
+- [JSON Workbench](https://dev-tools.helloworldfirm.com/tools/json/): Format, minify, validate, and convert between JSON, YAML, and CSV, sort keys, and query values by path.
+- [Color & Contrast](https://dev-tools.helloworldfirm.com/tools/color/): Convert colors between HEX, RGB, HSL, and OKLCH, build tints/shades, and check WCAG contrast ratios for accessibility.
 
 ## Studios
 
-- [Schema & Types Studio](https://dev-tools.helloworldfirm.com/studio/schema): Convert sources between JSON Schema, TypeScript interfaces, Zod schemas, and preview Swagger documentation.
-- [Security & Tokens](https://dev-tools.helloworldfirm.com/studio/security): Inspect JWTs, decode tokens, compute cryptographic hashes, and verify HMAC signatures using Web Crypto APIs.
+- [Schema & Types Studio](https://dev-tools.helloworldfirm.com/studio/schema/): Convert sources between JSON Schema, TypeScript interfaces, Zod schemas, and preview Swagger documentation.
+- [Security & Tokens](https://dev-tools.helloworldfirm.com/studio/security/): Inspect JWTs, decode tokens, compute cryptographic hashes, and verify HMAC signatures using Web Crypto APIs.
 
 ## Technical Documentation
 
