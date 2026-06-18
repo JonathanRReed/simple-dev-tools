@@ -6,8 +6,10 @@ import { useTheme } from "next-themes";
 import {
   Braces,
   CalendarClock,
+  Clock,
   Code2,
   Database,
+  FileJson,
   Home,
   Palette,
   QrCode,
@@ -33,8 +35,11 @@ import { siteConfig, toolPages, trustPages, type ToolIcon } from "@/lib/site";
 const iconMap = {
   braces: Braces,
   calendarClock: CalendarClock,
+  clock: Clock,
   code: Code2,
+  color: Palette,
   database: Database,
+  json: FileJson,
   qr: QrCode,
   searchCode: SearchCode,
   shield: ShieldCheck,
@@ -42,6 +47,13 @@ const iconMap = {
 } satisfies Record<ToolIcon, typeof Code2>;
 
 const normalize = (href: string) => (href === "/" ? "/" : href.replace(/\/$/, ""));
+
+// Keyword aliases so typing "data", "feedback", etc. finds the right page.
+const PAGE_KEYWORDS: Record<string, string[]> = {
+  "/about/": ["team", "author", "who", "maintainer"],
+  "/contact/": ["email", "support", "feedback", "bug"],
+  "/privacy/": ["data", "local", "tracking", "cookies"],
+};
 
 type CommandMenuValue = { open: boolean; setOpen: (open: boolean) => void; toggle: () => void };
 const CommandMenuContext = React.createContext<CommandMenuValue | null>(null);
@@ -176,11 +188,14 @@ export function CommandMenuProvider({ children }: { children: React.ReactNode })
             </CommandGroup>
           ) : null}
 
-          <CommandGroup heading="Tools">
-            <CommandItem value="home overview" onSelect={() => go("/")}>
+          <CommandGroup heading="Navigation">
+            <CommandItem value="home overview" keywords={["start", "catalog"]} onSelect={() => go("/")}>
               <Home />
               <span>Home</span>
             </CommandItem>
+          </CommandGroup>
+
+          <CommandGroup heading="Tools">
             {toolPages.map((tool) => {
               const Icon = iconMap[tool.icon];
               return (
@@ -202,7 +217,12 @@ export function CommandMenuProvider({ children }: { children: React.ReactNode })
 
           <CommandGroup heading="Pages">
             {trustPages.map((page) => (
-              <CommandItem key={page.href} value={page.title} onSelect={() => go(page.href)}>
+              <CommandItem
+                key={page.href}
+                value={page.title}
+                keywords={PAGE_KEYWORDS[page.href] ?? []}
+                onSelect={() => go(page.href)}
+              >
                 <span>{page.title}</span>
               </CommandItem>
             ))}

@@ -12,6 +12,9 @@ Simple Dev Tools is a Next.js application hosted at `https://dev-tools.helloworl
 - [Regex Lab](https://dev-tools.helloworldfirm.com/tools/regex): Iterate on regular expression patterns with explainers, tests, and sharing capabilities.
 - [IDs & Scheduling](https://dev-tools.helloworldfirm.com/tools/ids-cron): Generate ULIDs, UUIDs, and human-friendly CRON expression helpers with descriptions.
 - [Encoders & QR](https://dev-tools.helloworldfirm.com/tools/encode-qr): Encode/decode payloads (Base64, URL encoding) and produce QR code assets (PNG/SVG).
+- [Timestamp Converter](https://dev-tools.helloworldfirm.com/tools/timestamp): Convert between Unix epochs (seconds/milliseconds), ISO 8601, and time zones, with relative time and human-readable formats.
+- [JSON Workbench](https://dev-tools.helloworldfirm.com/tools/json): Format, minify, validate, and convert between JSON, YAML, and CSV, sort keys, and query values by path.
+- [Color & Contrast](https://dev-tools.helloworldfirm.com/tools/color): Convert colors between HEX, RGB, HSL, and OKLCH, build tints/shades, and check WCAG contrast ratios for accessibility.
 
 ## Studios
 

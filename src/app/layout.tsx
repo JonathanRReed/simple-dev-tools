@@ -7,10 +7,12 @@ import AppHeader from '@/components/AppHeader';
 import { CommandMenuProvider } from '@/components/CommandMenu';
 import Footer from '@/components/Footer';
 import AppSidebar, { AppSidebarProvider } from '@/components/Sidebar';
+import { BackToTop } from '@/components/layout/BackToTop';
 import {
   NavigationProgressBar,
   NavigationProgressProvider,
 } from '@/components/layout/NavigationProgress';
+import { RouteFocus } from '@/components/layout/RouteFocus';
 import { ThemeProvider } from '@/components/theme-provider';
 import { RecentToolsProvider } from '@/hooks/use-recent-tools';
 import { SidebarInset } from '@/components/ui/sidebar';
@@ -44,7 +46,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
   title: {
     default: `${siteConfig.name} | Developer tools by ${siteConfig.author.name}`,
-    template: `%s | ${siteConfig.name} by ${siteConfig.author.name}`,
+    template: `%s | ${siteConfig.name}`,
   },
   description: siteConfig.description,
   keywords: [...siteConfig.keywords],
@@ -186,6 +188,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                         </div>
                         <Footer />
                       </div>
+                      <RouteFocus />
+                      <BackToTop />
                     </SidebarInset>
                   </div>
                 </CommandMenuProvider>

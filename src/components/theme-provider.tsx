@@ -10,8 +10,10 @@ export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
   return (
     <NextThemesProvider
       attribute="data-theme"
-      defaultTheme="art-deco"
-      enableSystem={false}
+      // Follow the OS by default: system dark -> Art Deco, system light -> Paper.
+      // An explicit pick in the theme menu overrides and persists.
+      defaultTheme="system"
+      enableSystem
       themes={[...appThemeIds]}
       value={{
         main: 'main',
@@ -20,6 +22,8 @@ export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
         raycast: 'raycast',
         'art-deco': 'art-deco',
         paper: 'paper',
+        dark: 'art-deco',
+        light: 'paper',
       }}
       {...props}
     >

@@ -2,7 +2,7 @@
 
 Simple Dev Tools is a browser-first toolkit for everyday developer workflows. It is live at [dev-tools.helloworldfirm.com](https://dev-tools.helloworldfirm.com) and designed to be useful without auth, a database, or a custom backend.
 
-Built by Jonathan R Reed for Hello.World Consulting, the project highlights practical, portfolio-friendly strengths: polished UI, strong metadata, static hosting, and tools that are easy to try immediately.
+Built and maintained by Jonathan R Reed at Hello.World Consulting. Every tool runs entirely in your browser — no accounts, no servers, and nothing sent to a backend.
 
 ## What it includes
 
@@ -15,12 +15,12 @@ Built by Jonathan R Reed for Hello.World Consulting, the project highlights prac
 - JSON, YAML, and OpenAPI schema validation and conversion
 - JWT decoding, hashing, and HMAC utilities
 
-## Why this project is portfolio-ready
+## Why local-first
 
-- Everything runs locally in the browser, which keeps sensitive examples off a server.
-- The app is static-export friendly, so deployment is simple and low maintenance.
+- Everything runs in the browser, so sensitive examples — tokens, schemas, SQL, and regex samples — never leave your machine.
+- The app is a static export, so deployment is just files on a CDN: simple, cheap, and low-maintenance.
+- No auth and no backend, so the tools are usable the moment the page loads.
 - Metadata, Open Graph images, robots, sitemap, and llms.txt are already in place for discoverability.
-- The tool list is concrete and easy for an employer to understand quickly.
 
 ## Tech stack
 

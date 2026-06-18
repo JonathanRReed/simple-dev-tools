@@ -4,7 +4,7 @@ import ToolPage from "@/components/layout/ToolPage";
 import RegexClientOnly from "./ClientOnly";
 
 export const metadata: Metadata = {
-  title: "Regex Debugger and Tester",
+  title: "Regex Lab",
   description:
     "Debug regular expressions with live matches, replacements, sample text, and shareable URLs. This browser regex tester runs client-side.",
   alternates: {
@@ -16,13 +16,12 @@ export default function RegexPage() {
   return (
     <ToolPage contentClassName="mx-auto max-w-5xl space-y-6">
       <header className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+        <h1 className="font-display text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
           Regex Lab
         </h1>
         <p className="text-muted-foreground">
-          This regex tester is created by Jonathan R Reed to make quick pattern checks less painful.
-          Test, visualize, and share regular expressions with live matches, replacements, and shareable URLs.
-          Everything runs client-side.
+          Test, visualize, and share regular expressions with live matches,
+          replacements, and shareable URLs. Everything runs client-side.
         </p>
         <p className="max-w-3xl text-sm leading-7 text-muted-foreground">
           Use Regex Lab when you need to debug a pattern before it goes into an

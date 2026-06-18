@@ -1,5 +1,5 @@
 "use client";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import QRCode from "qrcode";
 import { ArrowLeftRight, Download, RotateCcw } from "lucide-react";
 
@@ -14,7 +14,9 @@ import { Alert } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 
 const te = new TextEncoder();
-const td = new TextDecoder();
+// Fatal decoder for Base64 → text: throws on invalid UTF-8 instead of
+// silently emitting U+FFFD replacement characters (mojibake).
+const tdFatal = new TextDecoder("utf-8", { fatal: true });
 
 function bytesToBase64(bytes: Uint8Array): string {
   let bin = "";
@@ -34,7 +36,7 @@ function toBase64(text: string): string {
 }
 
 function fromBase64(b64: string): string {
-  return td.decode(base64ToBytes(b64));
+  return tdFatal.decode(base64ToBytes(b64));
 }
 
 function toBase64Url(b64: string): string {
@@ -52,6 +54,39 @@ const QR_MIN = 128;
 const QR_MAX = 1024;
 const QR_DEFAULT = 256;
 
+const QR_MARGIN_MIN = 0;
+const QR_MARGIN_MAX = 8;
+const QR_MARGIN_DEFAULT = 2;
+
+/** Parse + clamp the quiet-zone margin; falls back to the default on NaN. */
+function clampQrMargin(raw: string): number {
+  const n = parseInt(raw, 10);
+  if (!Number.isFinite(n)) return QR_MARGIN_DEFAULT;
+  return Math.min(QR_MARGIN_MAX, Math.max(QR_MARGIN_MIN, n));
+}
+
+// Approximate max byte-mode capacities per ECC level (version 40 QR, binary
+// mode). Used as a friendly pre-emptive guard before the library throws.
+const QR_BYTE_CAPACITY: Record<"L" | "M" | "Q" | "H", number> = {
+  L: 2953,
+  M: 2331,
+  Q: 1663,
+  H: 1273,
+};
+
+/** Returns the trimmed text as a valid http(s) URL, or null. */
+function asHttpUrl(text: string): string | null {
+  const trimmed = text.trim();
+  if (trimmed === "") return null;
+  try {
+    const u = new URL(trimmed);
+    if (u.protocol === "http:" || u.protocol === "https:") return u.href;
+  } catch {
+    /* not a URL */
+  }
+  return null;
+}
+
 /** Parse + clamp a QR size; falls back to the default on NaN. */
 function clampQrSize(raw: string): number {
   const n = parseInt(raw, 10);
@@ -60,8 +95,11 @@ function clampQrSize(raw: string): number {
 }
 
 function counts(s: string): string {
+  // Count Unicode code points (not UTF-16 code units) so emoji / astral
+  // characters count as one "char".
+  const chars = Array.from(s).length;
   const bytes = te.encode(s).length;
-  return `${s.length.toLocaleString()} chars · ${bytes.toLocaleString()} bytes`;
+  return `${chars.toLocaleString()} chars · ${bytes.toLocaleString()} bytes`;
 }
 
 type EncodeMode = "encode" | "decode";
@@ -144,9 +182,13 @@ export default function EncodeQR() {
         }
       } catch (e: any) {
         setB64Output("");
+        // Distinguish a fatal UTF-8 decode (valid Base64, but not text) from a
+        // malformed-Base64 error so the message is actionable.
         setB64Error(
-          e?.message ||
-            "Decode error (ensure valid Base64 and toggle URL-safe appropriately)"
+          e instanceof TypeError
+            ? "Decoded bytes are not valid UTF-8 text (the data may be binary)."
+            : e?.message ||
+                "Decode error (ensure valid Base64 and toggle URL-safe appropriately)"
         );
       }
     }, 200);
@@ -171,11 +213,28 @@ export default function EncodeQR() {
   const [qrSizeInput, setQrSizeInput] = useState<string>(String(QR_DEFAULT));
   const [qrEcc, setQrEcc] = useState<"L" | "M" | "Q" | "H">("M");
   const [qrFormat, setQrFormat] = useState<"png" | "svg">("png");
+  // Quiet-zone margin (modules of whitespace around the symbol).
+  const [qrMargin, setQrMargin] = useState<number>(QR_MARGIN_DEFAULT);
   const [qrPngDataUrl, setQrPngDataUrl] = useState<string>("");
   const [qrSvg, setQrSvg] = useState<string>("");
   const [qrError, setQrError] = useState<string>("");
+  // Monotonic token: each generateQR call claims the next id, and only the
+  // latest call is allowed to commit results, so overlapping async runs can't
+  // resolve out of order and leave a stale preview.
+  const qrGenRef = useRef(0);
+
+  // Capacity accounting: byte length vs. the approximate max for the ECC level.
+  const qrBytes = useMemo(() => te.encode(qrText).length, [qrText]);
+  const qrCapacity = QR_BYTE_CAPACITY[qrEcc];
+  const qrOverBy = qrBytes - qrCapacity;
+  const qrOverCapacity = qrOverBy > 0;
+  const qrCapacityHint = `${qrBytes.toLocaleString()} / ${qrCapacity.toLocaleString()} bytes · ${qrEcc}`;
+
+  // Open-URL convenience: a valid http(s) destination for the current text.
+  const qrUrl = useMemo(() => asHttpUrl(qrText), [qrText]);
 
   const generateQR = useCallback(async () => {
+    const gen = ++qrGenRef.current;
     // Empty/whitespace guard: the library throws a raw error otherwise.
     if (qrText.trim() === "") {
       setQrPngDataUrl("");
@@ -190,9 +249,9 @@ export default function EncodeQR() {
         const url = await QRCode.toDataURL(qrText, {
           errorCorrectionLevel: qrEcc,
           width: size,
-          margin: 2,
-          scale: 4,
+          margin: qrMargin,
         });
+        if (gen !== qrGenRef.current) return;
         setQrPngDataUrl(url);
         setQrSvg("");
       } else {
@@ -200,17 +259,19 @@ export default function EncodeQR() {
           errorCorrectionLevel: qrEcc,
           type: "svg",
           width: size,
-          margin: 2,
+          margin: qrMargin,
         } as any);
+        if (gen !== qrGenRef.current) return;
         setQrSvg(svg);
         setQrPngDataUrl("");
       }
     } catch (e: any) {
+      if (gen !== qrGenRef.current) return;
       setQrPngDataUrl("");
       setQrSvg("");
       setQrError(e?.message || "QR generation error");
     }
-  }, [qrText, qrSizeInput, qrEcc, qrFormat]);
+  }, [qrText, qrSizeInput, qrEcc, qrFormat, qrMargin]);
 
   // Debounced auto-generation. Re-running on format change also clears the
   // previous (stale) preview, since only one of png/svg is ever set.
@@ -226,6 +287,7 @@ export default function EncodeQR() {
     setQrPngDataUrl("");
     setQrSvg("");
     setQrError("");
+    setQrMargin(QR_MARGIN_DEFAULT);
   }
 
   function downloadPng() {
@@ -421,7 +483,12 @@ export default function EncodeQR() {
         <TabsContent value="qr">
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,0.55fr)_minmax(0,0.45fr)]">
             <div className="flex flex-col gap-4">
-              <Field label="Text" htmlFor="qr-text" hint={counts(qrText)}>
+              <Field
+                label="Text"
+                htmlFor="qr-text"
+                hint={qrOverCapacity ? undefined : qrCapacityHint}
+                error={qrOverCapacity ? qrCapacityHint : undefined}
+              >
                 <textarea
                   id="qr-text"
                   className="w-full min-h-[120px] resize-y px-4 py-3 font-mono text-sm"
@@ -441,6 +508,21 @@ export default function EncodeQR() {
                     value={qrSizeInput}
                     onChange={(e) => setQrSizeInput(e.target.value)}
                     onBlur={(e) => setQrSizeInput(String(clampQrSize(e.target.value)))}
+                  />
+                </Field>
+
+                <Field
+                  label="Quiet zone"
+                  htmlFor="qr-margin"
+                  hint={`${QR_MARGIN_MIN}–${QR_MARGIN_MAX} modules`}
+                >
+                  <Input
+                    id="qr-margin"
+                    type="number"
+                    min={QR_MARGIN_MIN}
+                    max={QR_MARGIN_MAX}
+                    value={qrMargin}
+                    onChange={(e) => setQrMargin(clampQrMargin(e.target.value))}
                   />
                 </Field>
 
@@ -502,7 +584,7 @@ export default function EncodeQR() {
             </div>
 
             <ResultPanel title="Preview" bodyClassName="p-0">
-              <div className="flex min-h-[260px] items-center justify-center bg-background/60 p-4">
+              <div className="flex min-h-[260px] flex-col items-center justify-center gap-3 bg-background/60 p-4">
                 {qrFormat === "png" && qrPngDataUrl && (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={qrPngDataUrl} alt="Generated QR code" className="max-w-full" />
@@ -519,6 +601,18 @@ export default function EncodeQR() {
                   <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
                     QR preview appears here
                   </p>
+                )}
+                {qrUrl && (qrPngDataUrl || qrSvg) && (
+                  <Button asChild variant="link" size="sm">
+                    <a
+                      href={qrUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title={qrUrl}
+                    >
+                      Open ↗
+                    </a>
+                  </Button>
                 )}
               </div>
             </ResultPanel>

@@ -136,68 +136,103 @@ function RegexLabInner() {
     [pattern, flagsStr]
   );
 
-  // Hydrate state from query params (?p=pattern&f=flags)
+  // Hydrate state from query params (?p=pattern&f=flags&t=test&r=replacement)
   useEffect(() => {
     const sp = getSP();
     const qp = sp.get("p");
     const qf = sp.get("f");
+    const qt = sp.get("t");
+    const qr = sp.get("r");
     if (qp !== null && qp !== pattern) setPattern(qp);
     if (qf !== null) {
       const nextFlags = parseFlags(qf);
       const same = buildFlags(nextFlags) === buildFlags(flags);
       if (!same) setFlags(nextFlags);
     }
+    if (qt !== null && qt !== text) setText(qt);
+    if (qr !== null && qr !== replacement) setReplacement(qr);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [getSP]);
 
-  // Debounce URL updates when pattern/flags change
+  // Debounce URL updates when pattern/flags/test/replacement change
   useEffect(() => {
     const sp = getSP();
     const currentP = sp.get("p") || "";
     const currentF = sp.get("f") || "";
-    const needUpdate = currentP !== pattern || currentF !== flagsStr;
+    const currentT = sp.get("t") || "";
+    const currentR = sp.get("r") || "";
+    const needUpdate =
+      currentP !== pattern ||
+      currentF !== flagsStr ||
+      currentT !== text ||
+      currentR !== replacement;
     const t = setTimeout(() => {
       if (!needUpdate) return;
       const params = getSP();
       if (pattern) params.set("p", pattern); else params.delete("p");
       if (flagsStr) params.set("f", flagsStr); else params.delete("f");
+      if (text) params.set("t", text); else params.delete("t");
+      if (replacement) params.set("r", replacement); else params.delete("r");
       const qs = params.toString();
       router.replace(qs ? `?${qs}` : "?", { scroll: false });
     }, 300);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pattern, flagsStr, getSP]);
+  }, [pattern, flagsStr, text, replacement, getSP]);
 
-  const getShareUrl = useCallback(
-    () => (typeof window !== "undefined" ? window.location.href : ""),
-    []
-  );
+  // Build the share URL from CURRENT state at click time. Reading
+  // window.location.href would lag the 300ms-debounced URL sync and copy a
+  // stale link right after an edit, so serialize the live fields here instead.
+  const getShareUrl = useCallback(() => {
+    if (typeof window === "undefined") return "";
+    try {
+      const params = new URLSearchParams();
+      if (pattern) params.set("p", pattern);
+      if (flagsStr) params.set("f", flagsStr);
+      if (text) params.set("t", text);
+      if (replacement) params.set("r", replacement);
+      const qs = params.toString();
+      const { origin, pathname } = window.location;
+      return `${origin}${pathname}${qs ? `?${qs}` : ""}`;
+    } catch {
+      return typeof window !== "undefined" ? window.location.href : "";
+    }
+  }, [pattern, flagsStr, text, replacement]);
 
-  const matches = useMemo<MatchInfo[]>(() => {
-    if (!re) return [];
+  // Cap the number of matches collected so large/pathological inputs stay
+  // responsive. matchAll advances unicode zero-length matches correctly, which
+  // a hand-rolled exec loop with `lastIndex++` does not under the `u` flag
+  // (it can hang forever on a surrogate-pair boundary).
+  const MAX_MATCHES = 5000;
+  const matchesResult = useMemo<{ list: MatchInfo[]; truncated: boolean }>(() => {
+    if (!re) return { list: [], truncated: false };
     const list: MatchInfo[] = [];
-    const pushMatch = (m: RegExpExecArray) => {
+    const pushMatch = (m: RegExpMatchArray) => {
       list.push({
         match: m[0],
-        index: m.index,
+        index: m.index ?? 0,
         length: m[0].length,
         groups: Array.from(m).slice(1),
         named: m.groups ? { ...m.groups } : {},
       });
     };
     if (re.global || re.sticky) {
-      let m: RegExpExecArray | null;
-      const r = new RegExp(re.source, re.flags); // copy to avoid lastIndex side-effects
-      while ((m = r.exec(text)) !== null) {
+      // Copy to avoid lastIndex side-effects on the memoized regex.
+      const r = new RegExp(re.source, re.flags);
+      // matchAll requires the global flag; sticky-only regexes need it added.
+      const iterable = r.global ? text.matchAll(r) : text.matchAll(new RegExp(r.source, r.flags + "g"));
+      for (const m of iterable) {
+        if (list.length >= MAX_MATCHES) return { list, truncated: true };
         pushMatch(m);
-        if (m[0] === "") r.lastIndex++; // avoid infinite loops on zero-length matches
       }
     } else {
       const m = re.exec(text);
       if (m) pushMatch(m);
     }
-    return list;
+    return { list, truncated: false };
   }, [re, text]);
+
+  const matches = matchesResult.list;
 
   // Build highlight segments from match index + length.
   const segments = useMemo<Segment[]>(() => {
@@ -229,6 +264,66 @@ function RegexLabInner() {
       return { value: null, error: e?.message || "Replacement failed" };
     }
   }, [re, text, replacement, error]);
+
+  // Split the test string by the pattern. Cap very large inputs to keep the UI
+  // responsive; distinguish invalid regex from a genuinely empty split result.
+  const SPLIT_INPUT_CAP = 50000;
+  const split = useMemo<{ parts: string[] | null; error: string | null; truncated: boolean }>(() => {
+    if (!re) return { parts: null, error, truncated: false };
+    const truncated = text.length > SPLIT_INPUT_CAP;
+    const input = truncated ? text.slice(0, SPLIT_INPUT_CAP) : text;
+    try {
+      return { parts: input.split(re), error: null, truncated };
+    } catch (e: any) {
+      return { parts: null, error: e?.message || "Split failed", truncated: false };
+    }
+  }, [re, text, error]);
+
+  const splitJson = useMemo(
+    () => (split.parts ? JSON.stringify(split.parts, null, 2) : ""),
+    [split.parts]
+  );
+
+  // Count capture groups in the pattern by compiling a tolerant wrapper and
+  // reading numberOfCaptureGroups via the resulting match. Falls back to a
+  // lexical scan that ignores escaped "\(" and non-capturing "(?...)" groups.
+  const captureGroups = useMemo<number>(() => {
+    if (!re) return 0;
+    try {
+      // Anchored empty-alternative wrapper always matches, exposing group arity.
+      const probe = new RegExp(`${re.source}|`);
+      const m = probe.exec("");
+      if (m) return m.length - 1;
+    } catch {
+      /* fall through to lexical scan */
+    }
+    let count = 0;
+    let inClass = false;
+    for (let i = 0; i < pattern.length; i++) {
+      const c = pattern[i];
+      if (c === "\\") {
+        i++; // skip escaped char
+        continue;
+      }
+      if (inClass) {
+        if (c === "]") inClass = false;
+        continue;
+      }
+      if (c === "[") {
+        inClass = true;
+        continue;
+      }
+      if (c === "(" && pattern[i + 1] !== "?") count++;
+    }
+    return count;
+  }, [re, pattern]);
+
+  // How many replacements String.replace would perform: every match when the
+  // g flag is set, otherwise the first match only (1 if anything matched).
+  const replaceCount = useMemo<number>(() => {
+    if (!re || matches.length === 0) return 0;
+    return re.global ? matches.length : 1;
+  }, [re, matches.length]);
 
   // Plain-text export of the matches list for copying.
   const matchesText = useMemo(() => {
@@ -344,6 +439,22 @@ function RegexLabInner() {
           <Badge variant={matches.length ? "default" : "outline"}>{matchCountLabel}</Badge>
         </div>
 
+        {/* Live count summary: matches, capture groups, projected replacements. */}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+          <span className="flex items-center gap-1.5">
+            <span className="brutal-label">Matches</span>
+            <span className="font-mono text-sm text-foreground">{matches.length}</span>
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="brutal-label">Groups</span>
+            <span className="font-mono text-sm text-foreground">{captureGroups}</span>
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="brutal-label">Replacements</span>
+            <span className="font-mono text-sm text-foreground">{replaceCount}</span>
+          </span>
+        </div>
+
         {error ? <Alert variant="error">{error}</Alert> : null}
       </div>
 
@@ -356,6 +467,8 @@ function RegexLabInner() {
             value={text}
             onChange={(e) => setText(e.target.value)}
             spellCheck={false}
+            autoCapitalize="off"
+            autoCorrect="off"
           />
         </Field>
         <Field
@@ -382,6 +495,7 @@ function RegexLabInner() {
           <TabsTrigger value="highlight">Highlight</TabsTrigger>
           <TabsTrigger value="matches">Matches</TabsTrigger>
           <TabsTrigger value="replace">Replace</TabsTrigger>
+          <TabsTrigger value="split">Split</TabsTrigger>
         </TabsList>
 
         <TabsContent value="highlight">
@@ -418,6 +532,12 @@ function RegexLabInner() {
             ) : matches.length === 0 ? (
               <p className="font-mono text-sm text-muted-foreground">No matches.</p>
             ) : (
+              <div className="flex flex-col gap-2">
+              {matchesResult.truncated ? (
+                <Alert variant="warning">
+                  Showing first {MAX_MATCHES.toLocaleString()} matches; results truncated for responsiveness.
+                </Alert>
+              ) : null}
               <table className="w-full font-mono text-sm text-foreground">
                 <thead>
                   <tr className="border-b-2 border-border">
@@ -438,7 +558,13 @@ function RegexLabInner() {
                     return (
                       <tr key={i} className="border-b border-border/50 align-top">
                         <td className="px-2 py-1">{m.index}</td>
-                        <td className="px-2 py-1 whitespace-pre-wrap break-words">{m.match}</td>
+                        <td className="px-2 py-1 whitespace-pre-wrap break-words">
+                          {m.length > 0 ? (
+                            m.match
+                          ) : (
+                            <span className="text-muted-foreground">&lt;empty&gt;</span>
+                          )}
+                        </td>
                         <td className="px-2 py-1">
                           {hasGroups ? (
                             <ul className="space-y-0.5">
@@ -464,6 +590,7 @@ function RegexLabInner() {
                   })}
                 </tbody>
               </table>
+              </div>
             )}
           </ResultPanel>
         </TabsContent>
@@ -485,6 +612,63 @@ function RegexLabInner() {
               <pre className="whitespace-pre-wrap break-words font-mono text-sm text-foreground">
                 {replaced.value}
               </pre>
+            )}
+          </ResultPanel>
+        </TabsContent>
+
+        <TabsContent value="split">
+          <ResultPanel
+            title={
+              split.parts
+                ? `${split.parts.length} ${split.parts.length === 1 ? "part" : "parts"}`
+                : "Split"
+            }
+            actions={
+              <span className="brutal-label hidden sm:inline">{regexLiteral}</span>
+            }
+            copyValue={splitJson}
+            scroll
+          >
+            {split.error ? (
+              <Alert variant="error">{split.error}</Alert>
+            ) : !split.parts ? (
+              <p className="font-mono text-sm text-muted-foreground">No result.</p>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {split.truncated ? (
+                  <Alert variant="warning">
+                    Input truncated to {SPLIT_INPUT_CAP.toLocaleString()} characters for splitting.
+                  </Alert>
+                ) : null}
+                <table className="w-full font-mono text-sm text-foreground">
+                  <thead>
+                    <tr className="border-b-2 border-border">
+                      <th className="px-2 py-1 text-left">
+                        <Label>#</Label>
+                      </th>
+                      <th className="px-2 py-1 text-left">
+                        <Label>Part</Label>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {split.parts.map((part, i) => (
+                      <tr key={i} className="border-b border-border/50 align-top">
+                        <td className="px-2 py-1 text-muted-foreground">{i}</td>
+                        <td className="px-2 py-1 whitespace-pre-wrap break-words">
+                          {part === undefined ? (
+                            <span className="text-muted-foreground">&lt;undefined&gt;</span>
+                          ) : part === "" ? (
+                            <span className="text-muted-foreground">&lt;empty&gt;</span>
+                          ) : (
+                            part
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </ResultPanel>
         </TabsContent>

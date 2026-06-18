@@ -29,8 +29,8 @@ export default function ToolLoading({ message }: ToolLoadingProps) {
           <span>{message}</span>
         </div>
         {showHint && (
-          <p className="text-xs text-muted-foreground/80 text-center">
-            Just a moment, the tool is getting everything ready.
+          <p className="text-center text-xs text-muted-foreground">
+            Loading dependencies — this only happens once per session.
           </p>
         )}
       </div>
