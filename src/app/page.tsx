@@ -100,7 +100,6 @@ export default function Home() {
         type="button"
         onClick={() => setOpen(true)}
         className="group flex w-full items-center gap-3 border-2 border-border bg-card px-4 py-3 text-left transition-colors hover:border-primary focus-visible:border-primary"
-        aria-label="Search tools by name or tag"
       >
         <SearchCode className="size-5 shrink-0 text-muted-foreground" aria-hidden="true" />
         <span className="flex-1 font-mono text-sm text-muted-foreground group-hover:text-foreground">
