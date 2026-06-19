@@ -50,7 +50,7 @@ export default function AppHeader() {
           type="button"
           onClick={() => setOpen(true)}
           className="group inline-flex h-9 items-center gap-2 border-2 border-border bg-card px-2.5 text-sm text-muted-foreground transition-colors hover:border-primary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-          aria-label="Open command menu"
+          aria-label="Search ⌘K"
         >
           <Search className="size-4" aria-hidden="true" />
           <span className="hidden sm:inline">Search</span>
