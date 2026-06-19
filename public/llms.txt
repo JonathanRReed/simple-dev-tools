@@ -1,8 +1,15 @@
 # Simple Dev Tools
 
-> A collection of developer accelerators and studios built with Next.js, React, and TailwindCSS. Provides in-browser utilities for engineers to prototype snippets, inspect schemas, validate security tokens, generate diagrams, and automate workflows.
+Simple Dev Tools is a local-first browser toolkit built by Jonathan R. Reed through Hello.World Consulting. It gives engineers small utilities for snippets, diagrams, SQLite, regex, schemas, security tokens, IDs, QR codes, timestamps, JSON, and color checks without an account or hosted workspace.
 
-Simple Dev Tools is a Next.js application hosted at `https://dev-tools.helloworldfirm.com/` (production) that offers independent single-page tools with client-side interfaces. All tools run entirely in the browser with no authentication required. Built by Jonathan Reed at Hello.World Consulting using modern web technologies including Radix UI, shadcn/ui components, and various specialized libraries.
+The project is intentionally plain: open the tool, inspect or transform the input, copy or export the result, and leave without sending private implementation details to a backend. It is part of Jonathan R. Reed's public project network around practical tools, private workflows, and inspectable systems.
+
+## Data Boundaries
+
+- Tool input is handled in the browser.
+- The site has no account layer and no database-backed workspace.
+- Some tools use browser APIs, local WebAssembly, or bundled client libraries.
+- Do not paste production secrets, private keys, customer records, or regulated data into any public utility unless your own policy allows that use.
 
 ## Developer Accelerators
 

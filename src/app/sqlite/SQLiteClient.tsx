@@ -381,10 +381,10 @@ export default function SQLiteClient() {
       if (out.length > 0) {
         setResults(out);
         if (sawWrite) {
-          setOkMessage(`Query OK — ${changed} row${changed === 1 ? "" : "s"} changed`);
+          setOkMessage(`Query OK. ${changed} row${changed === 1 ? "" : "s"} changed`);
         }
       } else if (sawWrite) {
-        setOkMessage(`Query OK — ${changed} row${changed === 1 ? "" : "s"} changed`);
+        setOkMessage(`Query OK. ${changed} row${changed === 1 ? "" : "s"} changed`);
       } else {
         setOkMessage("Query OK");
       }
@@ -515,7 +515,7 @@ export default function SQLiteClient() {
           </div>
           {error ? <Alert variant="error">{error}</Alert> : null}
           <p className="text-xs text-muted-foreground">
-            Runs entirely in your browser — your data stays in your browser (the SQLite WASM module
+            Runs entirely in your browser. Your data stays in your browser (the SQLite WASM module
             is fetched once from a CDN).
           </p>
         </div>
@@ -585,7 +585,7 @@ export default function SQLiteClient() {
             <ResultPanel title="Results">
               <span className="text-sm text-muted-foreground">
                 {okMessage
-                  ? "Statement executed — no result set to display."
+                  ? "Statement executed. No result set to display."
                   : dbReady
                   ? "Run a query to see results here."
                   : "Loading SQLite WASM…"}

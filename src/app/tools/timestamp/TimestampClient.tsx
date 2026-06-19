@@ -182,7 +182,7 @@ function formatInZone(date: Date, timeZone: string): string {
       timeStyle: "long",
     });
   } catch {
-    return "—";
+    return "Unavailable";
   }
 }
 
@@ -278,7 +278,7 @@ export default function TimestampClient() {
           htmlFor="timestamp-input"
           hint={
             <span id="timestamp-hint">
-              Unix epoch (seconds or ms) or any parseable date string — ISO 8601,
+              Unix epoch (seconds or ms) or any parseable date string: ISO 8601,
               RFC 2822, etc.
             </span>
           }

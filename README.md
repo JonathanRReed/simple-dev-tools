@@ -2,7 +2,7 @@
 
 Simple Dev Tools is a browser-first toolkit for everyday developer workflows. It is live at [dev-tools.helloworldfirm.com](https://dev-tools.helloworldfirm.com) and designed to be useful without auth, a database, or a custom backend.
 
-Built and maintained by Jonathan R Reed at Hello.World Consulting. Every tool runs entirely in your browser — no accounts, no servers, and nothing sent to a backend.
+Built and maintained by Jonathan R. Reed at Hello.World Consulting. Every tool runs entirely in your browser: no accounts, no servers, and nothing sent to a backend.
 
 ## What it includes
 
@@ -17,7 +17,7 @@ Built and maintained by Jonathan R Reed at Hello.World Consulting. Every tool ru
 
 ## Why local-first
 
-- Everything runs in the browser, so sensitive examples — tokens, schemas, SQL, and regex samples — never leave your machine.
+- Everything runs in the browser, so sensitive examples such as tokens, schemas, SQL, and regex samples never leave your machine.
 - The app is a static export, so deployment is just files on a CDN: simple, cheap, and low-maintenance.
 - No auth and no backend, so the tools are usable the moment the page loads.
 - Metadata, Open Graph images, robots, sitemap, and llms.txt are already in place for discoverability.

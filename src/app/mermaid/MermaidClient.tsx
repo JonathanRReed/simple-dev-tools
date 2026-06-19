@@ -229,7 +229,7 @@ export default function MermaidClient() {
     // onto a canvas — producing a PNG with blank labels. Detect it on the live
     // SVG and refuse rather than emit a broken image; SVG export still works.
     if (diagramRef.current?.querySelector("foreignObject")) {
-      setError("PNG export isn't supported for this diagram type — use SVG export.");
+      setError("PNG export is not supported for this diagram type. Use SVG export.");
       return;
     }
 

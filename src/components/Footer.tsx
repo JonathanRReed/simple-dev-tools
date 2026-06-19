@@ -22,12 +22,12 @@ export default function Footer() {
           </div>
           <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
             <Badge variant="secondary" className="bg-secondary/70 text-secondary-foreground">
-              Built by Jonathan R Reed
+              Built by Jonathan R. Reed
             </Badge>
-            <span className="text-xs">© {new Date().getFullYear()} Jonathan R Reed. All rights reserved.</span>
+            <span className="text-xs">© {new Date().getFullYear()} Jonathan R. Reed. All rights reserved.</span>
           </div>
           <p className="max-w-xl text-sm leading-6 text-muted-foreground">
-            Browser-based utilities for common development tasks, built and maintained by Jonathan R Reed.
+            Browser-based utilities for common development tasks, built and maintained by Jonathan R. Reed.
           </p>
         </div>
 

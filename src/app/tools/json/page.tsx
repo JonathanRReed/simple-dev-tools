@@ -6,7 +6,7 @@ import JsonClientOnly from "./ClientOnly";
 export const metadata: Metadata = {
   title: "JSON Workbench",
   description:
-    "Format, validate, and convert between JSON, YAML, and CSV, then query by path. Everything runs locally in your browser — nothing is uploaded.",
+    "Format, validate, and convert between JSON, YAML, and CSV, then query by path. Everything runs locally in your browser, and nothing is uploaded.",
   alternates: {
     canonical: "/tools/json/",
   },
@@ -25,7 +25,7 @@ export default function JsonPage() {
           by path.
         </p>
         <p className="text-muted-foreground">
-          Every byte stays on this page — parsing, conversion, and queries all run
+          Every byte stays on this page. Parsing, conversion, and queries all run
           client-side, so nothing is ever uploaded.
         </p>
       </header>

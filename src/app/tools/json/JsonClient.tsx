@@ -727,7 +727,7 @@ export default function JsonClient() {
                 : stats.type === "object"
                   ? `e.g. members[0].name or ["weird key"]`
                   : isValid
-                    ? `(scalar — no path)`
+                    ? `(scalar: no path)`
                     : `e.g. members[0].name or ["weird key"]`
             }
             className="min-w-0"

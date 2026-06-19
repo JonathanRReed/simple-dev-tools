@@ -30,7 +30,7 @@ export default function ToolLoading({ message }: ToolLoadingProps) {
         </div>
         {showHint && (
           <p className="text-center text-xs text-muted-foreground">
-            Loading dependencies — this only happens once per session.
+            Loading dependencies. This only happens once per session.
           </p>
         )}
       </div>

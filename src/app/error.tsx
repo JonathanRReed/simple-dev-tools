@@ -27,7 +27,7 @@ export default function Error({
           Something went wrong
         </h1>
         <p className="text-muted-foreground">
-          This tool hit an unexpected error. Your data stays in the browser — try again, or head back home.
+          This tool hit an unexpected error. Your data stays in the browser. Try again, or head back home.
         </p>
       </header>
 

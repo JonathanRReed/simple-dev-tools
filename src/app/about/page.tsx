@@ -7,7 +7,7 @@ import { siteConfig } from "@/lib/site";
 export const metadata: Metadata = {
   title: "About Local Browser Developer Tools",
   description:
-    "Simple Dev Tools is a browser-only toolkit by Jonathan R Reed and Hello.World Consulting for practical developer workflows.",
+    "Simple Dev Tools is a browser-only toolkit by Jonathan R. Reed and Hello.World Consulting for practical developer workflows.",
   alternates: {
     canonical: "/about/",
   },
@@ -52,7 +52,7 @@ export default function AboutPage() {
         <section className="flex flex-col gap-3 border-t border-border/60 pt-6">
           <h2 className="text-xl font-semibold text-foreground">Who maintains it</h2>
           <p className="leading-7 text-muted-foreground">
-            Jonathan R Reed builds AI, cybersecurity, and developer productivity
+            Jonathan R. Reed builds AI, cybersecurity, and developer productivity
             products through Hello.World Consulting. You can review related work
             on the{" "}
             <Link

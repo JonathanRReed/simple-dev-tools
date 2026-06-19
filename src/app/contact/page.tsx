@@ -7,7 +7,7 @@ import { siteConfig } from "@/lib/site";
 export const metadata: Metadata = {
   title: "Contact Simple Dev Tools Support",
   description:
-    "Contact Hello.World Consulting or Jonathan R Reed about Simple Dev Tools, feedback, consulting, or related developer tooling.",
+    "Contact Hello.World Consulting or Jonathan R. Reed about Simple Dev Tools, feedback, consulting, or related developer tooling.",
   alternates: {
     canonical: "/contact/",
   },
@@ -26,7 +26,7 @@ export default function ContactPage() {
           </h1>
           <p className="text-base leading-7 text-muted-foreground">
             For consulting, product questions, or feedback about Simple Dev Tools,
-            use the official Hello.World Consulting site or Jonathan R Reed&apos;s
+            use the official Hello.World Consulting site or Jonathan R. Reed&apos;s
             project profile.
           </p>
           <p className="text-base leading-7 text-muted-foreground">

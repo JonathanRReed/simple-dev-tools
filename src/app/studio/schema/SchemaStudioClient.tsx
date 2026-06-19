@@ -648,7 +648,7 @@ export default function SchemaStudioClient() {
       // Network-level CORS failures usually surface as a TypeError "Failed to fetch".
       const raw = e?.message || "Failed to import";
       const message = /failed to fetch|networkerror|load failed/i.test(raw)
-        ? "Failed to fetch — the request was blocked (likely CORS) or the URL is unreachable. The remote host must send Access-Control-Allow-Origin for in-browser import."
+        ? "Failed to fetch. The request was blocked, likely CORS, or the URL is unreachable. The remote host must send Access-Control-Allow-Origin for in-browser import."
         : raw;
       setImportError(message);
     } finally {
@@ -697,7 +697,7 @@ export default function SchemaStudioClient() {
       setSchemaText(formatted);
       setValidatorError(null);
     } catch (e: any) {
-      setValidatorError(e?.message || "Invalid JSON — cannot format.");
+      setValidatorError(e?.message || "Invalid JSON. Cannot format.");
     }
   }, [schemaText]);
 
@@ -847,7 +847,7 @@ export default function SchemaStudioClient() {
                 <Alert variant="info">Nothing parsed yet. Paste a spec or load the sample.</Alert>
               ) : (
                 <Alert variant="success">
-                  Parsed successfully{parsed.isOpenAPI ? " — OpenAPI detected" : ""}.
+                  Parsed successfully{parsed.isOpenAPI ? ". OpenAPI detected" : ""}.
                 </Alert>
               )}
             </div>
@@ -920,10 +920,10 @@ export default function SchemaStudioClient() {
                 ) : validating || !validateResult ? (
                   <p className="text-sm text-muted-foreground">Validating…</p>
                 ) : validateResult.ok ? (
-                  <Alert variant="success">Valid — data conforms to the schema.</Alert>
+                  <Alert variant="success">Valid. Data conforms to the schema.</Alert>
                 ) : (
                   <div className="flex flex-col gap-2">
-                    <Alert variant="error">Invalid — data does not conform to the schema.</Alert>
+                    <Alert variant="error">Invalid. Data does not conform to the schema.</Alert>
                     <ul className="list-disc space-y-1 pl-5 font-mono text-xs text-muted-foreground">
                       {(validateResult.errors || []).map((err: any, i: number) => {
                         const detail = ajvErrorDetail(err);

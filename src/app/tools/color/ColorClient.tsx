@@ -606,7 +606,7 @@ export default function ColorClient() {
               }}
             >
               <span className="font-mono text-sm font-semibold">
-                {parsed ? toHex(parsed) : "—"}
+                {parsed ? toHex(parsed) : "No value"}
               </span>
               {parsed && parsed.a < 1 ? (
                 <span className="font-mono text-xs opacity-80">
@@ -741,7 +741,7 @@ export default function ColorClient() {
                 copyValue={contrast ? contrast.ratioStr : undefined}
               >
                 <span className="font-mono text-3xl font-bold text-foreground">
-                  {contrast ? contrast.ratioStr : "—"}
+                  {contrast ? contrast.ratioStr : "No ratio"}
                 </span>
               </ResultPanel>
 

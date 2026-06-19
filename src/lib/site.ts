@@ -5,7 +5,7 @@ export const siteConfig = {
   description:
     "Local-first developer tools that run in your browser: API snippets, diagrams, SQLite, regex, schemas, IDs, QR codes, and JSON cleanup.",
   author: {
-    name: "Jonathan R Reed",
+    name: "Jonathan R. Reed",
     url: "https://jonathanrreed.com",
     handle: "@jonathanrreed",
   },
@@ -156,7 +156,7 @@ export const trustPages = [
   {
     title: "Contact",
     href: "/contact/",
-    description: "Contact Hello.World Consulting or Jonathan R Reed about Simple Dev Tools.",
+    description: "Contact Hello.World Consulting or Jonathan R. Reed about Simple Dev Tools.",
   },
   {
     title: "Privacy",

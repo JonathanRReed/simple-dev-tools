@@ -25,7 +25,7 @@ export default function TimestampPage() {
           time. Seconds vs. milliseconds is auto-detected.
         </p>
         <p className="text-muted-foreground">
-          Everything is computed locally — nothing leaves your browser, and your
+          Everything is computed locally. Nothing leaves your browser, and your
           last input is remembered between visits.
         </p>
       </header>
@@ -35,7 +35,7 @@ export default function TimestampPage() {
         <p>
           All-digit input is treated as a Unix epoch. Values at or below{" "}
           <code className="font-mono">1e11</code> are read as seconds, larger
-          values as milliseconds — so both <code className="font-mono">1700000000</code>{" "}
+          values as milliseconds, so both <code className="font-mono">1700000000</code>{" "}
           and <code className="font-mono">1700000000000</code> resolve to the
           same moment. Anything else is parsed as a date string (ISO 8601,
           RFC 2822, and other formats your browser understands).

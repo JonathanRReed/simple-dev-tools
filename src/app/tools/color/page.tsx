@@ -6,7 +6,7 @@ import ColorClientOnly from "./ClientOnly";
 export const metadata: Metadata = {
   title: "Color & Contrast",
   description:
-    "Convert any CSS color between HEX, RGB, HSL, and OKLCH, generate tints and shades, and check WCAG contrast ratios — all locally in your browser.",
+    "Convert any CSS color between HEX, RGB, HSL, and OKLCH, generate tints and shades, and check WCAG contrast ratios locally in your browser.",
   alternates: {
     canonical: "/tools/color/",
   },
@@ -20,8 +20,8 @@ export default function ColorPage() {
           Color & Contrast
         </h1>
         <p className="text-muted-foreground">
-          Paste any CSS color — hex, <code className="font-mono">rgb()</code>,{" "}
-          <code className="font-mono">hsl()</code>, or a named color — and read it
+          Paste any CSS color, including hex, <code className="font-mono">rgb()</code>,{" "}
+          <code className="font-mono">hsl()</code>, or a named color, and read it
           back as HEX, RGB, HSL, and OKLCH. Generate a tint-and-shade ramp and
           check foreground/background pairs against WCAG contrast thresholds.
         </p>
