@@ -112,6 +112,11 @@ const authorProfile = {
   name: siteConfig.author.name,
   alternateName: 'Jonathan Reed',
   url: siteConfig.author.url,
+  sameAs: [
+    'https://jonathanrreed.com/',
+    'https://github.com/JonathanRReed',
+    'https://helloworldfirm.com/',
+  ],
 };
 
 const providerProfile = {
