@@ -1,6 +1,9 @@
 /api-snippet /api-snippet/ 301
 /mermaid /mermaid/ 301
 /sqlite /sqlite/ 301
+/about /about/ 301
+/contact /contact/ 301
+/privacy /privacy/ 301
 /tools/regex /tools/regex/ 301
 /tools/ids-cron /tools/ids-cron/ 301
 /tools/encode-qr /tools/encode-qr/ 301

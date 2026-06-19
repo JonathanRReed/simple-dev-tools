@@ -4,7 +4,7 @@ import ToolPage from "@/components/layout/ToolPage";
 import { siteConfig } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: "Privacy",
+  title: "Privacy for Local Browser Tools",
   description:
     "Simple Dev Tools uses a local-first privacy model. Tool inputs run in the browser and are not stored by this static site.",
   alternates: {

@@ -4,7 +4,7 @@ import ToolPage from "@/components/layout/ToolPage";
 import RegexClientOnly from "./ClientOnly";
 
 export const metadata: Metadata = {
-  title: "Regex Lab",
+  title: "Regex Lab Browser Regex Tester",
   description:
     "Debug regular expressions with live matches, replacements, sample text, and shareable URLs. This browser regex tester runs client-side.",
   alternates: {

@@ -5,7 +5,7 @@ import ToolPage from "@/components/layout/ToolPage";
 import { siteConfig } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: "Contact",
+  title: "Contact Simple Dev Tools Support",
   description:
     "Contact Hello.World Consulting or Jonathan R Reed about Simple Dev Tools, feedback, consulting, or related developer tooling.",
   alternates: {

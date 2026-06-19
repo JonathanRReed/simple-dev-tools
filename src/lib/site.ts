@@ -3,7 +3,7 @@ export const siteConfig = {
   shortName: "Simple Dev Tools",
   url: "https://dev-tools.helloworldfirm.com",
   description:
-    "Quiet, local-first developer tools that run entirely in your browser — API snippets, diagrams, SQLite, regex, schemas, IDs, QR codes, and tokens. No accounts, no servers.",
+    "Local-first developer tools that run in your browser: API snippets, diagrams, SQLite, regex, schemas, IDs, QR codes, and JSON cleanup.",
   author: {
     name: "Jonathan R Reed",
     url: "https://jonathanrreed.com",

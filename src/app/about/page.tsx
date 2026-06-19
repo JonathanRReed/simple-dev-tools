@@ -5,7 +5,7 @@ import ToolPage from "@/components/layout/ToolPage";
 import { siteConfig } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: "About",
+  title: "About Local Browser Developer Tools",
   description:
     "Simple Dev Tools is a browser-only toolkit by Jonathan R Reed and Hello.World Consulting for practical developer workflows.",
   alternates: {
