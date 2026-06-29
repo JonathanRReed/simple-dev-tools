@@ -33,6 +33,8 @@ INSERT INTO users (name, email, age, active) VALUES
 SELECT id, name, email, age, active FROM users ORDER BY id;`;
 
 const SQL_JS_CDN_BASE = "https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.13.0";
+const SQL_JS_SCRIPT_INTEGRITY =
+  "sha384-DJiKBv+LC78e5InEB+MvFIAH079ynMK/ERTtFUCpDzXhH1Bht7aVfpg3yOVsuYl9";
 
 /** localStorage key for persisting the SQL editor buffer across reloads. Settings/input
  *  only — never secrets. Guarded for static export (typeof window + try/catch). */
@@ -118,6 +120,9 @@ async function ensureSqlJsLoader() {
   }
   const script = document.createElement("script");
   script.src = `${SQL_JS_CDN_BASE}/sql-wasm.js`;
+  script.integrity = SQL_JS_SCRIPT_INTEGRITY;
+  script.crossOrigin = "anonymous";
+  script.referrerPolicy = "no-referrer";
   script.async = true;
 
   w.__initSqlJsPromise = new Promise((resolve, reject) => {
