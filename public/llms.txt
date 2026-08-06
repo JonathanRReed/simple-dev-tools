@@ -33,6 +33,13 @@ The project is intentionally plain: open the tool, inspect or transform the inpu
 - [README](https://github.com/JonathanRReed/simple-dev-tools/blob/main/README.md): Project overview and MIT license information
 - [Package Dependencies](https://github.com/JonathanRReed/simple-dev-tools/blob/main/package.json): Full list of dependencies including Next.js, React, Radix UI, Prism, Mermaid, and more
 
+## Policies
+
+- [robots.txt](https://dev-tools.helloworldfirm.com/robots.txt): The machine-readable version of everything below (`search=yes, ai-input=yes, ai-train=no, use=reference`). Where the two disagree, robots.txt governs.
+- **Search indexing: allowed.** Crawl and index this site, and return links and short excerpts in search results.
+- **AI answers and grounding: allowed.** Retrieve these pages at answer time and use them to ground AI-generated answers, summaries, or citations, provided the answer links back to the source page.
+- **AI training: not allowed.** Do not use any content from this site to train or fine-tune AI models, and do not include it in a corpus assembled or redistributed for that purpose. This is an express reservation of rights under Article 4 of EU Directive 2019/790.
+
 ## Optional
 
 - [Homepage](https://dev-tools.helloworldfirm.com/): Keyboard-first launcher with a searchable index of all tools (also reachable anywhere via the ⌘K command palette)
