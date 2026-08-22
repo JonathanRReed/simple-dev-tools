@@ -36,7 +36,9 @@ test('Mermaid and SQLite browser runtimes initialize', async ({ page }) => {
   await page.goto('/mermaid/');
   await expect(page.getByRole('img', { name: 'Rendered Mermaid diagram' }).locator('svg')).toBeVisible({ timeout: 20_000 });
 
-  await page.goto('/sqlite/');
+  await page.goto('/');
+  await page.getByRole('link', { name: /SQLite Playground/ }).first().click();
+  await expect(page).toHaveURL(/\/sqlite\/$/);
   const loadSample = page.getByRole('button', { name: 'Load sample' });
   await expect(loadSample).toBeEnabled({ timeout: 20_000 });
   await loadSample.click();
@@ -45,7 +47,9 @@ test('Mermaid and SQLite browser runtimes initialize', async ({ page }) => {
 });
 
 test('Schema Studio parses and documents a sample schema', async ({ page }) => {
-  await page.goto('/studio/schema/');
+  await page.goto('/');
+  await page.getByRole('link', { name: /Schema & Types Studio/ }).first().click();
+  await expect(page).toHaveURL(/\/studio\/schema\/$/);
   await page.getByRole('button', { name: 'Sample' }).click();
   await page.getByRole('tab', { name: 'Validate' }).click();
   await expect(page.getByText('Valid. Data conforms to the schema.')).toBeVisible();

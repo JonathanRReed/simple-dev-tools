@@ -1,8 +1,6 @@
 'use client';
 
 import * as React from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import {
   ArrowRight,
   Braces,
@@ -51,7 +49,6 @@ function isTypingTarget(el: EventTarget | null): boolean {
 }
 
 export default function Home() {
-  const router = useRouter();
   const { recent, clearRecent, hydrated } = useRecentTools();
   const { open, setOpen } = useCommandMenu();
 
@@ -72,13 +69,13 @@ export default function Home() {
         const tool = toolPages[Number(e.key) - 1];
         if (tool) {
           e.preventDefault();
-          router.push(tool.href);
+          window.location.assign(tool.href);
         }
       }
     };
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
-  }, [open, router]);
+  }, [open]);
 
   return (
     <div className="mx-auto w-full max-w-5xl py-6">
@@ -121,7 +118,7 @@ export default function Home() {
               const shortcut = idx != null && idx < 9 ? idx + 1 : null;
               return (
                 <li key={tool.href}>
-                  <Link
+                  <a
                     href={tool.href}
                     className="group flex items-center gap-3 px-3 py-3 transition-colors hover:bg-accent"
                   >
@@ -148,7 +145,7 @@ export default function Home() {
                       className="size-4 shrink-0 text-muted-foreground/50 group-hover:text-primary"
                       aria-hidden="true"
                     />
-                  </Link>
+                  </a>
                 </li>
               );
             })}
@@ -178,14 +175,14 @@ export default function Home() {
               {recentTools.map((tool) => {
                 const Icon = iconMap[tool.icon];
                 return (
-                  <Link
+                  <a
                     key={tool.href}
                     href={tool.href}
                     className="inline-flex items-center gap-2 border-2 border-border bg-card px-3 py-1.5 text-sm transition-colors hover:border-primary"
                   >
                     <Icon className="size-4 text-muted-foreground" />
                     {tool.title}
-                  </Link>
+                  </a>
                 );
               })}
             </div>

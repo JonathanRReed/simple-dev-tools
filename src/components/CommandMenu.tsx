@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
 import {
   Braces,
@@ -78,7 +78,6 @@ function isTypingTarget(el: EventTarget | null): boolean {
 export function CommandMenuProvider({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = React.useState(false);
   const [query, setQuery] = React.useState("");
-  const router = useRouter();
   const pathname = usePathname();
   const { setTheme } = useTheme();
   const { recent, pinned } = useRecentTools();
@@ -88,9 +87,9 @@ export function CommandMenuProvider({ children }: { children: React.ReactNode })
   const go = React.useCallback(
     (href: string) => {
       setOpen(false);
-      router.push(href);
+      window.location.assign(href);
     },
-    [router]
+    []
   );
 
   // Move to prev/next tool in the flat toolPages order.
@@ -99,9 +98,9 @@ export function CommandMenuProvider({ children }: { children: React.ReactNode })
       const idx = toolPages.findIndex((t) => normalize(t.href) === normalize(pathname ?? ""));
       const base = idx === -1 ? (delta > 0 ? -1 : 0) : idx;
       const next = (base + delta + toolPages.length) % toolPages.length;
-      router.push(toolPages[next].href);
+      window.location.assign(toolPages[next].href);
     },
-    [pathname, router]
+    [pathname]
   );
 
   React.useEffect(() => {

@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 
 import ToolPage from "@/components/layout/ToolPage";
 import { siteConfig } from "@/lib/site";
@@ -55,12 +54,12 @@ export default function AboutPage() {
             Jonathan R. Reed builds AI, cybersecurity, and developer productivity
             products through Hello.World Consulting. You can review related work
             on the{" "}
-            <Link
+            <a
               href={`${siteConfig.author.url}/projects/`}
               className="font-medium text-primary hover:underline"
             >
               project archive
-            </Link>
+            </a>
             .
           </p>
           <p className="leading-7 text-muted-foreground">

@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import { ArrowUpRight, ExternalLink } from 'lucide-react';
 
 import BrandMark from '@/components/BrandMark';
@@ -12,12 +11,14 @@ export default function Footer() {
       <div className="mx-auto grid w-full max-w-6xl gap-8 border-2 border-border bg-card p-6 sm:p-8 lg:grid-cols-[1fr_0.9fr] lg:items-end">
         <div className="space-y-5">
           <div className="flex flex-col gap-3">
-            <Link href="/" className="flex w-fit items-center gap-3" aria-label={`${siteConfig.name} home`}>
+            {/* A full document load reapplies the route-specific CSP. */}
+            {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+            <a href="/" className="flex w-fit items-center gap-3" aria-label={`${siteConfig.name} home`}>
               <BrandMark className="size-11 shrink-0" />
               <span className="font-display text-2xl font-bold tracking-tight text-foreground">
                 {siteConfig.name}
               </span>
-            </Link>
+            </a>
             <p className="text-sm text-muted-foreground">Quiet developer tools for focused browser work.</p>
           </div>
           <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
@@ -38,11 +39,11 @@ export default function Footer() {
           </div>
           <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
             {trustPages.map((page) => (
-              <Link key={page.href} href={page.href} className="inline-flex min-h-11 min-w-11 items-center text-primary underline-offset-4 hover:underline">
+              <a key={page.href} href={page.href} className="inline-flex min-h-11 min-w-11 items-center text-primary underline-offset-4 hover:underline">
                 {page.title}
-              </Link>
+              </a>
             ))}
-            <Link
+            <a
               href="https://jonathanrreed.com/projects/"
               target="_blank"
               rel="noopener noreferrer"
@@ -50,13 +51,13 @@ export default function Footer() {
             >
               More projects
               <ArrowUpRight className="h-3.5 w-3.5" />
-            </Link>
+            </a>
           </div>
           <Button asChild className="h-11 w-fit px-5">
-            <Link href="/api-snippet/">
+            <a href="/api-snippet/">
               Explore tools
               <ArrowUpRight className="h-4 w-4" />
-            </Link>
+            </a>
           </Button>
         </div>
       </div>
@@ -66,7 +67,7 @@ export default function Footer() {
 
 function FooterExternalLink({ href, label }: { href: string; label: string }) {
   return (
-    <Link
+    <a
       href={href}
       target="_blank"
       rel="noopener noreferrer"
@@ -74,6 +75,6 @@ function FooterExternalLink({ href, label }: { href: string; label: string }) {
     >
       <span className="font-semibold text-primary">{label}</span>
       <ExternalLink className="h-4 w-4 text-primary" />
-    </Link>
+    </a>
   );
 }

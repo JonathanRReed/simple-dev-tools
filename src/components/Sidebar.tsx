@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect } from 'react';
-import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   Braces,
@@ -120,10 +119,10 @@ export default function AppSidebar() {
     return (
       <SidebarMenuItem key={tool.href}>
         <SidebarMenuButton asChild isActive={isActive(tool.href)} tooltip={tool.title} className={activeRowClass}>
-          <Link href={tool.href} aria-current={isActive(tool.href) ? 'page' : undefined} className="flex items-center gap-3">
+          <a href={tool.href} aria-current={isActive(tool.href) ? 'page' : undefined} className="flex items-center gap-3">
             <Icon className="h-4 w-4" />
             <span className="group-data-[collapsible=icon]:sr-only">{tool.title}</span>
-          </Link>
+          </a>
         </SidebarMenuButton>
       </SidebarMenuItem>
     );
@@ -132,7 +131,9 @@ export default function AppSidebar() {
   return (
     <PrimitiveSidebar collapsible="icon" className="border-r-2 border-sidebar-border bg-sidebar text-sidebar-foreground">
       <SidebarHeader className="border-b-2 border-sidebar-border px-3 py-4 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:py-3">
-        <Link
+        {/* A full document load reapplies the route-specific CSP. */}
+        {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+        <a
           href="/"
           className="flex min-w-0 items-center gap-2.5 group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:gap-0"
         >
@@ -143,7 +144,7 @@ export default function AppSidebar() {
             </span>
             <span className="brutal-label truncate">{siteConfig.provider.name}</span>
           </div>
-        </Link>
+        </a>
       </SidebarHeader>
 
       <SidebarContent className="px-2 group-data-[collapsible=icon]:px-1">
@@ -187,14 +188,14 @@ export default function AppSidebar() {
                           tooltip={item.title}
                           className={activeRowClass}
                         >
-                          <Link
+                          <a
                             href={item.href}
                             aria-current={active ? 'page' : undefined}
                             className="flex items-center gap-3 group-data-[collapsible=icon]:size-full group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0"
                           >
                             <item.icon className="h-4 w-4" />
                             <span className="group-data-[collapsible=icon]:sr-only">{item.title}</span>
-                          </Link>
+                          </a>
                         </SidebarMenuButton>
                         {pinnable ? (
                           <SidebarMenuAction
@@ -217,7 +218,7 @@ export default function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="border-t-2 border-sidebar-border px-3 py-4 group-data-[collapsible=icon]:hidden">
-        <Link
+        <a
           href={siteConfig.provider.url}
           target="_blank"
           rel="noopener noreferrer"
@@ -228,7 +229,7 @@ export default function AppSidebar() {
             <span className="truncate text-sm font-semibold">{siteConfig.provider.name}</span>
             <span className="brutal-label truncate">helloworldfirm.com</span>
           </div>
-        </Link>
+        </a>
       </SidebarFooter>
     </PrimitiveSidebar>
   );

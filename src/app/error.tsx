@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect } from 'react';
-import Link from 'next/link';
 import { Home, RotateCcw } from 'lucide-react';
 
 import ToolPage from '@/components/layout/ToolPage';
@@ -44,10 +43,12 @@ export default function Error({
           Try again
         </Button>
         <Button asChild variant="outline" className="gap-2">
-          <Link href="/">
+          {/* A full document load reapplies the route-specific CSP. */}
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+          <a href="/">
             <Home className="size-4" aria-hidden="true" />
             Back to home
-          </Link>
+          </a>
         </Button>
       </div>
     </ToolPage>

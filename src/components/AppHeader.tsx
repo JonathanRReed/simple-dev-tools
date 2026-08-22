@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronRight, Search } from "lucide-react";
 
@@ -30,12 +29,14 @@ export default function AppHeader() {
       <div className="flex min-w-0 items-center gap-2">
         <SidebarTrigger className="size-9 shrink-0 rounded-none border-2 border-border" />
         <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-1.5 font-mono text-xs">
-          <Link
+          {/* A full document load reapplies the route-specific CSP. */}
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+          <a
             href="/"
             className="shrink-0 uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground focus-visible:text-foreground"
           >
             {siteConfig.shortName}
-          </Link>
+          </a>
           {activeTitle ? (
             <>
               <ChevronRight className="size-3.5 shrink-0 text-muted-foreground/60" aria-hidden="true" />

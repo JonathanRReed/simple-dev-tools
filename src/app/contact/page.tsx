@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 
 import ToolPage from "@/components/layout/ToolPage";
 import { siteConfig } from "@/lib/site";
@@ -44,7 +43,7 @@ export default function ContactPage() {
         </header>
 
         <section className="grid gap-4 sm:grid-cols-2">
-          <Link
+          <a
             href={siteConfig.provider.url}
             className="border-2 border-border bg-card p-5 transition-colors hover:border-primary hover:bg-primary/10"
           >
@@ -54,8 +53,8 @@ export default function ContactPage() {
             <span className="mt-2 block font-semibold text-primary">
               {siteConfig.provider.name}
             </span>
-          </Link>
-          <Link
+          </a>
+          <a
             href={siteConfig.author.url}
             className="border-2 border-border bg-card p-5 transition-colors hover:border-primary hover:bg-primary/10"
           >
@@ -65,7 +64,7 @@ export default function ContactPage() {
             <span className="mt-2 block font-semibold text-primary">
               {siteConfig.author.name}
             </span>
-          </Link>
+          </a>
         </section>
 
         <section className="flex flex-col gap-3 border-t border-border/60 pt-6">
