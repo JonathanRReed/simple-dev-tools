@@ -25,6 +25,10 @@ build/
 dist/
 coverage/
 squirrel-audits/
+playwright-report/
+test-results/
+.wrangler/
+*.tsbuildinfo
 
 # Environment variables
 .env

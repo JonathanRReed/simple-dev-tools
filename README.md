@@ -24,16 +24,16 @@ Built and maintained by Jonathan R. Reed at Hello.World Consulting. Every tool r
 
 ## Tech stack
 
-- Next.js static export
-- React, Tailwind CSS, Radix UI
-- TypeScript and Bun
+- Next.js 16 static export
+- React 19, Tailwind CSS 4, and Radix UI
+- TypeScript 6 and Bun 1.4
 
 ## Development
 
 Install dependencies and start the dev server:
 
 ```bash
-bun install
+bun install --frozen-lockfile
 bun run dev
 ```
 
@@ -48,11 +48,23 @@ bun run check
 That runs:
 - `bun run lint`
 - `bun run typecheck`
+- `bun run test`
 - `bun run build`
+
+Run the rendered desktop and mobile browser suite separately:
+
+```bash
+bun run test:e2e
+```
 
 ## Deployment
 
-The app uses `output: "export"` and `trailingSlash: true` in `next.config.js`, so routes export as static directories for CDNs or any static host.
+The app uses `output: "export"` and `trailingSlash: true` in `next.config.js`, so routes export as static directories for CDNs or any static host. The Cloudflare Pages production settings are:
+
+- Build command: `bun install --frozen-lockfile && bun run build`
+- Build output: `out`
+- Production branch: `main`
+- Bun version: `1.4.0`, pinned by `packageManager`
 
 Crawler and AI-reader surfaces live in `public/robots.txt`, `public/sitemap.xml`, and `public/llms.txt`.
 

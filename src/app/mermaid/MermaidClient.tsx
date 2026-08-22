@@ -207,7 +207,7 @@ export default function MermaidClient() {
     };
   }, [code, mermaid]);
 
-  const canExport = hasDiagram && !error && svgRef.current != null;
+  const canExport = hasDiagram && !error;
 
   const handleExportSVG = () => {
     if (!svgRef.current) return;

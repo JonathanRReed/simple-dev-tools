@@ -1,6 +1,5 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@config "../../tailwind.config.js";
 
 /* ============================================
    BRUTALIST / INDUSTRIAL FOUNDATION
@@ -67,7 +66,7 @@ body, .bg-background, .bg-card, .bg-popover {
 
 /* Uppercase, tracked, monospace label — the brutalist section/field marker. */
 .brutal-label {
-  font-family: theme('fontFamily.mono');
+  font-family: var(--font-mono);
   text-transform: uppercase;
   letter-spacing: 0.12em;
   font-size: 0.7rem;
@@ -450,7 +449,7 @@ body, .bg-background, .bg-card, .bg-popover {
 }
 
 html, body {
-  font-family: theme('fontFamily.sans');
+  font-family: var(--font-sans);
 }
 /* Hard, flat, high-contrast focus signal (no soft glow). */
 :focus-visible {

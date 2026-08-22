@@ -33,6 +33,12 @@ function bytesToBase64(bytes: Uint8Array): string {
   return btoa(s);
 }
 
+function bytesToArrayBuffer(bytes: Uint8Array): ArrayBuffer {
+  const buffer = new ArrayBuffer(bytes.byteLength);
+  new Uint8Array(buffer).set(bytes);
+  return buffer;
+}
+
 function base64urlToBytes(b64url: string): Uint8Array {
   let s = b64url.replace(/-/g, "+").replace(/_/g, "/");
   const pad = s.length % 4;
@@ -53,11 +59,7 @@ function stripPem(pem: string): string {
 
 function pemToArrayBuffer(pem: string): ArrayBuffer {
   const clean = stripPem(pem);
-  const bytes = base64ToBytes(clean);
-  // Ensure we return a concrete ArrayBuffer (not ArrayBufferLike)
-  const out = new ArrayBuffer(bytes.length);
-  new Uint8Array(out).set(bytes);
-  return out;
+  return bytesToArrayBuffer(base64ToBytes(clean));
 }
 
 async function importRsaSpkiPublicKey(spkiPem: string): Promise<CryptoKey> {
@@ -157,7 +159,7 @@ async function verifyRS256(jwt: string, publicKeyText: string) {
   if (parts.length !== 3) return { ok: false, error: "JWT must have 3 parts" };
   const [h, p, s] = parts;
   const data = new TextEncoder().encode(`${h}.${p}`);
-  const sig = base64urlToBytes(s);
+  const sig = bytesToArrayBuffer(base64urlToBytes(s));
   const key = await importPublicKeyForAlg("RS256", publicKeyText);
   const ok = await crypto.subtle.verify({ name: "RSASSA-PKCS1-v1_5" }, key, sig, data);
   return { ok } as { ok: boolean } & Record<string, string>;
@@ -168,7 +170,7 @@ async function verifyES256(jwt: string, publicKeyText: string) {
   if (parts.length !== 3) return { ok: false, error: "JWT must have 3 parts" };
   const [h, p, s] = parts;
   const data = new TextEncoder().encode(`${h}.${p}`);
-  const sig = base64urlToBytes(s);
+  const sig = bytesToArrayBuffer(base64urlToBytes(s));
   const key = await importPublicKeyForAlg("ES256", publicKeyText);
   const ok = await crypto.subtle.verify({ name: "ECDSA", hash: { name: "SHA-256" } }, key, sig, data);
   return { ok } as { ok: boolean } & Record<string, string>;
@@ -187,9 +189,9 @@ function decodePart(part: string) {
 
 // Pure: format a unix-seconds timestamp as a relative delta vs now, e.g.
 // "expired 3h ago" / "in 12m". Granularity steps through s/m/h/d. No deps.
-function relTime(unixSeconds: number): string | null {
-  if (!Number.isFinite(unixSeconds)) return null;
-  const deltaSec = Math.round(unixSeconds - Date.now() / 1000);
+function relTime(unixSeconds: number, nowSeconds: number | null): string | null {
+  if (!Number.isFinite(unixSeconds) || nowSeconds === null) return null;
+  const deltaSec = Math.round(unixSeconds - nowSeconds);
   const past = deltaSec < 0;
   const abs = Math.abs(deltaSec);
   let value: number;
@@ -224,6 +226,14 @@ const DEFAULT_SECRET = "your-256-bit-secret";
 
 export default function SecurityTokensClient() {
   const [tab, setTab] = useState<"jwt" | "hash" | "hmac">("jwt");
+  const [currentEpochSeconds, setCurrentEpochSeconds] = useState<number | null>(null);
+
+  useEffect(() => {
+    const updateClock = () => setCurrentEpochSeconds(Date.now() / 1000);
+    updateClock();
+    const interval = window.setInterval(updateClock, 30_000);
+    return () => window.clearInterval(interval);
+  }, []);
 
   // JWT state
   const [jwt, setJwt] = useState<string>(DEFAULT_JWT);
@@ -577,11 +587,11 @@ export default function SecurityTokensClient() {
                       <span className="brutal-label">Claims</span>
                       {(() => {
                         // Derive status purely from the already-decoded claims.
-                        const nowSec = Date.now() / 1000;
+                        const nowSec = currentEpochSeconds;
                         const expired =
-                          typeof payload.exp === "number" && nowSec > payload.exp;
+                          nowSec !== null && typeof payload.exp === "number" && nowSec > payload.exp;
                         const notYet =
-                          typeof payload.nbf === "number" && nowSec < payload.nbf;
+                          nowSec !== null && typeof payload.nbf === "number" && nowSec < payload.nbf;
                         // Time-only status: derived solely from exp/nbf, NOT
                         // signature verification. Use a neutral color/label so a
                         // forged/unsigned token can't read as "good" — green is
@@ -590,7 +600,9 @@ export default function SecurityTokensClient() {
                           ? { label: "EXPIRED", cls: "text-destructive" }
                           : notYet
                             ? { label: "NOT YET VALID", cls: "text-rp-gold" }
-                            : { label: "WITHIN VALIDITY WINDOW", cls: "text-muted-foreground" };
+                            : nowSec === null
+                              ? { label: "TIME CHECK PENDING", cls: "text-muted-foreground" }
+                              : { label: "WITHIN VALIDITY WINDOW", cls: "text-muted-foreground" };
                         return (
                           <span
                             className={`border-2 border-border px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wide ${cls}`}
@@ -604,10 +616,10 @@ export default function SecurityTokensClient() {
                       {typeof payload.exp === "number" ? (
                         <li>
                           exp: {payload.exp} {"->"} {tsToLocal(payload.exp) || "(invalid)"}
-                          {relTime(payload.exp) ? (
+                          {relTime(payload.exp, currentEpochSeconds) ? (
                             <span className="ml-2 text-muted-foreground">
-                              {Date.now() / 1000 > payload.exp ? "expired " : ""}
-                              {relTime(payload.exp)}
+                              {currentEpochSeconds !== null && currentEpochSeconds > payload.exp ? "expired " : ""}
+                              {relTime(payload.exp, currentEpochSeconds)}
                             </span>
                           ) : null}
                         </li>
@@ -615,9 +627,9 @@ export default function SecurityTokensClient() {
                       {typeof payload.iat === "number" ? (
                         <li>
                           iat: {payload.iat} {"->"} {tsToLocal(payload.iat) || "(invalid)"}
-                          {relTime(payload.iat) ? (
+                          {relTime(payload.iat, currentEpochSeconds) ? (
                             <span className="ml-2 text-muted-foreground">
-                              {relTime(payload.iat)}
+                              {relTime(payload.iat, currentEpochSeconds)}
                             </span>
                           ) : null}
                         </li>
@@ -625,12 +637,12 @@ export default function SecurityTokensClient() {
                       {typeof payload.nbf === "number" ? (
                         <li>
                           nbf: {payload.nbf} {"->"} {tsToLocal(payload.nbf) || "(invalid)"}
-                          {relTime(payload.nbf) ? (
+                          {relTime(payload.nbf, currentEpochSeconds) ? (
                             <span className="ml-2 text-muted-foreground">
-                              {relTime(payload.nbf)}
+                              {relTime(payload.nbf, currentEpochSeconds)}
                             </span>
                           ) : null}
-                          {Date.now() / 1000 < payload.nbf ? (
+                          {currentEpochSeconds !== null && currentEpochSeconds < payload.nbf ? (
                             <span className="ml-2 text-rp-gold">(not yet valid)</span>
                           ) : null}
                         </li>

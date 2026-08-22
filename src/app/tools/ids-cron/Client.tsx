@@ -120,6 +120,7 @@ function localTimeZone(): string {
 
 export default function IDsCronTool() {
   const [tab, setTab] = useState<"ids" | "cron">("ids");
+  const [cron, setCron] = useState<string>(DEFAULT_CRON);
 
   // IDs tab state
   const [uuid, setUuid] = useState<string>("");
@@ -202,7 +203,6 @@ export default function IDsCronTool() {
   }
 
   // Cron tab state
-  const [cron, setCron] = useState<string>(DEFAULT_CRON);
   const cronDesc = useMemo(() => {
     try {
       return { ok: true as const, text: cronstrue.toString(cron, { use24HourTimeFormat: true }) };

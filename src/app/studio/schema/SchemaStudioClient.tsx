@@ -32,6 +32,14 @@ const SAMPLE_SOURCE = `openapi: 3.0.3\ninfo:\n  title: Sample API\n  version: 1.
 const SAMPLE_SCHEMA = '{"type":"object","properties":{"name":{"type":"string"}},"required":["name"]}';
 const SAMPLE_DATA = '{"name":"Alice"}';
 
+const SCHEMA_FIELD_IDS = {
+  importUrl: "schema-import-url",
+  source: "schema-source",
+  validateSchema: "schema-validate-schema",
+  validateData: "schema-validate-data",
+  typesSchema: "schema-types-schema",
+} as const;
+
 function parseInput(source: string, format: "json" | "yaml") {
   // Treat an empty source as "nothing parsed" rather than a successful parse.
   if (!source.trim()) {
@@ -270,7 +278,7 @@ export default function SchemaStudioClient() {
   }, []);
 
   const tsTypeFromSchema = useCallback(
-    (schema: JSONSchema): string => {
+    function convertSchemaToType(schema: JSONSchema): string {
       if (!schema || typeof schema !== "object") return "any";
       if (schema.$ref && typeof schema.$ref === "string") {
         // External/remote refs can't be resolved in-browser — emit a safe
@@ -283,7 +291,7 @@ export default function SchemaStudioClient() {
       }
       const t = schema.type;
       if (Array.isArray(t)) {
-        return t.map((tt) => tsTypeFromSchema({ ...schema, type: tt })).join(" | ");
+        return t.map((tt) => convertSchemaToType({ ...schema, type: tt })).join(" | ");
       }
       switch (t) {
         case "string":
@@ -296,11 +304,11 @@ export default function SchemaStudioClient() {
         case "null":
           return "null";
         case "array":
-          return `${tsTypeFromSchema(schema.items || {})}[]`;
+          return `${convertSchemaToType(schema.items || {})}[]`;
         case "object": {
           const props = schema.properties || {};
           const required: string[] = schema.required || [];
-          const propTypes = Object.entries(props).map(([, v]: [string, any]) => tsTypeFromSchema(v));
+          const propTypes = Object.entries(props).map(([, v]: [string, any]) => convertSchemaToType(v));
           const entries = Object.entries(props).map(([k, v]: [string, any], i) => {
             const optional = required.includes(k) ? "" : "?";
             return `  ${JSON.stringify(k)}${optional}: ${propTypes[i]};`;
@@ -318,7 +326,7 @@ export default function SchemaStudioClient() {
             if (allowAdditional === true) {
               ap = "any";
             } else {
-              const apType = tsTypeFromSchema(allowAdditional);
+              const apType = convertSchemaToType(allowAdditional);
               const parts = Array.from(
                 new Set([...propTypes, apType, hasOptional ? "undefined" : ""].filter(Boolean))
               );
@@ -330,9 +338,9 @@ export default function SchemaStudioClient() {
           return `{\n${entries.join("\n")}\n}`;
         }
         default: {
-          if (schema.anyOf) return (schema.anyOf as any[]).map(tsTypeFromSchema).join(" | ");
-          if (schema.oneOf) return (schema.oneOf as any[]).map(tsTypeFromSchema).join(" | ");
-          if (schema.allOf) return (schema.allOf as any[]).map(tsTypeFromSchema).join(" & ");
+          if (schema.anyOf) return (schema.anyOf as any[]).map(convertSchemaToType).join(" | ");
+          if (schema.oneOf) return (schema.oneOf as any[]).map(convertSchemaToType).join(" | ");
+          if (schema.allOf) return (schema.allOf as any[]).map(convertSchemaToType).join(" & ");
           return "any";
         }
       }
@@ -341,16 +349,16 @@ export default function SchemaStudioClient() {
   );
 
   // Collect every $ref target referenced anywhere in a schema tree.
-  const collectRefs = useCallback((node: any, acc: Set<string>) => {
+  const collectRefs = useCallback(function collectSchemaRefs(node: any, acc: Set<string>) {
     if (!node || typeof node !== "object") return;
     if (Array.isArray(node)) {
-      node.forEach((n) => collectRefs(n, acc));
+      node.forEach((n) => collectSchemaRefs(n, acc));
       return;
     }
     if (typeof node.$ref === "string") acc.add(node.$ref);
     for (const key of Object.keys(node)) {
       if (key === "$ref") continue;
-      collectRefs(node[key], acc);
+      collectSchemaRefs(node[key], acc);
     }
   }, []);
 
@@ -433,7 +441,7 @@ export default function SchemaStudioClient() {
   );
 
   const zodFromSchema = useCallback(
-    (schema: JSONSchema): string => {
+    function convertSchemaToZod(schema: JSONSchema): string {
       if (!schema || typeof schema !== "object") return "z.any()";
       if (schema.$ref && typeof schema.$ref === "string") {
         // External/remote refs can't be resolved in-browser — emit a safe
@@ -450,7 +458,7 @@ export default function SchemaStudioClient() {
       }
       const t = schema.type;
       if (Array.isArray(t)) {
-        return `z.union([${t.map((tt) => zodFromSchema({ ...schema, type: tt })).join(", ")}])`;
+        return `z.union([${t.map((tt) => convertSchemaToZod({ ...schema, type: tt })).join(", ")}])`;
       }
       switch (t) {
         case "string":
@@ -463,26 +471,26 @@ export default function SchemaStudioClient() {
         case "null":
           return "z.null()";
         case "array":
-          return `z.array(${zodFromSchema(schema.items || {})})`;
+          return `z.array(${convertSchemaToZod(schema.items || {})})`;
         case "object": {
           const props = schema.properties || {};
           const required: string[] = schema.required || [];
           const entries = Object.entries(props).map(([k, v]: [string, any]) => {
-            const base = `${JSON.stringify(k)}: ${zodFromSchema(v)}`;
+            const base = `${JSON.stringify(k)}: ${convertSchemaToZod(v)}`;
             return required.includes(k) ? `  ${base}` : `  ${base}.optional()`;
           });
           const obj = entries.length ? `z.object({\n${entries.join(",\n")}\n})` : `z.object({})`;
           if (schema.additionalProperties) {
-            const ap = schema.additionalProperties === true ? "z.any()" : zodFromSchema(schema.additionalProperties);
+            const ap = schema.additionalProperties === true ? "z.any()" : convertSchemaToZod(schema.additionalProperties);
             return `${obj}.catchall(${ap})`;
           }
           return obj;
         }
         default: {
-          if (schema.anyOf) return `z.union([${(schema.anyOf as any[]).map(zodFromSchema).join(", ")}])`;
-          if (schema.oneOf) return `z.union([${(schema.oneOf as any[]).map(zodFromSchema).join(", ")}])`;
+          if (schema.anyOf) return `z.union([${(schema.anyOf as any[]).map(convertSchemaToZod).join(", ")}])`;
+          if (schema.oneOf) return `z.union([${(schema.oneOf as any[]).map(convertSchemaToZod).join(", ")}])`;
           if (schema.allOf && Array.isArray(schema.allOf)) {
-            const parts = (schema.allOf as any[]).map(zodFromSchema);
+            const parts = (schema.allOf as any[]).map(convertSchemaToZod);
             if (!parts.length) return "z.any()";
             return parts.slice(1).reduce((acc, cur) => `z.intersection(${acc}, ${cur})`, parts[0]);
           }
@@ -721,14 +729,7 @@ export default function SchemaStudioClient() {
     setTypesError(null);
   }, []);
 
-  // Stable ids for a11y (Field htmlFor / control id pairing).
-  const ids = useRef({
-    importUrl: "schema-import-url",
-    source: "schema-source",
-    validateSchema: "schema-validate-schema",
-    validateData: "schema-validate-data",
-    typesSchema: "schema-types-schema",
-  }).current;
+  const ids = SCHEMA_FIELD_IDS;
 
   const parsedStatus = parsed.error
     ? null
