@@ -58,7 +58,7 @@ export default function AboutPage() {
               href={`${siteConfig.author.url}/projects/`}
               className="font-medium text-primary hover:underline"
             >
-              project archive
+              project index
             </a>
             .
           </p>
