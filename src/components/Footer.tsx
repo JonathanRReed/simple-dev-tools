@@ -4,6 +4,7 @@ import BrandMark from '@/components/BrandMark';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { siteConfig, trustPages } from '@/lib/site';
+import packageJson from '../../package.json';
 
 export default function Footer() {
   return (
@@ -25,6 +26,9 @@ export default function Footer() {
             <Badge variant="secondary" className="bg-secondary/70 text-secondary-foreground">
               Built by Jonathan R. Reed
             </Badge>
+            <Badge variant="outline" className="font-mono text-xs">
+              v{packageJson.version}
+            </Badge>
             <span className="text-xs">© {new Date().getFullYear()} Jonathan R. Reed. All rights reserved.</span>
           </div>
           <p className="max-w-xl text-sm leading-6 text-muted-foreground">
@@ -34,6 +38,7 @@ export default function Footer() {
 
         <div className="flex flex-col gap-4">
           <div className="grid gap-3 sm:grid-cols-2">
+            <FooterExternalLink href="https://github.com/JonathanRReed/simple-dev-tools" label="GitHub" />
             <FooterExternalLink href={siteConfig.provider.url} label="helloworldfirm.com" />
             <FooterExternalLink href="https://JonathanRReed.com" label="JonathanRReed.com" />
           </div>

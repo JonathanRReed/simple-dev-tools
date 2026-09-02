@@ -7,7 +7,7 @@ test.beforeEach(async ({ page }) => {
 test('catalog, search, and theme controls work', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('heading', { level: 1 })).toContainText('Developer tools');
-  await expect(page.getByText('11 small, local tools')).toBeVisible();
+  await expect(page.getByText('15 small, local tools')).toBeVisible();
 
   await page.getByRole('button', { name: 'Toggle theme' }).click();
   await page.getByRole('menuitemradio', { name: /Paper/ }).click();
@@ -30,6 +30,33 @@ test('JSON conversion and JWT verification return usable output', async ({ page 
   await page.goto('/studio/security/');
   await page.getByRole('button', { name: 'Verify' }).click();
   await expect(page.getByText('Verified', { exact: true })).toBeVisible();
+});
+
+test('new tools render with samples and trust badge', async ({ page }) => {
+  // Text Diff
+  await page.goto('/tools/diff/');
+  await page.getByRole('button', { name: 'Sample' }).first().click();
+  await expect(page.getByText(/removed|added/i).first()).toBeVisible();
+
+  // File Hash Checker
+  await page.goto('/tools/hash/');
+  await page.getByRole('button', { name: 'Sample' }).click();
+  await expect(page.getByText(/^[a-f0-9]{64}$/i).first()).toBeVisible();
+
+  // Markdown Preview
+  await page.goto('/tools/markdown/');
+  await page.getByRole('button', { name: 'Sample' }).click();
+  await expect(page.getByRole('region', { name: /Rendered markdown preview/i })).toBeVisible();
+
+  // Querystring Editor
+  await page.goto('/tools/query/');
+  await page.getByRole('button', { name: 'Sample' }).click();
+  await expect(page.locator('tbody tr').first()).toBeVisible();
+});
+
+test('local-first trust badge is surfaced in tool shells', async ({ page }) => {
+  await page.goto('/tools/json/');
+  await expect(page.getByText(/Runs locally/i).first()).toBeVisible();
 });
 
 test('Mermaid and SQLite browser runtimes initialize', async ({ page }) => {

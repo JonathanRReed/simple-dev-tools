@@ -13,13 +13,22 @@ Built and maintained by Jonathan R. Reed at Hello.World Consulting. Every tool r
 - UUID, ULID, and cron helpers
 - URL, Base64, and QR encoding tools
 - JSON, YAML, and OpenAPI schema validation and conversion
-- JWT decoding, hashing, and HMAC utilities
+- JWT decoding, signing, hashing, and HMAC utilities
+- Text diffing with side-by-side and unified views
+- File and text hashing with digest verification
+- Sanitized markdown preview with HTML export
+- Querystring and form-body editing as a table
+
+Every tool supports shareable links (state is encoded in the URL), drag-and-drop
+file import where it makes sense, and keyboard shortcuts — with a per-tool
+"runs locally" badge making the no-backend guarantee visible where you work.
 
 ## Why local-first
 
 - Everything runs in the browser, so sensitive examples such as tokens, schemas, SQL, and regex samples never leave your machine.
 - The app is a static export, so deployment is just files on a CDN: simple, cheap, and low-maintenance.
 - No auth and no backend, so the tools are usable the moment the page loads.
+- An offline-capable service worker keeps visited tools working without a network.
 - Metadata, Open Graph images, robots, sitemap, and llms.txt are already in place for discoverability.
 
 ## Tech stack

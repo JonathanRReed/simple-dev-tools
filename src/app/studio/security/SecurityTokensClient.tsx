@@ -1,7 +1,14 @@
 "use client";
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Eraser, Loader2 } from "lucide-react";
+import { Eraser, Eye, EyeOff, Loader2 } from "lucide-react";
 
+import {
+  base64ToBytes as libBase64ToBytes,
+  base64urlToBytes as libBase64urlToBytes,
+  bytesToArrayBuffer as libBytesToArrayBuffer,
+  bytesToBase64url as libBytesToBase64url,
+  te as libTe,
+} from "@/lib/base64";
 import ToolShell from "@/components/tool/ToolShell";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -176,6 +183,119 @@ async function verifyES256(jwt: string, publicKeyText: string) {
   return { ok } as { ok: boolean } & Record<string, string>;
 }
 
+// --- JWT signing helpers ---
+type JwtSignAlg = "HS256" | "RS256" | "ES256";
+
+function isPlainObject(v: unknown): v is Record<string, unknown> {
+  return typeof v === "object" && v !== null && !Array.isArray(v);
+}
+
+async function importRsaPkcs8PrivateKey(pem: string): Promise<CryptoKey> {
+  const clean = stripPem(pem);
+  const keyData = libBytesToArrayBuffer(libBase64ToBytes(clean));
+  return crypto.subtle.importKey(
+    "pkcs8",
+    keyData,
+    { name: "RSASSA-PKCS1-v1_5", hash: { name: "SHA-256" } },
+    false,
+    ["sign"]
+  );
+}
+
+async function importEcPkcs8PrivateKey(pem: string): Promise<CryptoKey> {
+  const clean = stripPem(pem);
+  const keyData = libBytesToArrayBuffer(libBase64ToBytes(clean));
+  return crypto.subtle.importKey(
+    "pkcs8",
+    keyData,
+    { name: "ECDSA", namedCurve: "P-256" },
+    false,
+    ["sign"]
+  );
+}
+
+async function importRsaJwkPrivateKey(jwk: JsonWebKey): Promise<CryptoKey> {
+  return crypto.subtle.importKey(
+    "jwk",
+    jwk,
+    { name: "RSASSA-PKCS1-v1_5", hash: { name: "SHA-256" } },
+    false,
+    ["sign"]
+  );
+}
+
+async function importEcJwkPrivateKey(jwk: JsonWebKey): Promise<CryptoKey> {
+  return crypto.subtle.importKey(
+    "jwk",
+    jwk,
+    { name: "ECDSA", namedCurve: "P-256" },
+    false,
+    ["sign"]
+  );
+}
+
+async function importPrivateKeyForAlg(alg: JwtSignAlg, keyText: string): Promise<CryptoKey> {
+  // Try JSON first
+  try {
+    const jwk = JSON.parse(keyText) as JsonWebKey;
+    if (typeof jwk === "object" && jwk) {
+      if (alg === "RS256") return importRsaJwkPrivateKey(jwk);
+      if (alg === "ES256") return importEcJwkPrivateKey(jwk);
+    }
+  } catch {}
+  // Fallback to PEM (PKCS#8)
+  if (/BEGIN PRIVATE KEY/.test(keyText)) {
+    if (alg === "RS256") return importRsaPkcs8PrivateKey(keyText);
+    if (alg === "ES256") return importEcPkcs8PrivateKey(keyText);
+  }
+  throw new Error("Provide a valid private key as JWK JSON or PKCS#8 PEM (-----BEGIN PRIVATE KEY-----)");
+}
+
+async function signHS256(secret: string, data: string) {
+  if (secret.length === 0) throw new Error("HMAC secret is required");
+  const key = await crypto.subtle.importKey(
+    "raw",
+    libTe.encode(secret),
+    { name: "HMAC", hash: { name: "SHA-256" } },
+    false,
+    ["sign"]
+  );
+  const sig = await crypto.subtle.sign("HMAC", key, libTe.encode(data));
+  const bytes = new Uint8Array(sig);
+  return { b64url: libBytesToBase64url(bytes), size: bytes.byteLength };
+}
+
+async function signJWT(
+  alg: JwtSignAlg,
+  keyText: string,
+  header: Record<string, unknown>,
+  payload: Record<string, unknown>
+) {
+  const headerB64 = libBytesToBase64url(libTe.encode(JSON.stringify(header)));
+  const payloadB64 = libBytesToBase64url(libTe.encode(JSON.stringify(payload)));
+  const data = `${headerB64}.${payloadB64}`;
+  let sigB64: string;
+  let size: number;
+  if (alg === "HS256") {
+    const res = await signHS256(keyText, data);
+    sigB64 = res.b64url;
+    size = res.size;
+  } else {
+    const key = await importPrivateKeyForAlg(alg, keyText);
+    const sigBuf = await crypto.subtle.sign(
+      alg === "RS256"
+        ? { name: "RSASSA-PKCS1-v1_5" }
+        : { name: "ECDSA", hash: { name: "SHA-256" } },
+      key,
+      libTe.encode(data)
+    );
+    const sigBytes = new Uint8Array(sigBuf);
+    sigB64 = libBytesToBase64url(sigBytes);
+    size = sigBytes.byteLength;
+  }
+  return { jwt: `${data}.${sigB64}`, signatureSize: size };
+}
+
 // --- JWT helpers ---
 function decodePart(part: string) {
   try {
@@ -225,7 +345,7 @@ const DEFAULT_JWT =
 const DEFAULT_SECRET = "your-256-bit-secret";
 
 export default function SecurityTokensClient() {
-  const [tab, setTab] = useState<"jwt" | "hash" | "hmac">("jwt");
+  const [tab, setTab] = useState<"jwt" | "hash" | "hmac" | "sign">("jwt");
   const [currentEpochSeconds, setCurrentEpochSeconds] = useState<number | null>(null);
 
   useEffect(() => {
@@ -440,6 +560,169 @@ export default function SecurityTokensClient() {
     }
   }
 
+  // --- Sign & build state ---
+  function getNowSeconds() {
+    return Math.floor(Date.now() / 1000);
+  }
+
+  const [signHeader, setSignHeader] = useState<string>(() =>
+    JSON.stringify({ alg: "HS256", typ: "JWT" }, null, 2)
+  );
+  const [signPayload, setSignPayload] = useState<string>(() => {
+    const now = getNowSeconds();
+    return JSON.stringify(
+      {
+        iss: "simple-dev-tools",
+        sub: "user-123",
+        iat: now,
+        exp: now + 3600,
+      },
+      null,
+      2
+    );
+  });
+  const [signAlg, setSignAlg] = useState<JwtSignAlg>("HS256");
+  const [signKey, setSignKey] = useState<string>("");
+  const [signResult, setSignResult] = useState<string | null>(null);
+  const [signMeta, setSignMeta] = useState<{ signatureSize: number } | null>(null);
+  const [signError, setSignError] = useState<string | null>(null);
+  const [signing, setSigning] = useState(false);
+  const [showSecret, setShowSecret] = useState(false);
+
+  const signHeaderObj = useMemo(() => {
+    try {
+      const v = JSON.parse(signHeader);
+      return isPlainObject(v) ? v : null;
+    } catch {
+      return null;
+    }
+  }, [signHeader]);
+
+  const signHeaderError = useMemo<string | null>(() => {
+    try {
+      const v = JSON.parse(signHeader);
+      return isPlainObject(v) ? null : "Header must be a JSON object";
+    } catch (e: any) {
+      return e?.message || "Invalid header JSON";
+    }
+  }, [signHeader]);
+
+  const signPayloadObj = useMemo(() => {
+    try {
+      const v = JSON.parse(signPayload);
+      return isPlainObject(v) ? v : null;
+    } catch {
+      return null;
+    }
+  }, [signPayload]);
+
+  const signPayloadError = useMemo<string | null>(() => {
+    try {
+      const v = JSON.parse(signPayload);
+      return isPlainObject(v) ? null : "Payload must be a JSON object";
+    } catch (e: any) {
+      return e?.message || "Invalid payload JSON";
+    }
+  }, [signPayload]);
+
+  // Clear stale output when inputs change.
+  useEffect(() => {
+    setSignResult(null);
+    setSignMeta(null);
+    setSignError(null);
+  }, [signHeader, signPayload, signAlg, signKey]);
+
+  function handleSignAlgChange(alg: JwtSignAlg) {
+    setSignAlg(alg);
+    try {
+      const parsed = JSON.parse(signHeader);
+      if (isPlainObject(parsed)) {
+        setSignHeader(JSON.stringify({ ...parsed, alg }, null, 2));
+      }
+    } catch {}
+  }
+
+  function loadSignSample() {
+    const now = getNowSeconds();
+    setSignAlg("HS256");
+    setSignHeader(JSON.stringify({ alg: "HS256", typ: "JWT" }, null, 2));
+    setSignPayload(
+      JSON.stringify(
+        {
+          iss: "simple-dev-tools",
+          sub: "user-123",
+          iat: now,
+          exp: now + 3600,
+        },
+        null,
+        2
+      )
+    );
+    setSignKey("");
+    setSignResult(null);
+    setSignMeta(null);
+    setSignError(null);
+  }
+
+  function onResetSign() {
+    loadSignSample();
+  }
+
+  function onSampleSign() {
+    loadSignSample();
+  }
+
+  function setSignClaim(key: "iat" | "exp", offset: number) {
+    try {
+      const parsed = JSON.parse(signPayload);
+      if (isPlainObject(parsed)) {
+        const next = { ...parsed, [key]: getNowSeconds() + offset };
+        setSignPayload(JSON.stringify(next, null, 2));
+        return;
+      }
+    } catch {}
+    setSignError(`Could not set ${key}: payload must be a valid JSON object.`);
+  }
+
+  async function onSign() {
+    setSignError(null);
+    setSignResult(null);
+    setSignMeta(null);
+
+    if (!signHeaderObj || !signPayloadObj) {
+      setSignError(
+        `${!signHeaderObj ? "Header" : "Payload"} JSON is invalid. Fix the highlighted errors before signing.`
+      );
+      return;
+    }
+
+    if (signHeaderObj.alg !== undefined && signHeaderObj.alg !== signAlg) {
+      setSignError(
+        `Header alg is "${String(signHeaderObj.alg)}" but the selected algorithm is ${signAlg}. They must match.`
+      );
+      return;
+    }
+
+    const header = { ...signHeaderObj, alg: signAlg };
+    const payload = signPayloadObj;
+
+    if (signAlg === "HS256" && signKey.length === 0) {
+      setSignError("A secret is required for HS256.");
+      return;
+    }
+
+    setSigning(true);
+    try {
+      const res = await signJWT(signAlg, signKey, header, payload);
+      setSignResult(res.jwt);
+      setSignMeta({ signatureSize: res.signatureSize });
+    } catch (e: any) {
+      setSignError(e?.message || "Failed to sign JWT.");
+    } finally {
+      setSigning(false);
+    }
+  }
+
   function tsToLocal(ts?: number): string | null {
     if (ts == null || !Number.isFinite(ts)) return null;
     try {
@@ -465,6 +748,7 @@ export default function SecurityTokensClient() {
       <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
         <TabsList>
           <TabsTrigger value="jwt">JWT</TabsTrigger>
+          <TabsTrigger value="sign">Sign & build</TabsTrigger>
           <TabsTrigger value="hash">Hash</TabsTrigger>
           <TabsTrigger value="hmac">HMAC</TabsTrigger>
         </TabsList>
@@ -655,6 +939,190 @@ export default function SecurityTokensClient() {
                   For RS256/ES256, paste the signer&apos;s public key (SPKI PEM or JWK) above, then
                   Verify. HS256 uses the shared secret instead.
                 </p>
+              </div>
+            </div>
+          </ToolShell>
+        </TabsContent>
+
+        {/* Sign & build */}
+        <TabsContent value="sign">
+          <ToolShell
+            eyebrow="JWT sign / build"
+            toolbar={
+              <>
+                <Button variant="default" size="sm" onClick={onSign} disabled={signing}>
+                  {signing ? (
+                    <>
+                      <Loader2 className="size-4 animate-spin" aria-hidden="true" /> Signing…
+                    </>
+                  ) : (
+                    "Sign"
+                  )}
+                </Button>
+                <Button variant="outline" size="sm" onClick={onSampleSign}>
+                  Sample
+                </Button>
+                <Button variant="outline" size="sm" onClick={onResetSign}>
+                  <Eraser className="size-4" aria-hidden="true" /> Reset
+                </Button>
+              </>
+            }
+          >
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              <div className="flex flex-col gap-4">
+                <Field
+                  label="Header (JSON)"
+                  htmlFor="sign-header"
+                  hint='JSON object. The "alg" field is kept in sync with the algorithm select.'
+                  error={signHeaderError}
+                >
+                  <textarea
+                    id="sign-header"
+                    className={`${taClass} min-h-[80px] break-all`}
+                    value={signHeader}
+                    onChange={(e) => setSignHeader(e.target.value)}
+                    placeholder='{"alg":"HS256","typ":"JWT"}'
+                  />
+                </Field>
+
+                <Field
+                  label="Payload (JSON)"
+                  htmlFor="sign-payload"
+                  hint="JSON object. Use the claim helpers below to set iat and exp."
+                  error={signPayloadError}
+                >
+                  <textarea
+                    id="sign-payload"
+                    className={`${taClass} min-h-[160px] break-all`}
+                    value={signPayload}
+                    onChange={(e) => setSignPayload(e.target.value)}
+                    placeholder='{"sub":"..."}'
+                  />
+                </Field>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="brutal-label text-[10px]">Claims</span>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSignClaim("iat", 0)}
+                  >
+                    iat = now
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSignClaim("exp", 3600)}
+                  >
+                    exp = now + 1h
+                  </Button>
+                </div>
+
+                <Field label="Algorithm" htmlFor="sign-alg">
+                  <select
+                    id="sign-alg"
+                    className={selectClass}
+                    value={signAlg}
+                    onChange={(e) => handleSignAlgChange(e.target.value as JwtSignAlg)}
+                  >
+                    <option value="HS256">HS256</option>
+                    <option value="RS256">RS256</option>
+                    <option value="ES256">ES256</option>
+                  </select>
+                </Field>
+
+                {signAlg === "HS256" ? (
+                  <Field
+                    label="Secret (HS256)"
+                    htmlFor="sign-key"
+                    hint="A strong shared secret (at least 256 bits recommended)."
+                  >
+                    <div className="flex gap-2">
+                      <Input
+                        id="sign-key"
+                        type={showSecret ? "text" : "password"}
+                        className="font-mono"
+                        value={signKey}
+                        onChange={(e) => setSignKey(e.target.value)}
+                        placeholder="Shared secret for HS256"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={() => setShowSecret((s) => !s)}
+                        aria-label={showSecret ? "Hide secret" : "Show secret"}
+                        title={showSecret ? "Hide secret" : "Show secret"}
+                      >
+                        {showSecret ? (
+                          <EyeOff className="size-4" aria-hidden="true" />
+                        ) : (
+                          <Eye className="size-4" aria-hidden="true" />
+                        )}
+                      </Button>
+                    </div>
+                  </Field>
+                ) : (
+                  <Field
+                    label={`Private key (${signAlg})`}
+                    htmlFor="sign-key"
+                    hint="PKCS#8 PEM (-----BEGIN PRIVATE KEY-----) or private JWK JSON."
+                  >
+                    <textarea
+                      id="sign-key"
+                      className={`${taClass} min-h-[160px] break-all`}
+                      value={signKey}
+                      onChange={(e) => setSignKey(e.target.value)}
+                      placeholder="-----BEGIN PRIVATE KEY-----..."
+                    />
+                  </Field>
+                )}
+
+                {signError ? <Alert variant="error">{signError}</Alert> : null}
+              </div>
+
+              <div className="flex flex-col gap-4">
+                <div className="sr-only" aria-live="polite" aria-atomic="true">
+                  {signResult
+                    ? `JWT signed. Signature is ${signMeta?.signatureSize ?? 0} bytes.`
+                    : signError
+                      ? `Sign error: ${signError}`
+                      : ""}
+                </div>
+
+                {signResult ? (
+                  <>
+                    <Alert variant="success">
+                      <span className="font-semibold">Signed</span> — JWT ready below.
+                    </Alert>
+                    <ResultPanel
+                      title="Signed JWT"
+                      copyValue={signResult}
+                      mono
+                      bodyClassName="min-h-[120px] break-all"
+                    >
+                      {signResult}
+                    </ResultPanel>
+                    <div className="border-2 border-border bg-card p-3 text-xs">
+                      <div className="mb-2 flex items-center justify-between gap-2">
+                        <span className="brutal-label">Signature</span>
+                        <span className="font-mono">{signMeta?.signatureSize ?? 0} bytes</span>
+                      </div>
+                      {signAlg === "HS256" ? (
+                        <p className="text-muted-foreground">
+                          HS256 secrets should be strong (at least 256 bits) and should never be
+                          stored or transmitted alongside the token.
+                        </p>
+                      ) : null}
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    Build a header and payload, choose a key, then Sign to produce a compact JWT.
+                  </p>
+                )}
               </div>
             </div>
           </ToolShell>

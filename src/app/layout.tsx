@@ -1,5 +1,5 @@
 import './globals.css';
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import localFont from 'next/font/local';
 import type { ReactNode } from 'react';
 
@@ -15,6 +15,7 @@ import {
 import { RouteFocus } from '@/components/layout/RouteFocus';
 import { ThemeProvider } from '@/components/theme-provider';
 import { RecentToolsProvider } from '@/hooks/use-recent-tools';
+import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration';
 import { SidebarInset } from '@/components/ui/sidebar';
 import { siteConfig, toolPages } from '@/lib/site';
 
@@ -96,6 +97,12 @@ export const metadata: Metadata = {
   manifest: '/simple_dev_tools_logo_assets/site.webmanifest',
 };
 
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  themeColor: '#0a0d12',
+};
+
 const authorProfile = {
   '@type': 'Person',
   name: siteConfig.author.name,
@@ -155,6 +162,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         />
       </head>
       <body className="bg-background text-foreground font-sans antialiased">
+        <ServiceWorkerRegistration />
         <ThemeProvider>
           <NavigationProgressProvider>
             <NavigationProgressBar />

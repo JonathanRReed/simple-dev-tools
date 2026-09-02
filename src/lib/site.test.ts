@@ -5,7 +5,7 @@ import { appThemeIds, appThemes } from './themes';
 
 describe('published catalog', () => {
   test('uses unique canonical tool routes', () => {
-    expect(toolPages.length).toBe(11);
+    expect(toolPages.length).toBe(15);
     expect(new Set(toolPages.map((tool) => tool.href)).size).toBe(toolPages.length);
     expect(new Set(toolPages.map((tool) => tool.title)).size).toBe(toolPages.length);
     expect(toolPages.every((tool) => tool.href.startsWith('/') && tool.href.endsWith('/'))).toBe(true);

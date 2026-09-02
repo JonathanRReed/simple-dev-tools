@@ -5,6 +5,7 @@ import { RotateCcw, Sparkles, AlignLeft, Minimize2, ArrowDownAZ } from "lucide-r
 import YAML from "yaml";
 
 import ToolShell from "@/components/tool/ToolShell";
+import { FileDrop } from "@/components/FileDrop";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
@@ -13,6 +14,12 @@ import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { CopyButton } from "@/components/ui/copy-button";
 import { ResultPanel } from "@/components/ui/result-panel";
+import { parseCsv, toCsv } from "@/lib/csv";
+import { NO_VALUE, resolvePath } from "@/lib/json-path";
+import { readShareParams } from "@/lib/share";
+import { downloadFile } from "@/lib/download";
+import { useHotkey } from "@/hooks/use-hotkey";
+import { useStoredState } from "@/hooks/use-stored-state";
 
 type Format = "json" | "yaml" | "csv";
 
@@ -28,205 +35,6 @@ const SAMPLE = `{
   ],
   "meta": { "region": "us-west", "weird key": 7 }
 }`;
-
-/* ------------------------------------------------------------------ */
-/* localStorage (guarded for static export)                            */
-/* ------------------------------------------------------------------ */
-
-function loadStored(): string {
-  if (typeof window === "undefined") return "";
-  try {
-    return window.localStorage.getItem(STORAGE_KEY) ?? "";
-  } catch {
-    return "";
-  }
-}
-
-function persist(value: string): void {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(STORAGE_KEY, value);
-  } catch {
-    /* ignore (private mode / quota) */
-  }
-}
-
-function clearStored(): void {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.removeItem(STORAGE_KEY);
-  } catch {
-    /* ignore */
-  }
-}
-
-/* ------------------------------------------------------------------ */
-/* CSV parse (RFC 4180-ish)                                            */
-/* ------------------------------------------------------------------ */
-
-/**
- * Parse CSV text into a 2D array of string cells. Handles quoted fields,
- * commas and newlines inside quotes, and `""` escaped quotes. Accepts both
- * \r\n and \n line endings. A trailing newline does not produce a final empty
- * row.
- */
-function parseCsvGrid(text: string): string[][] {
-  const rows: string[][] = [];
-  let row: string[] = [];
-  let field = "";
-  let inQuotes = false;
-  let i = 0;
-  const n = text.length;
-
-  const pushField = () => {
-    row.push(field);
-    field = "";
-  };
-  const pushRow = () => {
-    pushField();
-    rows.push(row);
-    row = [];
-  };
-
-  while (i < n) {
-    const c = text[i];
-
-    if (inQuotes) {
-      if (c === '"') {
-        if (text[i + 1] === '"') {
-          field += '"';
-          i += 2;
-          continue;
-        }
-        inQuotes = false;
-        i += 1;
-        continue;
-      }
-      field += c;
-      i += 1;
-      continue;
-    }
-
-    if (c === '"') {
-      inQuotes = true;
-      i += 1;
-      continue;
-    }
-    if (c === ",") {
-      pushField();
-      i += 1;
-      continue;
-    }
-    if (c === "\r") {
-      // treat \r\n (and a lone \r) as one row terminator
-      pushRow();
-      if (text[i + 1] === "\n") i += 2;
-      else i += 1;
-      continue;
-    }
-    if (c === "\n") {
-      pushRow();
-      i += 1;
-      continue;
-    }
-    field += c;
-    i += 1;
-  }
-
-  // flush trailing field/row unless the input ended exactly on a terminator
-  if (field.length > 0 || row.length > 0) {
-    pushRow();
-  }
-  return rows;
-}
-
-/** Coerce a raw CSV string cell to a JS value: numbers, booleans, null, else string. */
-function coerceCsvValue(raw: string): unknown {
-  if (raw === "") return "";
-  const lower = raw.toLowerCase();
-  if (lower === "true") return true;
-  if (lower === "false") return false;
-  if (lower === "null") return null;
-  // Numeric (avoid coercing things like "+", "1.2.3", or leading-zero ids loosely;
-  // require a clean JSON-style number).
-  if (/^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?$/.test(raw)) {
-    const num = Number(raw);
-    if (Number.isFinite(num)) return num;
-  }
-  return raw;
-}
-
-function parseCsv(text: string): Record<string, unknown>[] {
-  const grid = parseCsvGrid(text);
-  if (grid.length === 0) return [];
-  const header = grid[0];
-  if (header.length === 0) return [];
-  const out: Record<string, unknown>[] = [];
-  for (let r = 1; r < grid.length; r++) {
-    const cells = grid[r];
-    // skip fully blank rows (a single empty cell from a stray blank line)
-    if (cells.length === 1 && cells[0] === "") continue;
-    const obj: Record<string, unknown> = {};
-    for (let c = 0; c < header.length; c++) {
-      const key = header[c] || `column_${c + 1}`;
-      obj[key] = c < cells.length ? coerceCsvValue(cells[c]) : "";
-    }
-    out.push(obj);
-  }
-  return out;
-}
-
-/* ------------------------------------------------------------------ */
-/* CSV serialize                                                       */
-/* ------------------------------------------------------------------ */
-
-function escapeCsvCell(value: string): string {
-  if (/[",\r\n]/.test(value)) {
-    return `"${value.replace(/"/g, '""')}"`;
-  }
-  return value;
-}
-
-/** Render a JS value as a single CSV cell. Objects/arrays are JSON-stringified. */
-function csvCell(value: unknown): string {
-  if (value === null || value === undefined) return "";
-  if (typeof value === "string") return value;
-  if (typeof value === "number" || typeof value === "boolean") return String(value);
-  try {
-    return JSON.stringify(value);
-  } catch {
-    return String(value);
-  }
-}
-
-/**
- * Convert an array of objects to CSV. Header = union of keys in first-seen
- * order. Throws a friendly error when the value isn't an array of objects.
- */
-function toCsv(value: unknown): string {
-  if (!Array.isArray(value)) {
-    throw new Error("CSV output needs an array of objects at the top level.");
-  }
-  if (value.length === 0) return "";
-  const keys: string[] = [];
-  const seen = new Set<string>();
-  for (const row of value) {
-    if (row === null || typeof row !== "object" || Array.isArray(row)) {
-      throw new Error("CSV output needs every item to be an object (not a primitive or array).");
-    }
-    for (const k of Object.keys(row as Record<string, unknown>)) {
-      if (!seen.has(k)) {
-        seen.add(k);
-        keys.push(k);
-      }
-    }
-  }
-  const headerLine = keys.map(escapeCsvCell).join(",");
-  const lines = (value as Record<string, unknown>[]).map((row) =>
-    keys.map((k) => escapeCsvCell(csvCell(row[k]))).join(",")
-  );
-  return [headerLine, ...lines].join("\n");
-}
 
 /* ------------------------------------------------------------------ */
 /* Transforms                                                          */
@@ -307,134 +115,33 @@ function serialize(value: unknown, format: Format): string {
 }
 
 /* ------------------------------------------------------------------ */
-/* Path resolver                                                       */
-/* ------------------------------------------------------------------ */
-
-type PathSeg = { kind: "key"; value: string } | { kind: "index"; value: number };
-
-/**
- * Parse a path like `a.b[0].c`, `users[2]["weird key"]`, or `[0].name` into
- * segments. Bracket access supports numeric indices and quoted string keys.
- */
-function parsePath(path: string): PathSeg[] {
-  const segs: PathSeg[] = [];
-  let i = 0;
-  const n = path.length;
-
-  const readQuoted = (quote: string): string => {
-    let s = "";
-    i += 1; // skip opening quote
-    while (i < n) {
-      const c = path[i];
-      if (c === "\\" && i + 1 < n) {
-        s += path[i + 1];
-        i += 2;
-        continue;
-      }
-      if (c === quote) {
-        i += 1; // skip closing quote
-        return s;
-      }
-      s += c;
-      i += 1;
-    }
-    throw new Error("Unterminated quote in path.");
-  };
-
-  while (i < n) {
-    const c = path[i];
-    if (c === ".") {
-      i += 1;
-      continue;
-    }
-    if (c === "[") {
-      i += 1;
-      // skip whitespace
-      while (i < n && path[i] === " ") i += 1;
-      const q = path[i];
-      if (q === '"' || q === "'") {
-        const key = readQuoted(q);
-        while (i < n && path[i] === " ") i += 1;
-        if (path[i] !== "]") throw new Error("Expected ']' after bracket key.");
-        i += 1;
-        segs.push({ kind: "key", value: key });
-      } else {
-        let raw = "";
-        while (i < n && path[i] !== "]") {
-          raw += path[i];
-          i += 1;
-        }
-        if (path[i] !== "]") throw new Error("Expected ']' to close bracket.");
-        i += 1;
-        const trimmed = raw.trim();
-        if (/^-?\d+$/.test(trimmed)) {
-          segs.push({ kind: "index", value: parseInt(trimmed, 10) });
-        } else {
-          // allow unquoted bracket keys too
-          segs.push({ kind: "key", value: trimmed });
-        }
-      }
-      continue;
-    }
-    // bare key: read until . or [
-    let key = "";
-    while (i < n && path[i] !== "." && path[i] !== "[") {
-      key += path[i];
-      i += 1;
-    }
-    if (key.length > 0) segs.push({ kind: "key", value: key });
-  }
-  return segs;
-}
-
-const NO_VALUE = Symbol("no-value");
-
-function resolvePath(root: unknown, path: string): unknown | typeof NO_VALUE {
-  const segs = parsePath(path);
-  let cur: unknown = root;
-  for (const seg of segs) {
-    if (cur === null || cur === undefined) return NO_VALUE;
-    if (seg.kind === "index") {
-      if (!Array.isArray(cur)) return NO_VALUE;
-      const idx = seg.value < 0 ? cur.length + seg.value : seg.value;
-      if (idx < 0 || idx >= cur.length) return NO_VALUE;
-      cur = cur[idx];
-    } else {
-      if (typeof cur !== "object" || Array.isArray(cur)) {
-        // allow indexing arrays by numeric-string key
-        if (Array.isArray(cur) && /^\d+$/.test(seg.value)) {
-          cur = cur[parseInt(seg.value, 10)];
-          continue;
-        }
-        return NO_VALUE;
-      }
-      const obj = cur as Record<string, unknown>;
-      if (!(seg.value in obj)) return NO_VALUE;
-      cur = obj[seg.value];
-    }
-  }
-  return cur;
-}
-
-/* ------------------------------------------------------------------ */
 /* Component                                                           */
 /* ------------------------------------------------------------------ */
 
 export default function JsonClient() {
-  const [source, setSource] = useState("");
+  const [source, setSource, clearSource] = useStoredState(STORAGE_KEY, "");
   const [sourceFormat, setSourceFormat] = useState<Format>("json");
   const [targetFormat, setTargetFormat] = useState<Format>("yaml");
   const [query, setQuery] = useState("");
 
-  // Hydrate persisted source after mount (keeps SSR markup === first client render).
+  // URL hash share state takes precedence over localStorage (hydrated by useStoredState).
   useEffect(() => {
-    const stored = loadStored();
-    if (stored) setSource(stored);
-  }, []);
-
-  useEffect(() => {
-    persist(source);
-  }, [source]);
+    let active = true;
+    readShareParams().then((params) => {
+      if (!active || !params) return;
+      if (typeof params.src === "string") setSource(params.src);
+      if (typeof params.sf === "string" && ["json", "yaml", "csv"].includes(params.sf)) {
+        setSourceFormat(params.sf as Format);
+      }
+      if (typeof params.tf === "string" && ["json", "yaml", "csv"].includes(params.tf)) {
+        setTargetFormat(params.tf as Format);
+      }
+      if (typeof params.q === "string") setQuery(params.q);
+    });
+    return () => {
+      active = false;
+    };
+  }, [setSource]);
 
   const isEmpty = source.trim() === "";
 
@@ -523,6 +230,18 @@ export default function JsonClient() {
   };
 
   const handleFormat = () => applyToSource((v) => v, "json");
+
+  useHotkey(
+    "mod+enter",
+    (event) => {
+      if (isValid) {
+        handleFormat();
+        event.preventDefault();
+      }
+    },
+    { allowInInput: true }
+  );
+
   const handleSortKeys = () => applyToSource((v) => sortKeysDeep(v), sourceFormat === "csv" ? "json" : sourceFormat);
 
   const handleMinify = () => {
@@ -541,8 +260,7 @@ export default function JsonClient() {
   };
 
   const handleReset = () => {
-    clearStored();
-    setSource("");
+    clearSource();
     setSourceFormat("json");
     setTargetFormat("yaml");
     setQuery("");
@@ -557,13 +275,25 @@ export default function JsonClient() {
         : targetFormat === "yaml"
           ? "text/yaml;charset=utf-8"
           : "text/csv;charset=utf-8";
-    const blob = new Blob([output.text], { type: mime });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `workbench.${ext}`;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 0);
+    downloadFile(output.text, `workbench.${ext}`, mime);
+  };
+
+  const handleFileText = (text: string, file: File) => {
+    setSource(text);
+    const ext = file.name.split(".").pop()?.toLowerCase();
+    if (ext === "yaml" || ext === "yml") setSourceFormat("yaml");
+    else if (ext === "csv") setSourceFormat("csv");
+    else setSourceFormat("json");
+  };
+
+  const shareParams = () => {
+    if (!source.trim()) return null;
+    return {
+      src: source,
+      sf: sourceFormat,
+      tf: targetFormat,
+      q: query,
+    };
   };
 
   const toolbar = (
@@ -585,8 +315,15 @@ export default function JsonClient() {
     { id: "csv", label: "CSV" },
   ];
 
+  const shortcuts = [{ keys: "⌘ ↵", description: "Format JSON" }];
+
   return (
-    <ToolShell eyebrow="JSON · YAML · CSV" toolbar={toolbar}>
+    <ToolShell
+      eyebrow="JSON · YAML · CSV"
+      toolbar={toolbar}
+      shareParams={shareParams}
+      shortcuts={shortcuts}
+    >
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 items-start">
         {/* ---------------- Source column ---------------- */}
         <div className="flex min-w-0 flex-col gap-3">
@@ -608,14 +345,21 @@ export default function JsonClient() {
           </div>
 
           <Field label="Source" htmlFor="json-source" className="min-w-0">
-            <textarea
-              id="json-source"
-              value={source}
-              onChange={(e) => setSource(e.target.value)}
-              spellCheck={false}
-              placeholder={`Paste ${sourceFormat.toUpperCase()} here…`}
-              className="min-h-[280px] w-full resize-y rounded-none border-2 border-input bg-background px-3 py-2 font-mono text-sm text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:outline-none"
-            />
+            <FileDrop
+              onFileText={handleFileText}
+              accept=".json,.yaml,.yml,.csv,text/csv"
+              label="Import file"
+              className="relative"
+            >
+              <textarea
+                id="json-source"
+                value={source}
+                onChange={(e) => setSource(e.target.value)}
+                spellCheck={false}
+                placeholder={`Paste ${sourceFormat.toUpperCase()} here…`}
+                className="min-h-[280px] w-full resize-y rounded-none border-2 border-input bg-background px-3 py-2 font-mono text-sm text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:outline-none"
+              />
+            </FileDrop>
           </Field>
 
           {isEmpty ? (

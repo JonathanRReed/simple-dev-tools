@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { Play, RotateCcw, Sparkles } from "lucide-react";
 
 import ToolShell from "@/components/tool/ToolShell";
+import { FileDrop } from "@/components/FileDrop";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { CopyButton } from "@/components/ui/copy-button";
@@ -12,6 +13,10 @@ import { Label } from "@/components/ui/label";
 import { ResultPanel } from "@/components/ui/result-panel";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { readShareParams } from "@/lib/share";
+import { downloadFile } from "@/lib/download";
+import { useHotkey } from "@/hooks/use-hotkey";
+import { useStoredState } from "@/hooks/use-stored-state";
 
 const DEFAULT_SQL = `-- Try: SELECT 42 AS answer;`;
 
@@ -39,34 +44,6 @@ const SQL_JS_SCRIPT_INTEGRITY =
 /** localStorage key for persisting the SQL editor buffer across reloads. Settings/input
  *  only — never secrets. Guarded for static export (typeof window + try/catch). */
 const SQL_STORAGE_KEY = "sdt:sqlite:sql";
-
-function loadStoredSql(): string {
-  if (typeof window === "undefined") return DEFAULT_SQL;
-  try {
-    const saved = window.localStorage.getItem(SQL_STORAGE_KEY);
-    return saved ?? DEFAULT_SQL;
-  } catch {
-    return DEFAULT_SQL;
-  }
-}
-
-function persistSql(value: string): void {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(SQL_STORAGE_KEY, value);
-  } catch {
-    /* ignore (private mode / quota) */
-  }
-}
-
-function clearStoredSql(): void {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.removeItem(SQL_STORAGE_KEY);
-  } catch {
-    /* ignore */
-  }
-}
 
 const Editor = dynamic(() => import("react-simple-code-editor"), {
   ssr: false,
@@ -273,7 +250,7 @@ function resultsToJson(results: ResultSet[]): string {
 }
 
 export default function SQLiteClient() {
-  const [sql, setSql] = useState(DEFAULT_SQL);
+  const [sql, setSql, clearSql] = useStoredState(SQL_STORAGE_KEY, DEFAULT_SQL);
   const [results, setResults] = useState<ResultSet[] | null>(null);
   const [okMessage, setOkMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -286,17 +263,17 @@ export default function SQLiteClient() {
   const highlightRef = useRef<HighlightFn>(escapeHtml);
   const [highlightReady, setHighlightReady] = useState(false);
 
-  // Hydrate the editor buffer from localStorage after mount so the static-export
-  // markup (DEFAULT_SQL) and first client render match, avoiding a hydration mismatch.
+  // URL hash share state takes precedence over localStorage (hydrated by useStoredState).
   useEffect(() => {
-    const stored = loadStoredSql();
-    if (stored !== DEFAULT_SQL) setSql(stored);
-  }, []);
-
-  // Persist the editor buffer whenever it changes (guarded, settings-only).
-  useEffect(() => {
-    persistSql(sql);
-  }, [sql]);
+    let active = true;
+    readShareParams().then((params) => {
+      if (!active || !params) return;
+      if (typeof params.sql === "string") setSql(params.sql);
+    });
+    return () => {
+      active = false;
+    };
+  }, [setSql]);
 
   useEffect(() => {
     let cancelled = false;
@@ -434,24 +411,23 @@ export default function SQLiteClient() {
       }
       dbRef.current = new SQL.Database();
     }
-    // Clear the persisted buffer so Reset durably restores the default. (The persist
-    // effect re-writes DEFAULT_SQL on the setSql below, which is equivalent: an absent
-    // key and a stored DEFAULT_SQL both hydrate back to the default on reload.)
-    clearStoredSql();
+    // Clear the persisted buffer so Reset durably restores the default.
+    clearSql();
     setSql(DEFAULT_SQL);
     setResults(null);
     setOkMessage(null);
     setError(null);
   };
 
-  const handleEditorKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-    if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+  useHotkey(
+    "mod+enter",
+    (event) => {
       event.preventDefault();
-      // Match the Run button's disabled state so keyboard and button behave the same.
       if (!dbReady || loading) return;
       runQuery();
-    }
-  };
+    },
+    { allowInInput: true }
+  );
 
   const totalRows = useMemo(
     () => (results ? results.reduce((sum, r) => sum + r.values.length, 0) : 0),
@@ -461,20 +437,17 @@ export default function SQLiteClient() {
   const csvValue = useMemo(() => (results ? resultsToCsv(results) : ""), [results]);
   const jsonValue = useMemo(() => (results ? resultsToJson(results) : ""), [results]);
 
-  const downloadCsv = () => download(csvValue, "results.csv", "text/csv;charset=utf-8");
-  const downloadJson = () => download(jsonValue, "results.json", "application/json");
+  const downloadCsv = () => downloadFile(csvValue, "results.csv", "text/csv;charset=utf-8");
+  const downloadJson = () => downloadFile(jsonValue, "results.json", "application/json");
 
-  function download(content: string, filename: string, type: string) {
-    const blob = new Blob([content], { type });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    a.click();
-    // Defer revocation so the download isn't aborted in stricter browsers that
-    // read the blob URL asynchronously after click().
-    setTimeout(() => URL.revokeObjectURL(url), 0);
-  }
+  const handleFileText = (text: string) => {
+    setSql(text);
+  };
+
+  const shareParams = () => {
+    if (!sql.trim()) return null;
+    return { sql };
+  };
 
   const toolbar = (
     <>
@@ -489,13 +462,22 @@ export default function SQLiteClient() {
     </>
   );
 
+  const shortcuts = [{ keys: "⌘ ↵", description: "Run query" }];
+
   return (
-    <ToolShell eyebrow="SQLite · WASM" toolbar={toolbar}>
+    <ToolShell
+      eyebrow="SQLite · WASM"
+      toolbar={toolbar}
+      shareParams={shareParams}
+      shortcuts={shortcuts}
+    >
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,0.55fr)_minmax(0,0.45fr)] items-start">
         <div className="flex min-w-0 flex-col gap-3">
           <Label htmlFor="sqlite-editor">SQL query</Label>
-          <div
-            onKeyDown={handleEditorKeyDown}
+          <FileDrop
+            onFileText={handleFileText}
+            accept=".sql,.txt,text/plain"
+            label="Import SQL"
             className="border-2 border-border bg-background focus-within:ring-2 focus-within:ring-ring"
           >
             <Editor
@@ -508,7 +490,7 @@ export default function SQLiteClient() {
               textareaId="sqlite-editor"
               spellCheck={false}
             />
-          </div>
+          </FileDrop>
           <div className="flex flex-wrap items-center gap-3">
             <Button onClick={runQuery} disabled={!dbReady || loading}>
               <Play aria-hidden="true" />

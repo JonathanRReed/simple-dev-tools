@@ -2,22 +2,7 @@
 
 import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
-import {
-  Braces,
-  CalendarClock,
-  Clock,
-  Code2,
-  Database,
-  FileJson,
-  Home,
-  Palette,
-  Pin,
-  PinOff,
-  QrCode,
-  SearchCode,
-  ShieldCheck,
-  Workflow,
-} from 'lucide-react';
+import { Clock, Home, Pin, PinOff } from 'lucide-react';
 
 import {
   Sidebar as PrimitiveSidebar,
@@ -37,23 +22,10 @@ import {
 } from '@/components/ui/sidebar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import BrandMark from '@/components/BrandMark';
+import { getToolIcon } from '@/components/ToolIcon';
 import { useRecentTools } from '@/hooks/use-recent-tools';
-import { siteConfig, toolGroups, toolPages, type ToolIcon, type ToolPageInfo } from '@/lib/site';
+import { siteConfig, toolGroups, toolPages, type ToolPageInfo } from '@/lib/site';
 import { cn } from '@/lib/utils';
-
-const iconMap = {
-  braces: Braces,
-  calendarClock: CalendarClock,
-  clock: Clock,
-  code: Code2,
-  color: Palette,
-  database: Database,
-  json: FileJson,
-  qr: QrCode,
-  searchCode: SearchCode,
-  shield: ShieldCheck,
-  workflow: Workflow,
-} satisfies Record<ToolIcon, typeof Code2>;
 
 const normalize = (href: string) => (href === '/' ? '/' : href.replace(/\/$/, ''));
 const toolByHref = new Map(toolPages.map((t) => [normalize(t.href), t] as const));
@@ -68,7 +40,7 @@ const navSections = [
     items: group.tools.map((tool) => ({
       title: tool.title,
       href: tool.href,
-      icon: iconMap[tool.icon],
+      icon: getToolIcon(tool.icon),
     })),
   })),
 ] as const;
@@ -115,7 +87,7 @@ export default function AppSidebar() {
     .filter((t): t is ToolPageInfo => Boolean(t) && !pinned.includes(normalize(t!.href)));
 
   const renderQuickRow = (tool: ToolPageInfo) => {
-    const Icon = iconMap[tool.icon];
+    const Icon = getToolIcon(tool.icon);
     return (
       <SidebarMenuItem key={tool.href}>
         <SidebarMenuButton asChild isActive={isActive(tool.href)} tooltip={tool.title} className={activeRowClass}>

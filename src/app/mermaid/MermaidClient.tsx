@@ -5,12 +5,16 @@ import dynamic from "next/dynamic";
 import { Download, Minus, Plus, RotateCcw } from "lucide-react";
 
 import ToolShell from "@/components/tool/ToolShell";
+import { FileDrop } from "@/components/FileDrop";
 import { Button } from "@/components/ui/button";
 import { CopyButton } from "@/components/ui/copy-button";
 import { Alert } from "@/components/ui/alert";
 import { Label } from "@/components/ui/label";
 import { ResultPanel } from "@/components/ui/result-panel";
 import { cn } from "@/lib/utils";
+import { readShareParams } from "@/lib/share";
+import { downloadFile } from "@/lib/download";
+import { useStoredState, useDebounced } from "@/hooks/use-stored-state";
 
 const DEFAULT_CODE = `graph TD\n  A[Client] -->|Request| B[API]\n  B -->|Response| A`;
 const STORAGE_KEY = "mermaid-editor-code";
@@ -91,7 +95,7 @@ function clampZoom(value: number): number {
 }
 
 export default function MermaidClient() {
-  const [code, setCode] = useState(DEFAULT_CODE);
+  const [code, setCode] = useStoredState(STORAGE_KEY, DEFAULT_CODE);
   const [error, setError] = useState<string | null>(null);
   const [mermaid, setMermaid] = useState<MermaidModule["default"] | null>(null);
   const [hasDiagram, setHasDiagram] = useState(false);
@@ -101,24 +105,17 @@ export default function MermaidClient() {
   const highlightRef = useRef<HighlightFn>((value: string) => value);
   const [highlightReady, setHighlightReady] = useState(false);
 
-  // Restore any previously edited code from localStorage on mount.
+  // URL hash share state takes precedence over localStorage (hydrated by useStoredState).
   useEffect(() => {
-    try {
-      const saved = window.localStorage.getItem(STORAGE_KEY);
-      if (saved != null && saved.length > 0) setCode(saved);
-    } catch {
-      // ignore storage access errors (private mode, etc.)
-    }
-  }, []);
-
-  // Persist code to localStorage as it changes.
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(STORAGE_KEY, code);
-    } catch {
-      // ignore storage access errors
-    }
-  }, [code]);
+    let active = true;
+    readShareParams().then((params) => {
+      if (!active || !params) return;
+      if (typeof params.code === "string") setCode(params.code);
+    });
+    return () => {
+      active = false;
+    };
+  }, [setCode]);
 
   useEffect(() => {
     let cancelled = false;
@@ -163,61 +160,54 @@ export default function MermaidClient() {
   }, []);
 
   // Debounced render: avoids re-rendering and flashing on every keystroke.
+  const debouncedCode = useDebounced(code, 250);
+
   useEffect(() => {
     if (!mermaid || !diagramRef.current) return;
     let cancelled = false;
 
-    const timer = setTimeout(() => {
-      (async () => {
-        // Per-render UNIQUE id (Date.now()) so concurrent/overlapping renders
-        // never collide on mermaid's internal temp element. Uniqueness alone
-        // doesn't clean up after a draw-time failure — the finally block below
-        // removes `d${renderId}`, which is what actually prevents orphan temp
-        // nodes from accumulating in the DOM on every failing keystroke.
-        const renderId = `mermaid-svg-${Date.now()}`;
-        try {
-          // Let parse throw its descriptive error (e.g. "Parse error on line 2…")
-          // so the Alert shows the actual problem rather than a generic message.
-          await mermaid.parse(code);
-          if (cancelled) return;
-          const { svg } = await mermaid.render(renderId, code);
-          if (cancelled) return;
-          svgRef.current = svg;
-          if (diagramRef.current) diagramRef.current.innerHTML = svg;
-          setError(null);
-          setHasDiagram(true);
-        } catch (err) {
-          if (cancelled) return;
-          setError(err instanceof Error ? err.message : "Invalid Mermaid syntax");
-          if (diagramRef.current) diagramRef.current.innerHTML = "";
-          svgRef.current = null;
-          setHasDiagram(false);
-        } finally {
-          // mermaid appends a detached container (#d<id>) to the body while
-          // rendering and only removes it on success; clean up any orphan it
-          // leaves behind on a draw-time failure.
-          document.getElementById(`d${renderId}`)?.remove();
-        }
-      })();
-    }, 250);
+    (async () => {
+      // Per-render UNIQUE id (Date.now()) so concurrent/overlapping renders
+      // never collide on mermaid's internal temp element. Uniqueness alone
+      // doesn't clean up after a draw-time failure — the finally block below
+      // removes `d${renderId}`, which is what actually prevents orphan temp
+      // nodes from accumulating in the DOM on every failing keystroke.
+      const renderId = `mermaid-svg-${Date.now()}`;
+      try {
+        // Let parse throw its descriptive error (e.g. "Parse error on line 2…")
+        // so the Alert shows the actual problem rather than a generic message.
+        await mermaid.parse(debouncedCode);
+        if (cancelled) return;
+        const { svg } = await mermaid.render(renderId, debouncedCode);
+        if (cancelled) return;
+        svgRef.current = svg;
+        if (diagramRef.current) diagramRef.current.innerHTML = svg;
+        setError(null);
+        setHasDiagram(true);
+      } catch (err) {
+        if (cancelled) return;
+        setError(err instanceof Error ? err.message : "Invalid Mermaid syntax");
+        if (diagramRef.current) diagramRef.current.innerHTML = "";
+        svgRef.current = null;
+        setHasDiagram(false);
+      } finally {
+        // mermaid appends a detached container (#d<id>) to the body while
+        // rendering and only removes it on success; clean up any orphan it
+        // leaves behind on a draw-time failure.
+        document.getElementById(`d${renderId}`)?.remove();
+      }
+    })();
 
     return () => {
       cancelled = true;
-      clearTimeout(timer);
     };
-  }, [code, mermaid]);
+  }, [debouncedCode, mermaid]);
 
   const canExport = hasDiagram && !error;
 
   const handleExportSVG = () => {
     if (!svgRef.current) return;
-    const blob = new Blob([svgRef.current], { type: "image/svg+xml" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "diagram.svg";
-    a.click();
-    URL.revokeObjectURL(url);
+    downloadFile(svgRef.current, "diagram.svg", "image/svg+xml");
   };
 
   const handleExportPNG = () => {
@@ -259,7 +249,12 @@ export default function MermaidClient() {
     }
 
     const img = new window.Image();
-    const svg64 = window.btoa(unescape(encodeURIComponent(svg)));
+    // UTF-8-safe base64 (replaces the deprecated unescape(encodeURIComponent()) trick,
+    // which mangles lone surrogates and non-BMP characters).
+    const svgBytes = new TextEncoder().encode(svg);
+    let svgBin = "";
+    for (let i = 0; i < svgBytes.length; i++) svgBin += String.fromCharCode(svgBytes[i]);
+    const svg64 = window.btoa(svgBin);
     const image64 = "data:image/svg+xml;base64," + svg64;
     img.onload = function () {
       const canvas = document.createElement("canvas");
@@ -273,12 +268,7 @@ export default function MermaidClient() {
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
       canvas.toBlob((blob) => {
         if (!blob) return;
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "diagram.png";
-        a.click();
-        URL.revokeObjectURL(url);
+        downloadFile(blob, "diagram.png", "image/png");
       }, "image/png");
     };
     img.onerror = function () {
@@ -303,6 +293,15 @@ export default function MermaidClient() {
   const handleZoomIn = () => setZoom((z) => clampZoom(z + ZOOM_STEP));
   const handleZoomOut = () => setZoom((z) => clampZoom(z - ZOOM_STEP));
   const handleZoomReset = () => setZoom(1);
+
+  const handleFileText = (text: string) => {
+    setCode(text);
+  };
+
+  const shareParams = () => {
+    if (!code.trim()) return null;
+    return { code };
+  };
 
   const toolbar = (
     <>
@@ -347,21 +346,35 @@ export default function MermaidClient() {
     </>
   );
 
+  const shortcuts = [{ keys: "—", description: "Auto-renders as you type" }];
+
   return (
-    <ToolShell eyebrow="Mermaid editor" toolbar={toolbar}>
+    <ToolShell
+      eyebrow="Mermaid editor"
+      toolbar={toolbar}
+      shareParams={shareParams}
+      shortcuts={shortcuts}
+    >
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,0.55fr)_minmax(0,0.45fr)]">
         <div className="flex min-w-0 flex-col gap-2">
           <Label htmlFor="mermaid-editor">Mermaid source</Label>
-          <Editor
-            value={code}
-            onValueChange={setCode}
-            highlight={(value) => highlightRef.current(value)}
-            padding={12}
+          <FileDrop
+            onFileText={handleFileText}
+            accept=".mmd,.mermaid,.txt,text/plain"
+            label="Import diagram"
             className="min-h-[260px] border-2 border-border bg-background font-mono text-sm text-foreground focus-within:ring-2 focus-within:ring-ring"
-            style={{ minHeight: 260, background: "none", opacity: highlightReady ? 1 : 0.85 }}
-            textareaId="mermaid-editor"
-            spellCheck={false}
-          />
+          >
+            <Editor
+              value={code}
+              onValueChange={setCode}
+              highlight={(value) => highlightRef.current(value)}
+              padding={12}
+              className="min-h-[260px] w-full"
+              style={{ minHeight: 260, background: "none", opacity: highlightReady ? 1 : 0.85 }}
+              textareaId="mermaid-editor"
+              spellCheck={false}
+            />
+          </FileDrop>
           {error ? <Alert variant="error">{error}</Alert> : null}
         </div>
         <ResultPanel

@@ -1,6 +1,6 @@
 # Simple Dev Tools
 
-Simple Dev Tools is a local-first browser toolkit built by Jonathan R. Reed through Hello.World Consulting. It gives engineers small utilities for snippets, diagrams, SQLite, regex, schemas, security tokens, IDs, QR codes, timestamps, JSON, and color checks without an account or hosted workspace.
+Simple Dev Tools is a local-first browser toolkit built by Jonathan R. Reed through Hello.World Consulting. It gives engineers small utilities for snippets, diagrams, SQLite, regex, schemas, security tokens, IDs, QR codes, timestamps, JSON, color checks, diffs, file hashes, markdown previews, and querystring editing without an account or hosted workspace.
 
 The project is intentionally plain: open the tool, inspect or transform the input, copy or export the result, and leave without sending private implementation details to a backend. It is part of Jonathan R. Reed's public project network around practical tools, private workflows, and inspectable systems.
 
@@ -22,11 +22,15 @@ The project is intentionally plain: open the tool, inspect or transform the inpu
 - [Timestamp Converter](https://dev-tools.helloworldfirm.com/tools/timestamp/): Convert between Unix epochs (seconds/milliseconds), ISO 8601, and time zones, with relative time and human-readable formats.
 - [JSON Workbench](https://dev-tools.helloworldfirm.com/tools/json/): Format, minify, validate, and convert between JSON, YAML, and CSV, sort keys, and query values by path.
 - [Color & Contrast](https://dev-tools.helloworldfirm.com/tools/color/): Convert colors between HEX, RGB, HSL, and OKLCH, build tints/shades, and check WCAG contrast ratios for accessibility.
+- [Text Diff](https://dev-tools.helloworldfirm.com/tools/diff/): Compare two texts side by side or unified, with word-level highlighting and copy/export.
+- [File Hash Checker](https://dev-tools.helloworldfirm.com/tools/hash/): Hash text or dropped files with SHA-256/384/512 and verify against an expected digest.
+- [Markdown Preview](https://dev-tools.helloworldfirm.com/tools/markdown/): Preview markdown with a sanitized live render, then copy or download the HTML.
+- [Querystring Editor](https://dev-tools.helloworldfirm.com/tools/query/): Parse, edit, and re-encode URL query strings and form bodies as an editable table.
 
 ## Studios
 
 - [Schema & Types Studio](https://dev-tools.helloworldfirm.com/studio/schema/): Convert sources between JSON Schema, TypeScript interfaces, Zod schemas, and preview Swagger documentation.
-- [Security & Tokens](https://dev-tools.helloworldfirm.com/studio/security/): Inspect JWTs, decode tokens, compute cryptographic hashes, and verify HMAC signatures using Web Crypto APIs.
+- [Security & Tokens](https://dev-tools.helloworldfirm.com/studio/security/): Inspect and decode JWTs, verify signatures, sign and build new JWTs, compute cryptographic hashes, and generate HMAC signatures using Web Crypto APIs.
 
 ## Technical Documentation
 

@@ -35,10 +35,14 @@ export type ToolIcon =
   | "code"
   | "color"
   | "database"
+  | "diff"
+  | "hash"
   | "json"
+  | "markdown"
   | "qr"
   | "searchCode"
   | "shield"
+  | "table"
   | "workflow";
 
 export type ToolPageInfo = {
@@ -117,6 +121,34 @@ export const toolGroups = [
         icon: "color",
         tags: ["Color", "A11y"],
       },
+      {
+        title: "Text Diff",
+        href: "/tools/diff/",
+        description: "Compare two texts side by side or unified, with word-level highlighting.",
+        icon: "diff",
+        tags: ["Diff", "Text"],
+      },
+      {
+        title: "File Hash Checker",
+        href: "/tools/hash/",
+        description: "Hash text or files with SHA-256/384/512 and verify against an expected digest.",
+        icon: "hash",
+        tags: ["Hashing", "Verification"],
+      },
+      {
+        title: "Markdown Preview",
+        href: "/tools/markdown/",
+        description: "Preview markdown with a sanitized live render, then copy or download HTML.",
+        icon: "markdown",
+        tags: ["Markdown", "Writing"],
+      },
+      {
+        title: "Querystring Editor",
+        href: "/tools/query/",
+        description: "Parse, edit, and re-encode URL query strings and form bodies as a table.",
+        icon: "table",
+        tags: ["URL", "Encoding"],
+      },
     ],
   },
   {
@@ -133,9 +165,9 @@ export const toolGroups = [
       {
         title: "Security & Tokens",
         href: "/studio/security/",
-        description: "Decode JWTs, verify signatures, compute hashes, and generate HMACs locally.",
+        description: "Decode, verify, and sign JWTs, compute hashes, and generate HMACs locally.",
         icon: "shield",
-        tags: ["Security", "Identity"],
+        tags: ["Security", "Identity", "JWT"],
       },
     ],
   },

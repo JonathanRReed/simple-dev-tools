@@ -1,6 +1,8 @@
 {
   "name": "Simple Dev Tools",
   "short_name": "Simple Dev Tools",
+  "id": "/",
+  "categories": ["developer", "utilities"],
   "icons": [
     {
       "src": "/simple_dev_tools_logo_assets/android-chrome-192x192.png",
@@ -11,6 +13,80 @@
       "src": "/simple_dev_tools_logo_assets/simple-dev-tools-favicon-512x512.png",
       "sizes": "512x512",
       "type": "image/png"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Regex Lab",
+      "short_name": "Regex",
+      "description": "Iterate on patterns with live matches, replacements, samples, and links.",
+      "url": "/tools/regex/",
+      "icons": [
+        {
+          "src": "/simple_dev_tools_logo_assets/android-chrome-192x192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        },
+        {
+          "src": "/simple_dev_tools_logo_assets/simple-dev-tools-favicon-512x512.png",
+          "sizes": "512x512",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "JSON Workbench",
+      "short_name": "JSON",
+      "description": "Format, validate, and convert between JSON, YAML, and CSV, then query by path.",
+      "url": "/tools/json/",
+      "icons": [
+        {
+          "src": "/simple_dev_tools_logo_assets/android-chrome-192x192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        },
+        {
+          "src": "/simple_dev_tools_logo_assets/simple-dev-tools-favicon-512x512.png",
+          "sizes": "512x512",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Timestamp Converter",
+      "short_name": "Timestamp",
+      "description": "Convert Unix epochs, ISO 8601, and time zones, with relative time.",
+      "url": "/tools/timestamp/",
+      "icons": [
+        {
+          "src": "/simple_dev_tools_logo_assets/android-chrome-192x192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        },
+        {
+          "src": "/simple_dev_tools_logo_assets/simple-dev-tools-favicon-512x512.png",
+          "sizes": "512x512",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Security & Tokens",
+      "short_name": "Security",
+      "description": "Decode, verify, and sign JWTs, compute hashes, and generate HMACs locally.",
+      "url": "/studio/security/",
+      "icons": [
+        {
+          "src": "/simple_dev_tools_logo_assets/android-chrome-192x192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        },
+        {
+          "src": "/simple_dev_tools_logo_assets/simple-dev-tools-favicon-512x512.png",
+          "sizes": "512x512",
+          "type": "image/png"
+        }
+      ]
     }
   ],
   "theme_color": "#0a0d12",

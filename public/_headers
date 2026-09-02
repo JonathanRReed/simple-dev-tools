@@ -20,16 +20,13 @@
   ! Cache-Control
   Cache-Control: public, max-age=31536000, immutable
 
-/Favicon/*
-  X-Robots-Tag: noindex
+/sw.js
+  Cache-Control: no-cache
 
 /simple_dev_tools_logo_assets/*
   X-Robots-Tag: noindex
 
 /favicon.ico
-  X-Robots-Tag: noindex
-
-/logo.avif
   X-Robots-Tag: noindex
 
 https://dev-hellworldfirm-com.pages.dev/*

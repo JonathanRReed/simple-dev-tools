@@ -3,20 +3,7 @@
 import * as React from "react";
 import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
-import {
-  Braces,
-  CalendarClock,
-  Clock,
-  Code2,
-  Database,
-  FileJson,
-  Home,
-  Palette,
-  QrCode,
-  SearchCode,
-  ShieldCheck,
-  Workflow,
-} from "lucide-react";
+import { Home, Palette } from "lucide-react";
 
 import {
   CommandDialog,
@@ -28,23 +15,10 @@ import {
   CommandSeparator,
   CommandShortcut,
 } from "@/components/ui/command";
+import { getToolIcon } from "@/components/ToolIcon";
 import { useRecentTools } from "@/hooks/use-recent-tools";
 import { appThemes } from "@/lib/themes";
-import { siteConfig, toolPages, trustPages, type ToolIcon } from "@/lib/site";
-
-const iconMap = {
-  braces: Braces,
-  calendarClock: CalendarClock,
-  clock: Clock,
-  code: Code2,
-  color: Palette,
-  database: Database,
-  json: FileJson,
-  qr: QrCode,
-  searchCode: SearchCode,
-  shield: ShieldCheck,
-  workflow: Workflow,
-} satisfies Record<ToolIcon, typeof Code2>;
+import { siteConfig, toolPages, trustPages } from "@/lib/site";
 
 const normalize = (href: string) => (href === "/" ? "/" : href.replace(/\/$/, ""));
 
@@ -162,7 +136,7 @@ export function CommandMenuProvider({ children }: { children: React.ReactNode })
           {showQuickGroups && pinnedTools.length > 0 ? (
             <CommandGroup heading="Pinned">
               {pinnedTools.map((tool) => {
-                const Icon = iconMap[tool.icon];
+                const Icon = getToolIcon(tool.icon);
                 return (
                   <CommandItem key={`pin-${tool.href}`} value={`pinned ${tool.title}`} onSelect={() => go(tool.href)}>
                     <Icon />
@@ -176,7 +150,7 @@ export function CommandMenuProvider({ children }: { children: React.ReactNode })
           {showQuickGroups && recentTools.length > 0 ? (
             <CommandGroup heading="Recent">
               {recentTools.map((tool) => {
-                const Icon = iconMap[tool.icon];
+                const Icon = getToolIcon(tool.icon);
                 return (
                   <CommandItem key={`recent-${tool.href}`} value={`recent ${tool.title}`} onSelect={() => go(tool.href)}>
                     <Icon />
@@ -196,7 +170,7 @@ export function CommandMenuProvider({ children }: { children: React.ReactNode })
 
           <CommandGroup heading="Tools">
             {toolPages.map((tool) => {
-              const Icon = iconMap[tool.icon];
+              const Icon = getToolIcon(tool.icon);
               return (
                 <CommandItem
                   key={tool.href}

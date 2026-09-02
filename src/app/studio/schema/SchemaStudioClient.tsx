@@ -5,6 +5,7 @@ import YAML from "yaml";
 import { AlignLeft, Download, RotateCcw, Sparkles, Wand2 } from "lucide-react";
 
 import ToolShell from "@/components/tool/ToolShell";
+import { FileDrop } from "@/components/FileDrop";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { CopyButton } from "@/components/ui/copy-button";
@@ -14,6 +15,10 @@ import { ResultPanel } from "@/components/ui/result-panel";
 import { Alert } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { readShareParams } from "@/lib/share";
+import { downloadFile } from "@/lib/download";
+import { useHotkey } from "@/hooks/use-hotkey";
+import { useDebounced } from "@/hooks/use-stored-state";
 
 interface SwaggerUIProps {
   spec?: unknown;
@@ -149,15 +154,72 @@ export default function SchemaStudioClient() {
   const [validateResult, setValidateResult] = useState<{ ok: boolean; errors: any[] | null } | null>(null);
   const [validating, setValidating] = useState(false);
 
-  // Debounced validation (~300ms) so we don't re-validate / flash on every keystroke.
+  // URL hash share state takes precedence over initial state.
+  useEffect(() => {
+    let active = true;
+    readShareParams().then((params) => {
+      if (!active || !params) return;
+      if (typeof params.src === "string") setSource(params.src);
+      if (typeof params.fmt === "string" && ["json", "yaml"].includes(params.fmt)) {
+        setFormat(params.fmt as "json" | "yaml");
+      }
+      if (typeof params.tab === "string" && ["source", "docs", "validate", "types"].includes(params.tab)) {
+        setTab(params.tab as typeof tab);
+      }
+      if (typeof params.schema === "string") setSchemaText(params.schema);
+      if (typeof params.data === "string") setDataText(params.data);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const validationInputs = useMemo(() => ({ schema: schemaText, data: dataText }), [schemaText, dataText]);
+  const debouncedInputs = useDebounced(validationInputs, 300);
+
+  const validateInputs = useCallback(
+    async (schemaStr: string, dataStr: string): Promise<{ ok: boolean; errors: any[] | null }> => {
+      let schema: any;
+      try {
+        schema = JSON.parse(schemaStr);
+      } catch (error: any) {
+        throw new Error(`Schema is not valid JSON: ${error?.message || "parse error"}`);
+      }
+      let data: any;
+      try {
+        data = JSON.parse(dataStr);
+      } catch (error: any) {
+        throw new Error(`Data is not valid JSON: ${error?.message || "parse error"}`);
+      }
+      try {
+        // Pick an Ajv class that matches the schema's declared dialect, and use a
+        // fresh instance per run so recompiling an $id-bearing schema never throws.
+        const validator = await createAjv(detectDialect(schema));
+        const compiled = validator.compile(schema);
+        const valid = compiled(data);
+        return { ok: !!valid, errors: compiled.errors || null };
+      } catch (error: any) {
+        throw new Error(error?.message || "Failed to compile schema.");
+      }
+    },
+    []
+  );
+
+  // With either input empty there is nothing to validate; clear stale state and
+  // let the render's "Provide both a schema and data" hint show.
   useEffect(() => {
     if (tab !== "validate") return;
-
-    // With either input empty there's nothing to validate; clear stale state and
-    // let the render's "Provide both a schema and data" hint show (an empty
-    // string is not valid JSON, so parsing it would otherwise surface a
-    // misleading "not valid JSON" error here).
     if (!schemaText.trim() || !dataText.trim()) {
+      setValidatorError(null);
+      setValidateResult(null);
+      setValidating(false);
+    }
+  }, [tab, schemaText, dataText]);
+
+  // Debounced validation: run once the user stops typing.
+  useEffect(() => {
+    if (tab !== "validate") return;
+    if (!debouncedInputs.schema.trim() || !debouncedInputs.data.trim()) {
       setValidatorError(null);
       setValidateResult(null);
       setValidating(false);
@@ -166,62 +228,54 @@ export default function SchemaStudioClient() {
 
     let cancelled = false;
     setValidating(true);
-    const handle = setTimeout(async () => {
-      // Parse the schema and data SEPARATELY so a JSON syntax error in either
-      // input surfaces as a distinct "not valid JSON" message via validatorError,
-      // instead of being mistaken for a failed validation run (which would show
-      // the misleading "does not conform to the schema" headline).
-      let schema: any;
-      try {
-        schema = JSON.parse(schemaText);
-      } catch (error: any) {
-        if (!cancelled) {
-          setValidatorError(`Schema is not valid JSON: ${error?.message || "parse error"}`);
-          setValidateResult(null);
-          setValidating(false);
-        }
-        return;
-      }
-      let data: any;
-      try {
-        data = JSON.parse(dataText);
-      } catch (error: any) {
-        if (!cancelled) {
-          setValidatorError(`Data is not valid JSON: ${error?.message || "parse error"}`);
-          setValidateResult(null);
-          setValidating(false);
-        }
-        return;
-      }
-      try {
-        // Pick an Ajv class that matches the schema's declared dialect, and use a
-        // fresh instance per run so recompiling an $id-bearing schema never throws.
-        const validator = await createAjv(detectDialect(schema));
+    validateInputs(debouncedInputs.schema, debouncedInputs.data)
+      .then((result) => {
         if (cancelled) return;
         setValidatorError(null);
-        const compiled = validator.compile(schema);
-        const valid = compiled(data);
-        if (!cancelled) {
-          setValidateResult({ ok: !!valid, errors: compiled.errors || null });
-        }
-      } catch (error: any) {
-        // A failure here is a schema-compilation problem (invalid schema), not a
-        // validation result — route it through validatorError too rather than the
-        // "does not conform" path.
-        if (!cancelled) {
-          setValidatorError(error?.message || "Failed to compile schema.");
-          setValidateResult(null);
-        }
-      } finally {
+        setValidateResult(result);
+      })
+      .catch((error: any) => {
+        if (cancelled) return;
+        setValidatorError(error?.message || "Failed to validate");
+        setValidateResult(null);
+      })
+      .finally(() => {
         if (!cancelled) setValidating(false);
-      }
-    }, 300);
+      });
 
     return () => {
       cancelled = true;
-      clearTimeout(handle);
     };
-  }, [tab, schemaText, dataText]);
+  }, [tab, debouncedInputs, validateInputs]);
+
+  const handleValidate = useCallback(
+    async (event?: KeyboardEvent) => {
+      event?.preventDefault();
+      setTab("validate");
+      if (!schemaText.trim() || !dataText.trim()) {
+        setValidatorError(null);
+        setValidateResult(null);
+        setValidating(false);
+        return;
+      }
+      setValidating(true);
+      setValidatorError(null);
+      setValidateResult(null);
+      try {
+        const result = await validateInputs(schemaText, dataText);
+        setValidatorError(null);
+        setValidateResult(result);
+      } catch (error: any) {
+        setValidatorError(error?.message || "Failed to validate");
+        setValidateResult(null);
+      } finally {
+        setValidating(false);
+      }
+    },
+    [schemaText, dataText, validateInputs]
+  );
+
+  useHotkey("mod+enter", handleValidate, { allowInInput: true });
 
   // --- JSON Schema helpers ----
   type JSONSchema = any;
@@ -616,15 +670,7 @@ export default function SchemaStudioClient() {
   const handleDownloadTypes = useCallback(() => {
     // Both TS and Zod outputs are TypeScript source; name the file accordingly.
     const filename = typesMode === "zod" ? "schema.zod.ts" : "types.ts";
-    const blob = new Blob([typesOutput || ""], { type: "text/typescript" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
+    downloadFile(typesOutput || "", filename, "text/typescript");
   }, [typesOutput, typesMode]);
 
   const detectFormat = useCallback((text: string): "json" | "yaml" => {
@@ -665,15 +711,8 @@ export default function SchemaStudioClient() {
   }, [importUrl, detectFormat]);
 
   const handleDownloadSource = useCallback(() => {
-    const blob = new Blob([source], { type: format === "json" ? "application/json" : "text/yaml" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `schema.${format === "json" ? "json" : "yaml"}`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
+    const ext = format === "json" ? "json" : "yaml";
+    downloadFile(source, `schema.${ext}`, format === "json" ? "application/json" : "text/yaml");
   }, [source, format]);
 
   // Pretty-print the Source editor in-place. JSON via JSON.parse/stringify,
@@ -729,6 +768,24 @@ export default function SchemaStudioClient() {
     setTypesError(null);
   }, []);
 
+  const handleFileText = (text: string, file: File) => {
+    setSource(text);
+    const ext = file.name.split(".").pop()?.toLowerCase();
+    if (ext === "json") setFormat("json");
+    else if (ext === "yaml" || ext === "yml") setFormat("yaml");
+  };
+
+  const shareParams = () => {
+    const params: Record<string, string> = {};
+    if (source.trim()) params.src = source;
+    if (schemaText.trim()) params.schema = schemaText;
+    if (dataText.trim()) params.data = dataText;
+    if (Object.keys(params).length === 0) return null;
+    params.fmt = format;
+    params.tab = tab;
+    return params;
+  };
+
   const ids = SCHEMA_FIELD_IDS;
 
   const parsedStatus = parsed.error
@@ -736,6 +793,8 @@ export default function SchemaStudioClient() {
     : parsed.empty
       ? null
       : parsed.value;
+
+  const shortcuts = [{ keys: "⌘ ↵", description: "Validate data" }];
 
   return (
     <ToolShell
@@ -752,6 +811,8 @@ export default function SchemaStudioClient() {
           </Button>
         </>
       }
+      shareParams={shareParams}
+      shortcuts={shortcuts}
     >
       <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
         <TabsList>
@@ -833,13 +894,20 @@ export default function SchemaStudioClient() {
               {importError && <Alert variant="error">{importError}</Alert>}
 
               <Field label="Schema or OpenAPI source" htmlFor={ids.source}>
-                <textarea
-                  id={ids.source}
-                  className="min-h-[280px] w-full px-4 py-3 font-mono text-sm"
-                  value={source}
-                  onChange={(e) => setSource(e.target.value)}
-                  placeholder={format === "yaml" ? "Paste YAML or OpenAPI here…" : "Paste JSON or OpenAPI here…"}
-                />
+                <FileDrop
+                  onFileText={handleFileText}
+                  accept=".json,.yaml,.yml,text/yaml,application/json"
+                  label="Import spec"
+                  className="relative"
+                >
+                  <textarea
+                    id={ids.source}
+                    className="min-h-[280px] w-full px-4 py-3 font-mono text-sm"
+                    value={source}
+                    onChange={(e) => setSource(e.target.value)}
+                    placeholder={format === "yaml" ? "Paste YAML or OpenAPI here…" : "Paste JSON or OpenAPI here…"}
+                  />
+                </FileDrop>
               </Field>
 
               {parsed.error ? (
