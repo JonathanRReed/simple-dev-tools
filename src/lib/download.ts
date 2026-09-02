@@ -15,5 +15,7 @@ export function downloadFile(
   a.href = url;
   a.download = filename;
   a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 0);
+  // Revoke after a delay — revoking immediately (setTimeout 0) can cancel the
+  // download in Firefox for larger blobs.
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }

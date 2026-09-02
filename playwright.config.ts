@@ -26,6 +26,6 @@ export default defineConfig({
     command: `bun run build && bunx wrangler pages dev out --port ${port} --compatibility-date=2026-08-04`,
     url: `http://127.0.0.1:${port}`,
     reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
+    timeout: 300_000,
   },
 });

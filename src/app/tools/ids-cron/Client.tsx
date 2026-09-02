@@ -1,11 +1,15 @@
 "use client";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import cronstrue from "cronstrue";
 import { ulid } from "ulid";
 import { CronExpressionParser } from "cron-parser";
 import { RefreshCw } from "lucide-react";
 
+import type { ToolShortcut } from "@/components/KeyboardShortcuts";
 import ToolShell from "@/components/tool/ToolShell";
+import { readShareParams } from "@/lib/share";
+import { useHotkey } from "@/hooks/use-hotkey";
+import { useStoredState } from "@/hooks/use-stored-state";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { CopyButton } from "@/components/ui/copy-button";
@@ -119,8 +123,8 @@ function localTimeZone(): string {
 }
 
 export default function IDsCronTool() {
-  const [tab, setTab] = useState<"ids" | "cron">("ids");
-  const [cron, setCron] = useState<string>(DEFAULT_CRON);
+  const [tab, setTab] = useStoredState(LS_TAB, "ids");
+  const [cron, setCron] = useStoredState(LS_EXPR, DEFAULT_CRON);
 
   // IDs tab state
   const [uuid, setUuid] = useState<string>("");
@@ -141,19 +145,24 @@ export default function IDsCronTool() {
     setUlidValue(ulid());
   }, []);
 
-  // Hydrate the last-used cron expression and active tab from localStorage.
-  // Guarded for static export; defaults stay if anything is missing/throws.
+  // Hydrate share params, then fall back to the values already loaded from
+  // localStorage by useStoredState.
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    try {
-      const savedExpr = window.localStorage.getItem(LS_EXPR);
-      if (savedExpr) setCron(savedExpr);
-      const savedTab = window.localStorage.getItem(LS_TAB);
-      if (savedTab === "ids" || savedTab === "cron") setTab(savedTab);
-    } catch {
-      // ignore unavailable/blocked storage
+    const params = readShareParams();
+    if (!params) return;
+    if (params.tab === "ids" || params.tab === "cron") setTab(params.tab);
+    if (typeof params.cron === "string") setCron(params.cron);
+    const effectiveTab =
+      params.tab === "ids" || params.tab === "cron" ? params.tab : (tab as "ids" | "cron");
+    if (effectiveTab === "ids") {
+      if (typeof params.uuid === "string") setUuid(params.uuid);
+      if (typeof params.ulid === "string") setUlidValue(params.ulid);
+      if (params.kind === "uuid" || params.kind === "ulid") setBulkKind(params.kind);
+      if (typeof params.count === "string") setBulkCount(params.count);
+      if (typeof params.bulk === "string") setBulkOutput(params.bulk);
     }
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [setTab, setCron]);
 
   const uuidInfo = useMemo(() => {
     const value = uuid.trim();
@@ -247,25 +256,6 @@ export default function IDsCronTool() {
     typeof window === "undefined" ? "Local" : localTimeZone()
   );
 
-  // Persist the cron expression and active tab (settings only, never secrets).
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    try {
-      window.localStorage.setItem(LS_EXPR, cron);
-    } catch {
-      // ignore unavailable/blocked storage
-    }
-  }, [cron]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    try {
-      window.localStorage.setItem(LS_TAB, tab);
-    } catch {
-      // ignore unavailable/blocked storage
-    }
-  }, [tab]);
-
   // The description (cronstrue) and the schedule (cron-parser) are independent
   // parsers; treat the expression as valid only when BOTH agree so the two
   // panels never contradict each other.
@@ -291,9 +281,47 @@ export default function IDsCronTool() {
   ];
   const activePreset = presets.find((p) => p.expr === cron.trim());
 
+  const shareParams = useCallback(() => {
+    const currentTab = tab as "ids" | "cron";
+    if (currentTab === "cron") {
+      if (!cron.trim()) return null;
+      return { tab: currentTab, cron };
+    }
+    const hasUserContent = uuid.trim() || ulidValue.trim() || bulkOutput.trim();
+    if (!hasUserContent) return null;
+    const params: Record<string, string> = { tab: currentTab };
+    if (uuid.trim()) params.uuid = uuid.trim();
+    if (ulidValue.trim()) params.ulid = ulidValue.trim();
+    if (bulkOutput.trim()) {
+      params.bulk = bulkOutput;
+      params.kind = bulkKind;
+      params.count = bulkCount;
+    }
+    return params;
+  }, [tab, cron, uuid, ulidValue, bulkOutput, bulkKind, bulkCount]);
+
+  const shortcuts: ToolShortcut[] = useMemo(
+    () =>
+      tab === "ids"
+        ? [{ keys: "⌘ ↵", description: "Generate IDs" }]
+        : [],
+    [tab]
+  );
+
+  useHotkey(
+    "mod+enter",
+    (event) => {
+      if (tab === "ids") {
+        event.preventDefault();
+        generateBulk();
+      }
+    },
+    { allowInInput: true }
+  );
+
   return (
-    <ToolShell eyebrow="IDs & Scheduling">
-      <Tabs value={tab} onValueChange={(v) => setTab(v as "ids" | "cron")}>
+    <ToolShell eyebrow="IDs & Scheduling" shareParams={shareParams} shortcuts={shortcuts}>
+      <Tabs value={tab} onValueChange={(v) => setTab(v)}>
         <TabsList>
           <TabsTrigger value="ids">IDs</TabsTrigger>
           <TabsTrigger value="cron">Cron</TabsTrigger>

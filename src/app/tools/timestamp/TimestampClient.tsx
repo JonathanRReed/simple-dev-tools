@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Clock, RotateCcw, Sparkles } from "lucide-react";
 
+import type { ToolShortcut } from "@/components/KeyboardShortcuts";
 import ToolShell from "@/components/tool/ToolShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +12,9 @@ import { Label } from "@/components/ui/label";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { ResultPanel } from "@/components/ui/result-panel";
+import { readShareParams } from "@/lib/share";
+import { useHotkey } from "@/hooks/use-hotkey";
+import { useStoredState } from "@/hooks/use-stored-state";
 
 /** localStorage key for the last input string. Settings/input only — never
  *  secrets. Guarded for static export (typeof window + try/catch). */
@@ -30,21 +34,29 @@ type ParseResult =
   | { ok: true; date: Date; detected: Detection }
   | { ok: false };
 
-function loadStoredInput(): string {
-  if (typeof window === "undefined") return "";
+/** Copy text to the clipboard with a non-secure-context fallback. */
+async function copyToClipboard(text: string): Promise<boolean> {
   try {
-    return window.localStorage.getItem(STORAGE_KEY) ?? "";
+    if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
   } catch {
-    return "";
+    /* fall through to execCommand */
   }
-}
-
-function persistInput(value: string): void {
-  if (typeof window === "undefined") return;
   try {
-    window.localStorage.setItem(STORAGE_KEY, value);
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly", "");
+    ta.style.position = "fixed";
+    ta.style.top = "-9999px";
+    document.body.appendChild(ta);
+    ta.select();
+    const ok = document.execCommand("copy");
+    document.body.removeChild(ta);
+    return ok;
   } catch {
-    /* ignore (private mode / quota) */
+    return false;
   }
 }
 
@@ -193,27 +205,34 @@ const DETECTION_LABEL: Record<Detection, string> = {
 };
 
 export default function TimestampClient() {
-  const [input, setInput] = useState<string>("");
+  const [input, setInput, clearInput] = useStoredState(STORAGE_KEY, "");
   // A monotonically-updated clock so relative time stays fresh while idle.
   const [now, setNow] = useState<number>(() => Date.now());
 
   const zones = useMemo(() => supportedZones(), []);
   const localZone = useMemo(() => resolvedZone(), []);
   const [zone, setZone] = useState<string>("UTC");
+  const [zoneManuallyChanged, setZoneManuallyChanged] = useState(false);
 
   // Hydrate the last input + default the converter zone to the local one.
+  // URL hash share state takes precedence over localStorage (hydrated by useStoredState).
   useEffect(() => {
-    const stored = loadStoredInput();
-    if (stored) setInput(stored);
+    const params = readShareParams();
+    if (params) {
+      if (typeof params.v === "string") setInput(params.v);
+      if (
+        typeof params.tz === "string" &&
+        params.tz !== "" &&
+        zones.includes(params.tz)
+      ) {
+        setZone(params.tz);
+        setZoneManuallyChanged(true);
+        return;
+      }
+    }
     const lz = resolvedZone();
     if (lz && lz !== "local" && zones.includes(lz)) setZone(lz);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Persist the input on change.
-  useEffect(() => {
-    persistInput(input);
-  }, [input]);
+  }, [setInput, zones]);
 
   // Tick once a second so "x seconds/minutes ago" advances on its own.
   useEffect(() => {
@@ -250,8 +269,37 @@ export default function TimestampClient() {
   };
 
   const reset = () => {
-    setInput("");
+    clearInput();
   };
+
+  const handleZoneChange = (next: string) => {
+    setZone(next);
+    setZoneManuallyChanged(true);
+  };
+
+  const shareParams = () => {
+    const value = input.trim();
+    if (!value) return null;
+    const params: Record<string, string> = { v: value };
+    if (zoneManuallyChanged) params.tz = zone;
+    return params;
+  };
+
+  const shortcuts: ToolShortcut[] = useMemo(
+    () => [{ keys: "⌘ ↵", description: "Copy converted result" }],
+    []
+  );
+
+  useHotkey(
+    "mod+enter",
+    (event) => {
+      if (fields?.iso) {
+        event.preventDefault();
+        void copyToClipboard(fields.iso);
+      }
+    },
+    { allowInInput: true }
+  );
 
   const toolbar = (
     <>
@@ -271,7 +319,12 @@ export default function TimestampClient() {
   );
 
   return (
-    <ToolShell eyebrow="Timestamp · local" toolbar={toolbar}>
+    <ToolShell
+      eyebrow="Timestamp · local"
+      toolbar={toolbar}
+      shareParams={shareParams}
+      shortcuts={shortcuts}
+    >
       <div className="flex flex-col gap-6">
         <Field
           label="Moment"
@@ -354,7 +407,7 @@ export default function TimestampClient() {
               <select
                 id="timestamp-zone"
                 value={zone}
-                onChange={(e) => setZone(e.target.value)}
+                onChange={(e) => handleZoneChange(e.target.value)}
                 className="flex h-9 w-full rounded-none border-2 border-input bg-background px-3 py-1 font-mono text-sm transition-colors focus-visible:border-ring focus-visible:outline-none"
               >
                 {zones.map((z) => (

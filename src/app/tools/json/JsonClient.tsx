@@ -126,21 +126,16 @@ export default function JsonClient() {
 
   // URL hash share state takes precedence over localStorage (hydrated by useStoredState).
   useEffect(() => {
-    let active = true;
-    readShareParams().then((params) => {
-      if (!active || !params) return;
-      if (typeof params.src === "string") setSource(params.src);
-      if (typeof params.sf === "string" && ["json", "yaml", "csv"].includes(params.sf)) {
-        setSourceFormat(params.sf as Format);
-      }
-      if (typeof params.tf === "string" && ["json", "yaml", "csv"].includes(params.tf)) {
-        setTargetFormat(params.tf as Format);
-      }
-      if (typeof params.q === "string") setQuery(params.q);
-    });
-    return () => {
-      active = false;
-    };
+    const params = readShareParams();
+    if (!params) return;
+    if (typeof params.src === "string") setSource(params.src);
+    if (typeof params.sf === "string" && ["json", "yaml", "csv"].includes(params.sf)) {
+      setSourceFormat(params.sf as Format);
+    }
+    if (typeof params.tf === "string" && ["json", "yaml", "csv"].includes(params.tf)) {
+      setTargetFormat(params.tf as Format);
+    }
+    if (typeof params.q === "string") setQuery(params.q);
   }, [setSource]);
 
   const isEmpty = source.trim() === "";

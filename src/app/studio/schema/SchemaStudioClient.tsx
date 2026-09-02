@@ -156,22 +156,17 @@ export default function SchemaStudioClient() {
 
   // URL hash share state takes precedence over initial state.
   useEffect(() => {
-    let active = true;
-    readShareParams().then((params) => {
-      if (!active || !params) return;
-      if (typeof params.src === "string") setSource(params.src);
-      if (typeof params.fmt === "string" && ["json", "yaml"].includes(params.fmt)) {
-        setFormat(params.fmt as "json" | "yaml");
-      }
-      if (typeof params.tab === "string" && ["source", "docs", "validate", "types"].includes(params.tab)) {
-        setTab(params.tab as typeof tab);
-      }
-      if (typeof params.schema === "string") setSchemaText(params.schema);
-      if (typeof params.data === "string") setDataText(params.data);
-    });
-    return () => {
-      active = false;
-    };
+    const params = readShareParams();
+    if (!params) return;
+    if (typeof params.src === "string") setSource(params.src);
+    if (typeof params.fmt === "string" && ["json", "yaml"].includes(params.fmt)) {
+      setFormat(params.fmt as "json" | "yaml");
+    }
+    if (typeof params.tab === "string" && ["source", "docs", "validate", "types"].includes(params.tab)) {
+      setTab(params.tab as typeof tab);
+    }
+    if (typeof params.schema === "string") setSchemaText(params.schema);
+    if (typeof params.data === "string") setDataText(params.data);
   }, []);
 
   const validationInputs = useMemo(() => ({ schema: schemaText, data: dataText }), [schemaText, dataText]);

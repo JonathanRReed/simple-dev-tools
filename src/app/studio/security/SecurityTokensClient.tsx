@@ -796,6 +796,8 @@ export default function SecurityTokensClient() {
                 <Field label="Secret (HS256)" htmlFor="jwt-secret">
                   <Input
                     id="jwt-secret"
+                    type="password"
+                    autoComplete="new-password"
                     className="font-mono"
                     value={secret}
                     onChange={(e) => setSecret(e.target.value)}
@@ -1043,6 +1045,7 @@ export default function SecurityTokensClient() {
                       <Input
                         id="sign-key"
                         type={showSecret ? "text" : "password"}
+                        autoComplete="new-password"
                         className="font-mono"
                         value={signKey}
                         onChange={(e) => setSignKey(e.target.value)}
@@ -1075,6 +1078,8 @@ export default function SecurityTokensClient() {
                       className={`${taClass} min-h-[160px] break-all`}
                       value={signKey}
                       onChange={(e) => setSignKey(e.target.value)}
+                      autoComplete="off"
+                      spellCheck={false}
                       placeholder="-----BEGIN PRIVATE KEY-----..."
                     />
                   </Field>
@@ -1222,6 +1227,8 @@ export default function SecurityTokensClient() {
                 <Field label="Secret" htmlFor="hmac-secret">
                   <Input
                     id="hmac-secret"
+                    type="password"
+                    autoComplete="new-password"
                     className="font-mono"
                     value={hmacSecret}
                     onChange={(e) => setHmacSecret(e.target.value)}

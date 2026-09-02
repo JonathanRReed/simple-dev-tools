@@ -58,13 +58,15 @@ export function useHotkey(
   }, [handler]);
 
   useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
+    const target: Window | Document = options.target ?? window;
+    const onKeyDown = (event: Event) => {
+      if (!(event instanceof KeyboardEvent)) return;
       if (!options.allowInInput && isTypingTarget(event.target)) return;
       if (matches(combo, event)) {
         handlerRef.current(event);
       }
     };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [combo, options.allowInInput]);
+    target.addEventListener("keydown", onKeyDown);
+    return () => target.removeEventListener("keydown", onKeyDown);
+  }, [combo, options.allowInInput, options.target]);
 }

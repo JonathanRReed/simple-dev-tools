@@ -11,10 +11,12 @@ const alertVariants = cva(
   {
     variants: {
       variant: {
-        error: "border-destructive bg-destructive/10 text-destructive",
-        success: "border-rp-foam bg-rp-foam/10 text-rp-foam",
-        warning: "border-rp-gold bg-rp-gold/10 text-rp-gold",
-        info: "border-border bg-card text-muted-foreground",
+        // Semantic color lives in the border + tint; text stays foreground so
+        // light themes (dawn/paper) keep WCAG AA contrast on tinted surfaces.
+        error: "border-destructive bg-destructive/10 text-foreground",
+        success: "border-rp-foam bg-rp-foam/10 text-foreground",
+        warning: "border-rp-gold bg-rp-gold/10 text-foreground",
+        info: "border-border bg-card text-foreground",
       },
     },
     defaultVariants: { variant: "info" },

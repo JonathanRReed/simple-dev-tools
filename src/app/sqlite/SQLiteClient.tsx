@@ -37,9 +37,10 @@ INSERT INTO users (name, email, age, active) VALUES
 
 SELECT id, name, email, age, active FROM users ORDER BY id;`;
 
-const SQL_JS_CDN_BASE = "https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.14.2";
-const SQL_JS_SCRIPT_INTEGRITY =
-  "sha384-7Zym2PlgXfg8ap8cqJUwlZrLl+VEwt0NVbzYfhH28IWLnSpAgQOnSCY2+EXo5MtM";
+// sql.js is vendored same-origin (public/sqljs/) instead of loaded from a CDN:
+// no third-party request, no CSP script-src exception, and the WASM payload is
+// served with the same origin guarantees as the app itself.
+const SQL_JS_BASE = "/sqljs";
 
 /** localStorage key for persisting the SQL editor buffer across reloads. Settings/input
  *  only — never secrets. Guarded for static export (typeof window + try/catch). */
@@ -96,10 +97,7 @@ async function ensureSqlJsLoader() {
     return w.__initSqlJsPromise;
   }
   const script = document.createElement("script");
-  script.src = `${SQL_JS_CDN_BASE}/sql-wasm.js`;
-  script.integrity = SQL_JS_SCRIPT_INTEGRITY;
-  script.crossOrigin = "anonymous";
-  script.referrerPolicy = "no-referrer";
+  script.src = `${SQL_JS_BASE}/sql-wasm.js`;
   script.async = true;
 
   w.__initSqlJsPromise = new Promise((resolve, reject) => {
@@ -135,7 +133,7 @@ async function ensureSqlJsModule() {
     const initSqlJs = await ensureSqlJsLoader();
     if (!initSqlJs) return null;
     return initSqlJs({
-      locateFile: (file: string) => `${SQL_JS_CDN_BASE}/${file}`,
+      locateFile: (file: string) => `${SQL_JS_BASE}/${file}`,
     });
   })();
 
@@ -265,14 +263,9 @@ export default function SQLiteClient() {
 
   // URL hash share state takes precedence over localStorage (hydrated by useStoredState).
   useEffect(() => {
-    let active = true;
-    readShareParams().then((params) => {
-      if (!active || !params) return;
-      if (typeof params.sql === "string") setSql(params.sql);
-    });
-    return () => {
-      active = false;
-    };
+    const params = readShareParams();
+    if (!params) return;
+    if (typeof params.sql === "string") setSql(params.sql);
   }, [setSql]);
 
   useEffect(() => {

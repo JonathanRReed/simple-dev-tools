@@ -1,6 +1,6 @@
 # Simple Dev Tools
 
-Simple Dev Tools is a browser-first toolkit for everyday developer workflows. It is live at [dev-tools.helloworldfirm.com](https://dev-tools.helloworldfirm.com) and designed to be useful without auth, a database, or a custom backend.
+Simple Dev Tools (v1.1.0) is a browser-first toolkit for everyday developer workflows. It is live at [dev-tools.helloworldfirm.com](https://dev-tools.helloworldfirm.com) and designed to be useful without auth, a database, or a custom backend.
 
 Built and maintained by Jonathan R. Reed at Hello.World Consulting. Every tool runs entirely in your browser: no accounts, no servers, and nothing sent to a backend.
 
@@ -19,9 +19,10 @@ Built and maintained by Jonathan R. Reed at Hello.World Consulting. Every tool r
 - Sanitized markdown preview with HTML export
 - Querystring and form-body editing as a table
 
-Every tool supports shareable links (state is encoded in the URL), drag-and-drop
-file import where it makes sense, and keyboard shortcuts — with a per-tool
-"runs locally" badge making the no-backend guarantee visible where you work.
+Tools support shareable links (state is gzip-compressed into the URL, with a
+size cap that falls back to a clear "too large" message), drag-and-drop file
+import where it makes sense, and keyboard shortcuts — with a per-tool "runs
+locally" badge making the no-backend guarantee visible where you work.
 
 ## Why local-first
 
@@ -65,6 +66,9 @@ Run the rendered desktop and mobile browser suite separately:
 ```bash
 bun run test:e2e
 ```
+
+Both the quality gate and the Playwright e2e suite run in CI on every pull
+request and push to `main` (`.github/workflows/`).
 
 ## Deployment
 

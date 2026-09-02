@@ -263,7 +263,7 @@ export default function HashClient() {
                         Drop file here
                       </span>
                       <span className="text-sm text-muted-foreground">
-                        or hover and click Import file to browse
+                        or choose Import file to browse
                       </span>
                     </>
                   )}
@@ -297,10 +297,7 @@ export default function HashClient() {
                   className="flex items-center gap-2 border-2 border-border bg-card p-2"
                 >
                   <span className="brutal-label w-20 shrink-0">{alg}</span>
-                  <span
-                    className="min-w-0 grow break-all font-mono text-sm text-foreground"
-                    aria-label={`${alg} digest`}
-                  >
+                  <span className="min-w-0 grow break-all font-mono text-sm text-foreground">
                     {display}
                   </span>
                   <CopyButton value={display} label="Copy" size="sm" />
@@ -323,7 +320,7 @@ export default function HashClient() {
               <>
                 {verify.hasExpected ? (
                   verify.matched ? (
-                    <Badge className="border-rp-foam bg-rp-foam/10 text-rp-foam">
+                    <Badge className="border-rp-foam bg-rp-foam/10 text-foreground">
                       Match
                     </Badge>
                   ) : (

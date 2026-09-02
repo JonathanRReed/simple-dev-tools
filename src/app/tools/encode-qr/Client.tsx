@@ -3,7 +3,20 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import QRCode from "qrcode";
 import { ArrowLeftRight, Download, RotateCcw } from "lucide-react";
 
+import type { ToolShortcut } from "@/components/KeyboardShortcuts";
 import ToolShell from "@/components/tool/ToolShell";
+import { readShareParams } from "@/lib/share";
+import { downloadFile } from "@/lib/download";
+import { useHotkey } from "@/hooks/use-hotkey";
+import {
+  bytesToBase64,
+  base64ToBytes,
+  toBase64,
+  fromBase64,
+  toBase64Url,
+  fromBase64Url,
+  te,
+} from "@/lib/base64";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { CopyButton } from "@/components/ui/copy-button";
@@ -12,43 +25,6 @@ import { Label } from "@/components/ui/label";
 import { ResultPanel } from "@/components/ui/result-panel";
 import { Alert } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
-
-const te = new TextEncoder();
-// Fatal decoder for Base64 → text: throws on invalid UTF-8 instead of
-// silently emitting U+FFFD replacement characters (mojibake).
-const tdFatal = new TextDecoder("utf-8", { fatal: true });
-
-function bytesToBase64(bytes: Uint8Array): string {
-  let bin = "";
-  for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
-  return btoa(bin);
-}
-
-function base64ToBytes(b64: string): Uint8Array {
-  const bin = atob(b64);
-  const out = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
-  return out;
-}
-
-function toBase64(text: string): string {
-  return bytesToBase64(te.encode(text));
-}
-
-function fromBase64(b64: string): string {
-  return tdFatal.decode(base64ToBytes(b64));
-}
-
-function toBase64Url(b64: string): string {
-  return b64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
-}
-
-function fromBase64Url(b64url: string): string {
-  let s = b64url.replace(/-/g, "+").replace(/_/g, "/");
-  const pad = s.length % 4;
-  if (pad) s += "====".slice(pad);
-  return s;
-}
 
 const QR_MIN = 128;
 const QR_MAX = 1024;
@@ -92,6 +68,32 @@ function clampQrSize(raw: string): number {
   const n = parseInt(raw, 10);
   if (!Number.isFinite(n)) return QR_DEFAULT;
   return Math.min(QR_MAX, Math.max(QR_MIN, n));
+}
+
+/** Copy text to the clipboard with a non-secure-context fallback. */
+async function copyToClipboard(text: string): Promise<boolean> {
+  try {
+    if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch {
+    /* fall through to execCommand */
+  }
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly", "");
+    ta.style.position = "fixed";
+    ta.style.top = "-9999px";
+    document.body.appendChild(ta);
+    ta.select();
+    const ok = document.execCommand("copy");
+    document.body.removeChild(ta);
+    return ok;
+  } catch {
+    return false;
+  }
 }
 
 function counts(s: string): string {
@@ -218,6 +220,30 @@ export default function EncodeQR() {
   const [qrPngDataUrl, setQrPngDataUrl] = useState<string>("");
   const [qrSvg, setQrSvg] = useState<string>("");
   const [qrError, setQrError] = useState<string>("");
+
+  // URL hash share state takes precedence over defaults.
+  useEffect(() => {
+    const params = readShareParams();
+    if (!params) return;
+    if (
+      params.tab === "url" ||
+      params.tab === "base64" ||
+      params.tab === "qr"
+    ) {
+      setTab(params.tab as typeof tab);
+    }
+    if (typeof params.u === "string") setUrlInput(params.u);
+    if (params.um === "encode" || params.um === "decode") setUrlMode(params.um);
+    if (typeof params.b === "string") setB64Input(params.b);
+    if (params.bm === "encode" || params.bm === "decode") setB64Mode(params.bm);
+    if (params.bu === "0" || params.bu === "1") setB64UrlSafe(params.bu === "1");
+    if (typeof params.q === "string") setQrText(params.q);
+    if (typeof params.qs === "string") setQrSizeInput(params.qs);
+    if (params.qe === "L" || params.qe === "M" || params.qe === "Q" || params.qe === "H") setQrEcc(params.qe);
+    if (params.qf === "png" || params.qf === "svg") setQrFormat(params.qf);
+    if (typeof params.qm === "string") setQrMargin(clampQrMargin(params.qm));
+  }, []);
+
   // Monotonic token: each generateQR call claims the next id, and only the
   // latest call is allowed to commit results, so overlapping async runs can't
   // resolve out of order and leave a stale preview.
@@ -292,22 +318,86 @@ export default function EncodeQR() {
 
   function downloadPng() {
     if (!qrPngDataUrl) return;
-    const a = document.createElement("a");
-    a.href = qrPngDataUrl;
-    a.download = "qr.png";
-    a.click();
+    void fetch(qrPngDataUrl)
+      .then((res) => res.blob())
+      .then((blob) => downloadFile(blob, "qr.png"));
   }
 
   function downloadSvg() {
     if (!qrSvg) return;
-    const blob = new Blob([qrSvg], { type: "image/svg+xml" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "qr.svg";
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    downloadFile(qrSvg, "qr.svg", "image/svg+xml");
   }
+
+  async function copyCurrentQr(): Promise<boolean> {
+    const text = qrFormat === "png" ? qrPngDataUrl : qrSvg;
+    if (!text) return false;
+    return copyToClipboard(text);
+  }
+
+  const MAX_SHARE_VALUE = 2000;
+
+  const shareParams = useCallback(() => {
+    const params: Record<string, string> = { tab };
+    const add = (key: string, value: string) => {
+      if (value && value.length <= MAX_SHARE_VALUE) params[key] = value;
+    };
+    if (tab === "url") {
+      add("u", urlInput);
+      params.um = urlMode;
+    } else if (tab === "base64") {
+      add("b", b64Input);
+      params.bm = b64Mode;
+      params.bu = b64UrlSafe ? "1" : "0";
+    } else {
+      add("q", qrText);
+      add("qs", qrSizeInput);
+      params.qe = qrEcc;
+      params.qf = qrFormat;
+      params.qm = String(qrMargin);
+    }
+    // If only the tab survived and the essential input is empty, nothing to share.
+    if (Object.keys(params).length <= 1) {
+      const inputEmpty =
+        tab === "url" ? !urlInput.trim() : tab === "base64" ? !b64Input.trim() : !qrText.trim();
+      if (inputEmpty) return null;
+    }
+    return params;
+  }, [
+    tab,
+    urlInput,
+    urlMode,
+    b64Input,
+    b64Mode,
+    b64UrlSafe,
+    qrText,
+    qrSizeInput,
+    qrEcc,
+    qrFormat,
+    qrMargin,
+  ]);
+
+  const shortcuts: ToolShortcut[] = useMemo(
+    () =>
+      tab === "qr"
+        ? [{ keys: "⌘ ↵", description: "Generate or copy QR" }]
+        : [],
+    [tab]
+  );
+
+  useHotkey(
+    "mod+enter",
+    (event) => {
+      if (tab === "qr") {
+        event.preventDefault();
+        if (qrPngDataUrl || qrSvg) {
+          void copyCurrentQr();
+        } else {
+          void generateQR();
+        }
+      }
+    },
+    { allowInInput: true }
+  );
 
   const eyebrow = useMemo(
     () => (tab === "url" ? "ENCODER / URL" : tab === "base64" ? "ENCODER / BASE64" : "ENCODER / QR"),
@@ -315,7 +405,7 @@ export default function EncodeQR() {
   );
 
   return (
-    <ToolShell eyebrow={eyebrow}>
+    <ToolShell eyebrow={eyebrow} shareParams={shareParams} shortcuts={shortcuts}>
       <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
         <TabsList>
           <TabsTrigger value="url">URL</TabsTrigger>

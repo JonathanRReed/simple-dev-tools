@@ -21,10 +21,12 @@ const buttonVariants = cva(
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
-        default: "h-9 px-4 py-2",
-        sm: "h-8 px-3 text-xs",
+        // Bumped from h-9/h-8/h-9 toward the 44px touch-target guideline
+        // while keeping the compact brutalist look on desktop via sm:.
+        default: "h-10 px-4 py-2 sm:h-9",
+        sm: "h-9 px-3 text-xs sm:h-8",
         lg: "h-11 px-8",
-        icon: "h-9 w-9",
+        icon: "h-10 w-10 sm:h-9 sm:w-9",
       },
     },
     defaultVariants: {

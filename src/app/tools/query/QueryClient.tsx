@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useId, useMemo, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { Plus, RotateCcw, Sparkles, Trash2 } from "lucide-react";
 
 import type { ToolShortcut } from "@/components/KeyboardShortcuts";
@@ -39,11 +39,16 @@ type Row = {
   valueError: boolean;
 };
 
+let fallbackIdCounter = 0;
+
 function newId(): string {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
     return crypto.randomUUID();
   }
-  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+  // Counter-based fallback cannot collide within a session (unlike
+  // Date.now(), which repeats for rows created in the same millisecond).
+  fallbackIdCounter += 1;
+  return `row-${fallbackIdCounter}`;
 }
 
 /** Encode a decoded value for application/x-www-form-urlencoded output. */
@@ -157,28 +162,33 @@ export default function QueryClient() {
   const [spacePlus, setSpacePlus] = useState(true);
   const [showDecoded, setShowDecoded] = useState(true);
   const baseId = useId();
+  // When row edits write back to `input`, the input→rows parse effect must
+  // skip one run so row identity (and input focus) is preserved.
+  const skipParseRef = useRef(false);
 
   // URL hash share state takes precedence over localStorage (hydrated by useStoredState).
   useEffect(() => {
-    let active = true;
-    readShareParams().then((params) => {
-      if (!active || !params) return;
-      if (typeof params.q === "string") setInput(params.q);
-      if (
-        typeof params.mode === "string" &&
-        MODES.some((m) => m.id === params.mode)
-      ) {
-        setMode(params.mode as OutputMode);
-      }
-    });
-    return () => {
-      active = false;
-    };
+    const params = readShareParams();
+    if (!params) return;
+    if (typeof params.q === "string") setInput(params.q);
+    if (
+      typeof params.mode === "string" &&
+      MODES.some((m) => m.id === params.mode)
+    ) {
+      setMode(params.mode as OutputMode);
+    }
+    if (typeof params.base === "string") setBaseUrl(params.base);
+    if (params.sp === "0" || params.sp === "1") setSpacePlus(params.sp === "1");
+    if (params.sd === "0" || params.sd === "1") setShowDecoded(params.sd === "1");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Parse the source input into rows and a base URL whenever the source changes.
   useEffect(() => {
+    if (skipParseRef.current) {
+      skipParseRef.current = false;
+      return;
+    }
     const { base, query } = extractQuery(input);
     setBaseUrl(base);
     setRows(parseRows(query, showDecoded, spacePlus));
@@ -190,6 +200,26 @@ export default function QueryClient() {
     setRows((prev) => prev.map((row) => refreshDisplay(row, showDecoded, spacePlus)));
   }, [showDecoded, spacePlus]);
 
+  /** Serialize rows back into the canonical source string. */
+  const serializeRows = useCallback(
+    (next: Row[]): string =>
+      next
+        .filter((row) => !(row.key === "" && row.value === ""))
+        .map((row) => `${encodeForm(row.key, spacePlus)}=${encodeForm(row.value, spacePlus)}`)
+        .join("&"),
+    [spacePlus]
+  );
+
+  /** Apply a row-list change and mirror it into the persisted/shared source. */
+  const commitRows = useCallback(
+    (next: Row[]) => {
+      setRows(next);
+      skipParseRef.current = true;
+      setInput(serializeRows(next));
+    },
+    [serializeRows, setInput]
+  );
+
   const output = useMemo(() => buildOutput(rows, mode, baseUrl, spacePlus), [rows, mode, baseUrl, spacePlus]);
 
   const hasErrors = useMemo(
@@ -198,8 +228,8 @@ export default function QueryClient() {
   );
 
   const addRow = useCallback(() => {
-    setRows((prev) => [
-      ...prev,
+    commitRows([
+      ...rows,
       {
         id: newId(),
         key: "",
@@ -210,16 +240,19 @@ export default function QueryClient() {
         valueError: false,
       },
     ]);
-  }, []);
+  }, [commitRows, rows]);
 
-  const removeRow = useCallback((id: string) => {
-    setRows((prev) => prev.filter((row) => row.id !== id));
-  }, []);
+  const removeRow = useCallback(
+    (id: string) => {
+      commitRows(rows.filter((row) => row.id !== id));
+    },
+    [commitRows, rows]
+  );
 
   const updateKey = useCallback(
     (id: string, next: string) => {
-      setRows((prev) =>
-        prev.map((row) => {
+      commitRows(
+        rows.map((row) => {
           if (row.id !== id) return row;
 
           if (showDecoded) {
@@ -235,13 +268,13 @@ export default function QueryClient() {
         })
       );
     },
-    [showDecoded, spacePlus]
+    [commitRows, rows, showDecoded, spacePlus]
   );
 
   const updateValue = useCallback(
     (id: string, next: string) => {
-      setRows((prev) =>
-        prev.map((row) => {
+      commitRows(
+        rows.map((row) => {
           if (row.id !== id) return row;
 
           if (showDecoded) {
@@ -257,7 +290,7 @@ export default function QueryClient() {
         })
       );
     },
-    [showDecoded, spacePlus]
+    [commitRows, rows, showDecoded, spacePlus]
   );
 
   const handleSample = useCallback(() => {
@@ -274,9 +307,15 @@ export default function QueryClient() {
   }, [clearInput]);
 
   const shareParams = useCallback(() => {
-    if (!input.trim()) return null;
-    return { q: input, mode };
-  }, [input, mode]);
+    if (!input.trim() && !baseUrl.trim()) return null;
+    return {
+      q: input,
+      mode,
+      base: baseUrl,
+      sp: spacePlus ? "1" : "0",
+      sd: showDecoded ? "1" : "0",
+    };
+  }, [input, mode, baseUrl, spacePlus, showDecoded]);
 
   const shortcuts: ToolShortcut[] = useMemo(
     () => [
@@ -448,10 +487,10 @@ export default function QueryClient() {
                 <caption className="sr-only">Editable query parameters</caption>
                 <thead>
                   <tr className="border-b-2 border-border bg-secondary text-left">
-                    <th scope="col" className="brutal-label px-3 py-2">
+                    <th scope="col" className="brutal-label px-3 py-2 text-foreground">
                       Key
                     </th>
-                    <th scope="col" className="brutal-label px-3 py-2">
+                    <th scope="col" className="brutal-label px-3 py-2 text-foreground">
                       Value
                     </th>
                     <th scope="col" className="brutal-label px-3 py-2">
@@ -507,7 +546,7 @@ export default function QueryClient() {
                             type="button"
                             variant="ghost"
                             size="icon"
-                            aria-label="Remove parameter"
+                            aria-label={`Remove parameter ${i + 1}`}
                             onClick={() => removeRow(row.id)}
                           >
                             <Trash2 className="size-4" aria-hidden="true" />

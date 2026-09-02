@@ -1,14 +1,19 @@
 "use client";
 
-import React, { useId, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useId, useMemo, useState } from "react";
 import { Download, Plus, Trash2 } from "lucide-react";
 
+import type { ToolShortcut } from "@/components/KeyboardShortcuts";
 import ToolShell from "@/components/tool/ToolShell";
+import { FileDrop } from "@/components/FileDrop";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { CopyButton } from "@/components/ui/copy-button";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { readShareParams } from "@/lib/share";
+import { downloadFile } from "@/lib/download";
+import { useHotkey } from "@/hooks/use-hotkey";
 
 const httpMethods = [
   "GET",
@@ -251,21 +256,29 @@ const SNIPPET_FILENAMES: Record<"curl" | "python" | "js", string> = {
   js: "request.js",
 };
 
-/** Save snippet text to a file via a transient object URL + <a download>. */
-function downloadSnippet(filename: string, contents: string): void {
-  if (typeof window === "undefined") return;
+/** Copy text to the clipboard with a non-secure-context fallback. */
+async function copyToClipboard(text: string): Promise<boolean> {
   try {
-    const blob = new Blob([contents], { type: "text/plain;charset=utf-8" });
-    const objectUrl = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = objectUrl;
-    anchor.download = filename;
-    document.body.appendChild(anchor);
-    anchor.click();
-    anchor.remove();
-    setTimeout(() => URL.revokeObjectURL(objectUrl), 0);
+    if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
   } catch {
-    // Best-effort: download is a convenience, never block the UI.
+    /* fall through to execCommand */
+  }
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly", "");
+    ta.style.position = "fixed";
+    ta.style.top = "-9999px";
+    document.body.appendChild(ta);
+    ta.select();
+    const ok = document.execCommand("copy");
+    document.body.removeChild(ta);
+    return ok;
+  } catch {
+    return false;
   }
 }
 
@@ -294,10 +307,66 @@ export default function ApiSnippetClient() {
   const [headers, setHeaders] = useState<HeaderRow[]>([]);
   const [params, setParams] = useState<ParamRow[]>([]);
   const [tab, setTab] = useState<"curl" | "python" | "js">("curl");
+  const [regenToken, setRegenToken] = useState(0);
 
+  // URL hash share state takes precedence over defaults.
+  useEffect(() => {
+    const params = readShareParams();
+    if (!params) return;
+    if (typeof params.url === "string" && params.url.trim()) setUrl(params.url);
+    if (typeof params.method === "string" && httpMethods.includes(params.method)) setMethod(params.method);
+    if (typeof params.body === "string") setBody(params.body);
+    if (typeof params.auth === "string") setAuthToken(params.auth);
+    if (typeof params.headers === "string") {
+      try {
+        const parsed: unknown = JSON.parse(params.headers);
+        if (Array.isArray(parsed)) {
+          const rows: HeaderRow[] = [];
+          for (const item of parsed) {
+            if (
+              item &&
+              typeof item === "object" &&
+              typeof (item as { key?: unknown }).key === "string" &&
+              typeof (item as { value?: unknown }).value === "string"
+            ) {
+              rows.push(newHeaderRow((item as { key: string }).key, (item as { value: string }).value));
+            }
+          }
+          if (rows.length) setHeaders(rows);
+        }
+      } catch {
+        // ignore malformed share
+      }
+    }
+    if (typeof params.params === "string") {
+      try {
+        const parsed: unknown = JSON.parse(params.params);
+        if (Array.isArray(parsed)) {
+          const rows: ParamRow[] = [];
+          for (const item of parsed) {
+            if (
+              item &&
+              typeof item === "object" &&
+              typeof (item as { key?: unknown }).key === "string" &&
+              typeof (item as { value?: unknown }).value === "string"
+            ) {
+              rows.push(newParamRow((item as { key: string }).key, (item as { value: string }).value));
+            }
+          }
+          if (rows.length) setParams(rows);
+        }
+      } catch {
+        // ignore malformed share
+      }
+    }
+  }, []);
+
+  // regenToken is a manual trigger for the "regenerate" shortcut; it is not
+  // consumed by the memo factory, so the exhaustive-deps warning is suppressed.
   const result = useMemo(
     () => generateSnippets(url, method, body, headers, authToken, params),
-    [url, method, body, headers, authToken, params]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [url, method, body, headers, authToken, params, regenToken]
   );
 
   const parseError = result.ok ? null : result.error;
@@ -340,6 +409,49 @@ export default function ApiSnippetClient() {
   const updateParam = (id: string, patch: Partial<Omit<ParamRow, "id">>) =>
     setParams((rows) => rows.map((r) => (r.id === id ? { ...r, ...patch } : r)));
 
+  const handleBodyFile = (text: string) => {
+    setBody(text);
+  };
+
+  const shareParams = useCallback(() => {
+    const cleanUrl = url.trim();
+    if (!cleanUrl) return null;
+    const out: Record<string, string> = { url: cleanUrl, method };
+    if (body.trim()) out.body = body;
+    if (authToken.trim()) out.auth = authToken.trim();
+    const headerEntries = headers
+      .filter((h) => h.key.trim() || h.value.trim())
+      .map((h) => ({ key: h.key, value: h.value }));
+    if (headerEntries.length) out.headers = JSON.stringify(headerEntries);
+    const paramEntries = params
+      .filter((p) => p.key.trim())
+      .map((p) => ({ key: p.key, value: p.value }));
+    if (paramEntries.length) out.params = JSON.stringify(paramEntries);
+    return out;
+  }, [url, method, body, authToken, headers, params]);
+
+  const regenerateSnippets = useCallback(() => {
+    setRegenToken((n) => n + 1);
+    if (result.ok) {
+      const text = result.snippets[tab];
+      if (text) void copyToClipboard(text);
+    }
+  }, [result, tab]);
+
+  const shortcuts: ToolShortcut[] = useMemo(
+    () => [{ keys: "⌘ ↵", description: "Regenerate snippets" }],
+    []
+  );
+
+  useHotkey(
+    "mod+enter",
+    (event) => {
+      event.preventDefault();
+      regenerateSnippets();
+    },
+    { allowInInput: true }
+  );
+
   const toolbar = (
     <>
       <Button type="button" variant="outline" size="sm" onClick={handleSample}>
@@ -352,7 +464,12 @@ export default function ApiSnippetClient() {
   );
 
   return (
-    <ToolShell eyebrow="Request → snippets" toolbar={toolbar}>
+    <ToolShell
+      eyebrow="Request → snippets"
+      toolbar={toolbar}
+      shareParams={shareParams}
+      shortcuts={shortcuts}
+    >
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Request definition */}
         <div className="flex flex-col gap-4">
@@ -524,13 +641,20 @@ export default function ApiSnippetClient() {
             }
             error={parseError ?? undefined}
           >
-            <textarea
-              id={bodyId}
-              className="min-h-[140px] w-full px-3 py-2 text-sm font-mono"
-              placeholder={'{\n  "name": "value",\n  "active": true\n}'}
-              value={body}
-              onChange={(e) => setBody(e.target.value)}
-            />
+            <FileDrop
+              onFileText={handleBodyFile}
+              accept=".json,application/json"
+              label="Import JSON"
+              className="relative"
+            >
+              <textarea
+                id={bodyId}
+                className="min-h-[140px] w-full px-3 py-2 text-sm font-mono"
+                placeholder={'{\n  "name": "value",\n  "active": true\n}'}
+                value={body}
+                onChange={(e) => setBody(e.target.value)}
+              />
+            </FileDrop>
           </Field>
         </div>
 
@@ -570,7 +694,11 @@ export default function ApiSnippetClient() {
                           variant="ghost"
                           size="sm"
                           onClick={() =>
-                            downloadSnippet(SNIPPET_FILENAMES[lang], snippets[lang])
+                            downloadFile(
+                              snippets[lang],
+                              SNIPPET_FILENAMES[lang],
+                              "text/plain;charset=utf-8"
+                            )
                           }
                         >
                           <Download className="size-4" aria-hidden="true" />

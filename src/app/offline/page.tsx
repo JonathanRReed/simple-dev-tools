@@ -21,8 +21,8 @@ export default function OfflinePage() {
           You are offline
         </h1>
         <p className="text-muted-foreground">
-          Your connection dropped. Any tools you&apos;ve already opened are saved
-          in your browser&apos;s cache and will keep working without a network.
+          Your connection dropped. Tools you&apos;ve already opened are usually
+          cached and should keep working without a network.
         </p>
       </header>
 

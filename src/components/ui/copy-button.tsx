@@ -77,8 +77,8 @@ const CopyButton = React.forwardRef<HTMLButtonElement, CopyButtonProps>(
         disabled={disabled}
         aria-label={label ? undefined : "Copy to clipboard"}
         className={cn(
-          state === "copied" && "border-rp-foam text-rp-foam",
-          state === "error" && "border-destructive text-destructive",
+          state === "copied" && "border-rp-foam text-foreground",
+          state === "error" && "border-destructive text-foreground",
           className
         )}
         {...props}

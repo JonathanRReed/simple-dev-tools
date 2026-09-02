@@ -117,6 +117,7 @@ body, .bg-background, .bg-card, .bg-popover {
   *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
 }
@@ -225,7 +226,7 @@ body, .bg-background, .bg-card, .bg-popover {
   --muted-foreground: 248 18% 70%;
   --accent: 189 43% 73%;
   --accent-foreground: 246 24% 17%;
-  --destructive: 343 76% 68%;
+  --destructive: 343 70% 62%;
   --destructive-foreground: 246 24% 17%;
   --border: 247 16% 30%;
   --input: 249 15% 38%;
@@ -255,31 +256,34 @@ body, .bg-background, .bg-card, .bg-popover {
   --rp-highlight-high: #cecacd;
   --sidebar-background: 35 100% 98%;
   --sidebar-foreground: 248 19% 32%;
-  --sidebar-primary: 35 81% 56%;
+  --sidebar-primary: 343 45% 42%;
   --sidebar-primary-foreground: 35 100% 98%;
   --sidebar-accent: 10 9% 86%;
   --sidebar-accent-foreground: 248 19% 32%;
   --sidebar-border: 315 4% 80%;
-  --sidebar-ring: 343 35% 55%;
+  --sidebar-ring: 343 45% 42%;
   --background: 32 57% 95%;
   --foreground: 248 19% 32%;
   --card: 35 100% 98%;
   --card-foreground: 248 19% 32%;
   --popover: 28 40% 92%;
   --popover-foreground: 248 19% 32%;
-  --primary: 343 35% 55%;
+  /* Darkened from the Rosé Pine dawn originals (primary 343 35% 55%,
+     destructive 3 53% 67%, accent 35 81% 56%) — those fills measured below
+     WCAG AA against their foregrounds on tinted surfaces. */
+  --primary: 343 45% 42%;
   --primary-foreground: 35 100% 98%;
   --secondary: 10 9% 86%;
   --secondary-foreground: 248 19% 32%;
   --muted: 257 9% 61%;
   --muted-foreground: 248 15% 42%;
-  --accent: 35 81% 56%;
+  --accent: 35 70% 40%;
   --accent-foreground: 35 100% 98%;
-  --destructive: 3 53% 67%;
+  --destructive: 3 60% 45%;
   --destructive-foreground: 35 100% 98%;
   --border: 315 4% 80%;
   --input: 10 9% 86%;
-  --ring: 343 35% 55%;
+  --ring: 343 45% 42%;
   --chart-1: 343 35% 55%;
   --chart-2: 35 81% 56%;
   --chart-3: 197 53% 34%;
@@ -425,7 +429,7 @@ body, .bg-background, .bg-card, .bg-popover {
   --muted-foreground: 204 11% 38%;
   --accent: 16 40% 52%;
   --accent-foreground: 36 100% 99%;
-  --destructive: 354 38% 55%;
+  --destructive: 354 45% 44%;
   --destructive-foreground: 36 100% 99%;
   --border: 36 19% 73%;
   --input: 38 28% 84%;

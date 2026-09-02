@@ -1,6 +1,6 @@
 /* global caches, clients, fetch, self, Request, Response, URL */
 
-const CACHE_NAME = 'sdt-v1';
+const CACHE_NAME = 'sdt-v2';
 
 const PRECACHE_ASSETS = [
   '/',
@@ -83,25 +83,25 @@ self.addEventListener('fetch', (event) => {
 });
 
 async function handleNavigation(request) {
-  // Stale-while-revalidate: serve cached immediately if present.
-  const cached = await caches.match(request);
-  if (cached) {
-    fetchAndCache(request).catch(() => {});
-    return cached;
-  }
-
-  // Not cached: network-first with a timeout.
+  // Network-first for HTML: a stale shell can reference _next/static chunks
+  // that no longer exist after a deploy, so fresh HTML always wins when the
+  // network is available. The cache is the offline fallback.
   try {
     const networkResponse = await withTimeout(fetch(request), NAVIGATION_TIMEOUT);
     if (networkResponse && networkResponse.ok) {
-      await putInCache(request, networkResponse);
+      await putInCache(request, networkResponse.clone());
       return networkResponse;
     }
   } catch (error) {
-    // Fall through to offline fallback.
+    // Network failed or timed out — fall through to the cache.
   }
 
-  // Network failed/timed out and no cache: show the offline page.
+  const cached = await caches.match(request);
+  if (cached) {
+    return cached;
+  }
+
+  // Nothing cached either: show the offline page.
   const offline = await caches.match('/offline/');
   if (offline) {
     return offline;

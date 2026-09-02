@@ -1,7 +1,9 @@
 {
   "name": "Simple Dev Tools",
-  "short_name": "Simple Dev Tools",
+  "short_name": "Dev Tools",
   "id": "/",
+  "start_url": "/",
+  "scope": "/",
   "categories": ["developer", "utilities"],
   "icons": [
     {

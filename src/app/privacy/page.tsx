@@ -43,10 +43,12 @@ export default function PrivacyPage() {
         <section className="flex flex-col gap-3 border-t border-border/60 pt-6">
           <h2 className="text-xl font-semibold text-foreground">External resources</h2>
           <p className="leading-7 text-muted-foreground">
-            The SQLite playground loads SQL.js resources from a public CDN so the
-            WebAssembly runtime can initialize in the browser. Do not paste
-            production secrets, private keys, or regulated data into any developer
-            utility.
+            The SQLite playground loads its SQL.js WebAssembly runtime from this
+            site&apos;s own origin (vendored, no third-party request). The schema
+            studio can optionally fetch a spec from a URL you paste, and the host
+            may enable Cloudflare&apos;s privacy-preserving Web Analytics for aggregate
+            traffic totals. Do not paste production secrets, private keys, or
+            regulated data into any developer utility.
           </p>
         </section>
       </article>

@@ -1,9 +1,12 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { RotateCcw, Sparkles } from "lucide-react";
 
+import type { ToolShortcut } from "@/components/KeyboardShortcuts";
 import ToolShell from "@/components/tool/ToolShell";
+import { useHotkey } from "@/hooks/use-hotkey";
+import { readShareParams } from "@/lib/share";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
@@ -465,9 +468,19 @@ export default function ColorClient() {
   const [bgText, setBgText] = useState(DEFAULT_BG);
   const hydratedRef = useRef(false);
 
-  // Hydrate the last color after mount so server markup (DEFAULT_COLOR) and the
-  // first client render match, avoiding a hydration mismatch.
+  // Hydrate share params first, then fall back to the last-used color from
+  // localStorage. Both happen after mount so the first client render matches
+  // server markup and avoids a hydration mismatch.
   useEffect(() => {
+    const params = readShareParams();
+    if (params && typeof params.c === "string" && params.c.trim()) {
+      const color = params.c;
+      setText(color);
+      setFgText(typeof params.fg === "string" ? params.fg : color);
+      setBgText(typeof params.bg === "string" ? params.bg : DEFAULT_BG);
+      hydratedRef.current = true;
+      return;
+    }
     const stored = loadStoredColor();
     if (stored && stored !== DEFAULT_COLOR) {
       setText(stored);
@@ -476,8 +489,13 @@ export default function ColorClient() {
     hydratedRef.current = true;
   }, []);
 
-  // Parse the primary color.
-  const parsed = useMemo(() => parseCssColor(text), [text]);
+  // Parse the primary color. parseCssColor mutates the DOM (getComputedStyle),
+  // so it runs in a layout effect — never during render. useLayoutEffect keeps
+  // the first painted frame correct (the component is client-only).
+  const [parsed, setParsed] = useState<Rgba | null>(null);
+  useLayoutEffect(() => {
+    setParsed(parseCssColor(text));
+  }, [text]);
 
   // Persist whenever the primary color changes to a valid value (post-hydration).
   useEffect(() => {
@@ -485,8 +503,12 @@ export default function ColorClient() {
     if (parsed) persistColor(text);
   }, [text, parsed]);
 
-  const fg = useMemo(() => parseCssColor(fgText), [fgText]);
-  const bg = useMemo(() => parseCssColor(bgText), [bgText]);
+  const [fg, setFg] = useState<Rgba | null>(null);
+  const [bg, setBg] = useState<Rgba | null>(null);
+  useLayoutEffect(() => {
+    setFg(parseCssColor(fgText));
+    setBg(parseCssColor(bgText));
+  }, [fgText, bgText]);
 
   const ramp = useMemo(() => (parsed ? buildRamp(parsed) : null), [parsed]);
 
@@ -537,6 +559,31 @@ export default function ColorClient() {
     setBgText(DEFAULT_BG);
   };
 
+  const shareParams = useCallback(() => {
+    const value = text.trim();
+    if (!value) return null;
+    const params: Record<string, string> = { c: value };
+    if (fgText.trim() && fgText !== text) params.fg = fgText.trim();
+    if (bgText.trim() && bgText !== DEFAULT_BG) params.bg = bgText.trim();
+    return params;
+  }, [text, fgText, bgText]);
+
+  const shortcuts: ToolShortcut[] = useMemo(
+    () => [{ keys: "⌘ ↵", description: "Copy current color" }],
+    []
+  );
+
+  useHotkey(
+    "mod+enter",
+    (event) => {
+      if (text.trim()) {
+        event.preventDefault();
+        void copyText(text);
+      }
+    },
+    { allowInInput: true }
+  );
+
   const toolbar = (
     <>
       <Button variant="secondary" size="sm" onClick={loadSample}>
@@ -551,7 +598,12 @@ export default function ColorClient() {
   );
 
   return (
-    <ToolShell eyebrow="Color · Local" toolbar={toolbar}>
+    <ToolShell
+      eyebrow="Color · Local"
+      toolbar={toolbar}
+      shareParams={shareParams}
+      shortcuts={shortcuts}
+    >
       <div className="space-y-8">
         {/* ---- Input row ---- */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-start">

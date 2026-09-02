@@ -226,33 +226,41 @@ export default function MarkdownClient() {
   const isEmpty = source.trim() === "";
 
   useEffect(() => {
-    let active = true;
-    readShareParams().then((params) => {
-      if (!active || !params) return;
-      if (typeof params.md === "string") setSource(params.md);
-    });
-    return () => {
-      active = false;
-    };
+    const params = readShareParams();
+    if (!params) return;
+    if (typeof params.md === "string") setSource(params.md);
+    if (params.sync === "0" || params.sync === "1") setSyncScroll(params.sync === "1");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  // Parse + sanitize in an effect (not useMemo): DOMPurify touches the DOM,
+  // which must not happen during render.
+  const [rendered, setRendered] = useState<{ sanitizedHtml: string; parseError: string }>({
+    sanitizedHtml: "",
+    parseError: "",
+  });
 
-  const { sanitizedHtml, parseError } = useMemo(() => {
+  useEffect(() => {
     if (debouncedSource.trim() === "") {
-      return { sanitizedHtml: "", parseError: "" };
+      setRendered({ sanitizedHtml: "", parseError: "" });
+      return;
     }
     try {
       const raw = marked.parse(debouncedSource, { async: false }) as string;
+      // FORBID_ATTR "style" keeps share-link payloads from injecting
+      // position:fixed overlays or fake UI via inline style attributes.
       const sanitized = DOMPurify.sanitize(raw, {
         FORBID_TAGS: ["script", "style"],
+        FORBID_ATTR: ["style"],
         ALLOW_DATA_ATTR: false,
       });
-      return { sanitizedHtml: sanitized, parseError: "" };
+      setRendered({ sanitizedHtml: sanitized, parseError: "" });
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      return { sanitizedHtml: "", parseError: msg };
+      setRendered({ sanitizedHtml: "", parseError: msg });
     }
   }, [debouncedSource]);
+
+  const { sanitizedHtml, parseError } = rendered;
 
   useHotkey(
     "mod+Enter",
@@ -326,7 +334,7 @@ export default function MarkdownClient() {
     <ToolShell
       eyebrow="Markdown"
       toolbar={toolbar}
-      shareParams={() => (isEmpty ? null : { md: source })}
+      shareParams={() => (isEmpty ? null : { md: source, sync: syncScroll ? "1" : "0" })}
       shortcuts={shortcuts}
     >
       <style>{PREVIEW_CSS}</style>

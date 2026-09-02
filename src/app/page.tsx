@@ -138,7 +138,7 @@ export default function Home() {
         </div>
 
         {hasActiveFilters ? (
-          <div className="mt-3 flex items-center gap-2">
+          <div className="mt-3 flex items-center gap-2" aria-live="polite" aria-atomic="true">
             <span className="brutal-label">Active filters</span>
             <span className="font-mono text-xs text-muted-foreground">
               {activeTags.size} tag{activeTags.size === 1 ? '' : 's'}

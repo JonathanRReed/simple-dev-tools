@@ -28,7 +28,7 @@ import { Badge } from '@/components/ui/badge';
 import { CopyButton } from '@/components/ui/copy-button';
 import { ResultPanel } from '@/components/ui/result-panel';
 import { FileDrop } from '@/components/FileDrop';
-import { useHotkey } from '@/hooks/use-hotkey';
+import { useDebounced } from '@/hooks/use-stored-state';
 import { downloadFile } from '@/lib/download';
 import { readShareParams } from '@/lib/share';
 import { cn } from '@/lib/utils';
@@ -92,45 +92,50 @@ export default function DiffClient() {
   const [level, setLevel] = useState<DiffLevel>('word');
   const [ignoreWhitespace, setIgnoreWhitespace] = useState(false);
   const [ignoreCase, setIgnoreCase] = useState(false);
-  const [recomputeTick, setRecomputeTick] = useState(0);
+
+  // Debounce the inputs so large pastes don't re-diff on every keystroke.
+  const debouncedOriginal = useDebounced(original, 300);
+  const debouncedChanged = useDebounced(changed, 300);
 
   useEffect(() => {
-    readShareParams().then((params) => {
-      if (!params) return;
-      if (typeof params.a === 'string') setOriginal(params.a);
-      if (typeof params.b === 'string') setChanged(params.b);
-      if (params.m === 'side' || params.m === 'unified') setMode(params.m);
-      if (params.l === 'word' || params.l === 'line') setLevel(params.l);
-      if (params.iw === '1' || params.iw === '0') setIgnoreWhitespace(params.iw === '1');
-      if (params.ic === '1' || params.ic === '0') setIgnoreCase(params.ic === '1');
-    });
+    const params = readShareParams();
+    if (!params) return;
+    if (typeof params.a === 'string') setOriginal(params.a);
+    if (typeof params.b === 'string') setChanged(params.b);
+    if (params.m === 'side' || params.m === 'unified') setMode(params.m);
+    if (params.l === 'word' || params.l === 'line') setLevel(params.l);
+    if (params.iw === '1' || params.iw === '0') setIgnoreWhitespace(params.iw === '1');
+    if (params.ic === '1' || params.ic === '0') setIgnoreCase(params.ic === '1');
   }, []);
 
-  const recompute = () => setRecomputeTick((t) => t + 1);
-  useHotkey('mod+enter', recompute, { allowInInput: true });
-
-  const bothEmpty = original === '' && changed === '';
+  const bothEmpty = debouncedOriginal === '' && debouncedChanged === '';
   const hasInput = !bothEmpty;
 
-  const wordChanges = useMemo<ChangeObject<string>[]>(() => {
-    void recomputeTick;
-    if (bothEmpty) return [];
-    return diffWords(
-      original,
-      changed,
-      buildWordOptions(ignoreWhitespace, ignoreCase)
-    );
-  }, [original, changed, ignoreWhitespace, ignoreCase, bothEmpty, recomputeTick]);
+  // Guard rail: Myers diff is O(ND) and can hang the tab on very large,
+  // dissimilar inputs. Refuse beyond this size with a clear message.
+  const MAX_DIFF_LENGTH = 500_000;
+  const tooLarge =
+    debouncedOriginal.length > MAX_DIFF_LENGTH || debouncedChanged.length > MAX_DIFF_LENGTH;
 
+  // Compute only the active granularity. The word diff is the expensive one;
+  // line diffs are also needed for the stats line.
   const lineChanges = useMemo<ChangeObject<string>[]>(() => {
-    void recomputeTick;
-    if (bothEmpty) return [];
+    if (bothEmpty || tooLarge) return [];
     return diffLines(
-      original,
-      changed,
+      debouncedOriginal,
+      debouncedChanged,
       buildLineOptions(ignoreWhitespace, ignoreCase)
     );
-  }, [original, changed, ignoreWhitespace, ignoreCase, bothEmpty, recomputeTick]);
+  }, [debouncedOriginal, debouncedChanged, ignoreWhitespace, ignoreCase, bothEmpty, tooLarge]);
+
+  const wordChanges = useMemo<ChangeObject<string>[]>(() => {
+    if (level !== 'word' || bothEmpty || tooLarge) return [];
+    return diffWords(
+      debouncedOriginal,
+      debouncedChanged,
+      buildWordOptions(ignoreWhitespace, ignoreCase)
+    );
+  }, [level, debouncedOriginal, debouncedChanged, ignoreWhitespace, ignoreCase, bothEmpty, tooLarge]);
 
   const changes = level === 'word' ? wordChanges : lineChanges;
 
@@ -148,20 +153,19 @@ export default function DiffClient() {
   }, [lineChanges]);
 
   const patch = useMemo(() => {
-    void recomputeTick;
-    if (bothEmpty) return '';
+    if (bothEmpty || tooLarge) return '';
     return (
       createTwoFilesPatch(
         'original.txt',
         'changed.txt',
-        original,
-        changed,
+        debouncedOriginal,
+        debouncedChanged,
         undefined,
         undefined,
         buildPatchOptions(ignoreWhitespace, ignoreCase)
       ) ?? ''
     );
-  }, [original, changed, ignoreWhitespace, ignoreCase, bothEmpty, recomputeTick]);
+  }, [debouncedOriginal, debouncedChanged, ignoreWhitespace, ignoreCase, bothEmpty, tooLarge]);
 
   const handleSample = () => {
     setOriginal(SAMPLE_A);
@@ -187,7 +191,7 @@ export default function DiffClient() {
   };
 
   const shareParams = () => {
-    if (bothEmpty) return null;
+    if (original === '' && changed === '') return null;
     return {
       a: original,
       b: changed,
@@ -216,7 +220,7 @@ export default function DiffClient() {
       eyebrow="Text Diff"
       toolbar={toolbar}
       shareParams={shareParams}
-      shortcuts={[{ keys: '⌘ ↵', description: 'Recompute diff' }]}
+      shortcuts={[{ keys: '—', description: 'Diffs automatically as you type' }]}
     >
       <div className="flex flex-col gap-5">
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
@@ -372,7 +376,12 @@ export default function DiffClient() {
           </span>
         </div>
 
-        {bothEmpty ? (
+        {tooLarge ? (
+          <Alert variant="warning">
+            Inputs over {Math.round(MAX_DIFF_LENGTH / 1000)} KB are too large for in-browser
+            diffing. Trim the texts (or diff the relevant sections) and try again.
+          </Alert>
+        ) : bothEmpty ? (
           <Alert variant="info">
             Paste text in both columns, or load the sample, to see the diff.
           </Alert>
@@ -429,10 +438,12 @@ function LineUnified({ changes }: { changes: ChangeObject<string>[] }) {
     <div className="space-y-1 font-mono text-sm">
       {changes.map((c, i) => {
         const marker = c.added ? '+' : c.removed ? '-' : ' ';
+        // Semantic color stays in the border/tint; text uses foreground so
+        // light themes (dawn/paper) keep WCAG AA contrast.
         const colorClass = c.added
-          ? 'border-rp-foam bg-rp-foam/10 text-rp-foam'
+          ? 'border-rp-foam bg-rp-foam/10 text-foreground'
           : c.removed
-            ? 'border-rp-love bg-rp-love/10 text-rp-love'
+            ? 'border-rp-love bg-rp-love/10 text-foreground'
             : 'border-border bg-card text-foreground';
         const lines = splitLines(c.value);
         return lines.map((line, li) => (
@@ -443,7 +454,7 @@ function LineUnified({ changes }: { changes: ChangeObject<string>[] }) {
               colorClass
             )}
           >
-            <span className="select-none text-center" aria-hidden="true">
+            <span className="select-none text-center font-semibold" aria-hidden="true">
               {marker}
             </span>
             <span
@@ -452,6 +463,7 @@ function LineUnified({ changes }: { changes: ChangeObject<string>[] }) {
                 line === '' ? 'text-muted-foreground' : ''
               )}
             >
+              <span className="sr-only">{c.added ? 'added: ' : c.removed ? 'removed: ' : ''}</span>
               {line}
             </span>
           </div>
@@ -465,19 +477,19 @@ function WordUnified({ changes }: { changes: ChangeObject<string>[] }) {
   return (
     <pre className="whitespace-pre-wrap break-words font-mono text-sm text-foreground">
       {changes.map((c, i) => {
+        // Semantic color stays in the border/tint; text uses foreground so
+        // light themes keep WCAG AA contrast.
         const colorClass = c.added
-          ? 'border-2 border-rp-foam bg-rp-foam/20 text-rp-foam'
+          ? 'border-2 border-rp-foam bg-rp-foam/20 text-foreground'
           : c.removed
-            ? 'border-2 border-rp-love bg-rp-love/20 text-rp-love'
+            ? 'border-2 border-rp-love bg-rp-love/20 text-foreground'
             : '';
         return (
           <span
             key={i}
             className={cn('px-0.5', colorClass)}
-            aria-label={
-              c.added ? 'added' : c.removed ? 'removed' : undefined
-            }
           >
+            <span className="sr-only">{c.added ? 'added: ' : c.removed ? 'removed: ' : ''}</span>
             {c.value}
           </span>
         );
@@ -492,16 +504,22 @@ type SideBySideRow =
 
 function toSideBySideRows(changes: ChangeObject<string>[]): SideBySideRow[] {
   const rows: SideBySideRow[] = [];
-  let pending: { left?: ChangeObject<string>; right?: ChangeObject<string> } = {};
+  // Accumulate ALL consecutive removals on the left and additions on the
+  // right, flushing only when the diff changes direction or hits common
+  // ground. Pairing one-for-one would misalign runs like [removed A,
+  // removed B, added C] into "A vs ∅, B vs C" instead of "AB vs C".
+  let leftParts: string[] = [];
+  let rightParts: string[] = [];
 
   const flush = () => {
-    if (pending.left || pending.right) {
+    if (leftParts.length > 0 || rightParts.length > 0) {
       rows.push({
         kind: 'change',
-        left: pending.left?.value,
-        right: pending.right?.value,
+        left: leftParts.length > 0 ? leftParts.join('') : undefined,
+        right: rightParts.length > 0 ? rightParts.join('') : undefined,
       });
-      pending = {};
+      leftParts = [];
+      rightParts = [];
     }
   };
 
@@ -510,23 +528,10 @@ function toSideBySideRows(changes: ChangeObject<string>[]): SideBySideRow[] {
       flush();
       rows.push({ kind: 'common', value: c.value });
     } else if (c.removed) {
-      if (pending.left && !pending.right) {
-        flush();
-        pending.left = c;
-      } else if (pending.right) {
-        pending.left = c;
-      } else {
-        pending.left = c;
-      }
+      if (rightParts.length > 0) flush();
+      leftParts.push(c.value);
     } else if (c.added) {
-      if (pending.right && !pending.left) {
-        flush();
-        pending.right = c;
-      } else if (pending.left) {
-        pending.right = c;
-      } else {
-        pending.right = c;
-      }
+      rightParts.push(c.value);
     }
   }
   flush();
@@ -577,20 +582,22 @@ function SideBySide({
               className={cn(
                 'min-h-[1.5rem] whitespace-pre-wrap break-words border-b-2 px-2 py-1 font-mono text-sm',
                 hasLeft
-                  ? 'border-rp-love border-r-2 bg-rp-love/10 text-rp-love'
+                  ? 'border-rp-love border-r-2 bg-rp-love/10 text-foreground'
                   : 'border-r-2 border-border text-muted-foreground'
               )}
             >
+              <span className="sr-only">{hasLeft ? 'removed: ' : ''}</span>
               {hasLeft ? row.left : level === 'word' ? '\u00A0' : ''}
             </div>
             <div
               className={cn(
                 'min-h-[1.5rem] whitespace-pre-wrap break-words border-b-2 px-2 py-1 font-mono text-sm',
                 hasRight
-                  ? 'border-rp-foam bg-rp-foam/10 text-rp-foam'
+                  ? 'border-rp-foam bg-rp-foam/10 text-foreground'
                   : 'border-border text-muted-foreground'
               )}
             >
+              <span className="sr-only">{hasRight ? 'added: ' : ''}</span>
               {hasRight ? row.right : level === 'word' ? '\u00A0' : ''}
             </div>
           </Fragment>

@@ -19,11 +19,27 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+
       - name: Install Playwright browsers
         run: bunx playwright install --with-deps chromium
 
       - name: Run e2e tests
         run: bun run test:e2e
+
+      - name: Report bundle size
+        if: always()
+        run: |
+          echo "## Bundle size" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          du -sh out 2>/dev/null || true
+          echo "Largest chunks:" >> $GITHUB_STEP_SUMMARY
+          find out/_next/static/chunks -name '*.js' -size +100k -exec du -h {} \; 2>/dev/null | sort -rh | head -10 >> $GITHUB_STEP_SUMMARY || true
+          echo '```' >> $GITHUB_STEP_SUMMARY
 
       - name: Upload failure artifacts
         if: failure()

@@ -107,14 +107,9 @@ export default function MermaidClient() {
 
   // URL hash share state takes precedence over localStorage (hydrated by useStoredState).
   useEffect(() => {
-    let active = true;
-    readShareParams().then((params) => {
-      if (!active || !params) return;
-      if (typeof params.code === "string") setCode(params.code);
-    });
-    return () => {
-      active = false;
-    };
+    const params = readShareParams();
+    if (!params) return;
+    if (typeof params.code === "string") setCode(params.code);
   }, [setCode]);
 
   useEffect(() => {
@@ -128,10 +123,17 @@ export default function MermaidClient() {
       // instead of <foreignObject> XHTML. Browsers cannot rasterize
       // <foreignObject> when the SVG is drawn onto a canvas, which otherwise
       // produces blank/unstyled labels in the PNG export (see handleExportPNG).
+      // "htmlLabels" is added to `secure` so an `%%{init}%%` directive in
+      // user-supplied diagram code cannot re-enable HTML labels and inject
+      // arbitrary markup into the rendered SVG (share-link hardening).
+      const defaultSecure = (mermaidModule as unknown as {
+        mermaidAPI?: { defaultConfig?: { secure?: string[] } };
+      }).mermaidAPI?.defaultConfig?.secure;
       mermaidModule.initialize({
         startOnLoad: false,
         htmlLabels: false,
         flowchart: { htmlLabels: false },
+        secure: [...(defaultSecure ?? []), "htmlLabels"],
       });
       setMermaid(mermaidModule);
     })();
