@@ -170,7 +170,7 @@ export function NavigationProgressProvider({ children }: { children: ReactNode }
   );
 }
 
-export function useNavigationProgress() {
+function useNavigationProgress() {
   const context = useContext(NavigationProgressContext);
 
   if (!context) {

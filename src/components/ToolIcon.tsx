@@ -45,14 +45,3 @@ const iconMap = {
 export function getToolIcon(icon: ToolIcon): LucideIcon {
   return iconMap[icon];
 }
-
-export interface ToolIconProps {
-  icon: ToolIcon;
-  className?: string;
-  strokeWidth?: number;
-}
-
-export default function ToolIcon({ icon, className, strokeWidth }: ToolIconProps) {
-  const Icon = iconMap[icon];
-  return <Icon className={className} strokeWidth={strokeWidth} aria-hidden="true" />;
-}

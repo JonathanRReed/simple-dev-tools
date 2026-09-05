@@ -7,14 +7,10 @@ import { Badge } from '@/components/ui/badge';
 import { useCommandMenu } from '@/components/CommandMenu';
 import { getToolIcon } from '@/components/ToolIcon';
 import { MAX_RECENT, useRecentTools } from '@/hooks/use-recent-tools';
-import { siteConfig, toolGroups, toolPages, type ToolPageInfo } from '@/lib/site';
+import { getToolPage, siteConfig, toolGroups, toolPages, type ToolPageInfo } from '@/lib/site';
 import { cn } from '@/lib/utils';
 
-const normalize = (href: string) => (href === '/' ? '/' : href.replace(/\/$/, ''));
 const toolIndex = new Map(toolPages.map((t, i) => [t.href, i] as const));
-
-// Group labels match the sidebar's so the two surfaces read consistently.
-const groupLabel = (title: string) => (title === 'Developer accelerators' ? 'Tools' : title);
 
 function isTypingTarget(el: EventTarget | null): boolean {
   if (!(el instanceof HTMLElement)) return false;
@@ -33,8 +29,8 @@ export default function Home() {
   const recentTools = React.useMemo(
     () =>
       recent
-        .map((h) => toolPages.find((t) => normalize(t.href) === h))
-        .filter((t): t is ToolPageInfo => Boolean(t))
+        .map((h) => getToolPage(h))
+        .filter((t): t is ToolPageInfo => t != null)
         .slice(0, MAX_RECENT),
     [recent]
   );
@@ -65,6 +61,11 @@ export default function Home() {
     [activeTags, hasActiveFilters]
   );
 
+  const visibleCount = React.useMemo(
+    () => toolPages.filter(toolMatches).length,
+    [toolMatches]
+  );
+
   // Press 1–9 to jump straight to a catalog tool (keyboard-first launcher).
   React.useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -86,13 +87,15 @@ export default function Home() {
       {/* Masthead */}
       <header className="mb-8">
         <p className="brutal-label">{siteConfig.name}</p>
-        <h1 className="mt-2 font-display text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
+        <h1 className="mt-2 font-display text-4xl font-bold tracking-tight text-balance text-foreground sm:text-5xl">
           Developer tools.
           <span className="text-muted-foreground"> Local, in-browser.</span>
         </h1>
         <p className="mt-3 max-w-2xl font-mono text-sm text-muted-foreground">
           {toolPages.length} small, local tools. Nothing leaves your browser. Press{' '}
-          <kbd className="border border-border bg-card px-1.5 py-0.5 text-xs">⌘K</kbd> anywhere.
+          <kbd className="border border-border bg-card px-1.5 py-0.5 text-xs">⌘K</kbd> anywhere,
+          or <kbd className="border border-border bg-card px-1.5 py-0.5 text-xs">1</kbd>–
+          <kbd className="border border-border bg-card px-1.5 py-0.5 text-xs">9</kbd> to jump.
         </p>
       </header>
 
@@ -107,13 +110,62 @@ export default function Home() {
           Search tools by name or tag…
         </span>
         <span className="hidden shrink-0 items-center gap-1 font-mono text-[0.65rem] uppercase tracking-wider text-muted-foreground sm:flex">
-          <CommandIcon className="size-3" /> K
+          <CommandIcon className="size-3" aria-hidden="true" /> K
         </span>
       </button>
 
+      {/* Recent strip — the fastest path back for returning visitors. */}
+      {hydrated && recentTools.length > 0 ? (
+        <section className="mt-6" aria-label="Recently opened tools">
+          <div className="mb-2 flex items-center justify-between">
+            <p className="brutal-label flex items-center gap-1.5">
+              <Clock className="size-3" aria-hidden="true" /> Recent
+            </p>
+            <button
+              type="button"
+              onClick={clearRecent}
+              className="font-mono text-[0.65rem] uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground focus-visible:text-foreground"
+            >
+              Clear
+            </button>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {recentTools.map((tool) => {
+              const Icon = getToolIcon(tool.icon);
+              return (
+                <a
+                  key={tool.href}
+                  href={tool.href}
+                  className="inline-flex items-center gap-2 border-2 border-border bg-card px-3 py-1.5 text-sm transition-colors hover:border-primary"
+                >
+                  <Icon className="size-4 text-muted-foreground" aria-hidden="true" />
+                  {tool.title}
+                </a>
+              );
+            })}
+          </div>
+        </section>
+      ) : null}
+
       {/* Tag filter */}
-      <section className="mt-4" aria-label="Filter catalog by tag">
-        <p className="brutal-label mb-2">Filter by tag</p>
+      <section className="mt-6" aria-label="Filter catalog by tag">
+        <div className="mb-2 flex items-center justify-between gap-3">
+          <p className="brutal-label">Filter by tag</p>
+          {hasActiveFilters ? (
+            <div className="flex items-center gap-3" aria-live="polite" aria-atomic="true">
+              <span className="font-mono text-xs text-muted-foreground">
+                {visibleCount} of {toolPages.length} tools
+              </span>
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="font-mono text-[0.65rem] uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground focus-visible:text-foreground"
+              >
+                Clear
+              </button>
+            </div>
+          ) : null}
+        </div>
         <div className="flex flex-wrap gap-2">
           {allTags.map((tag) => {
             const active = activeTags.has(tag);
@@ -136,22 +188,6 @@ export default function Home() {
             );
           })}
         </div>
-
-        {hasActiveFilters ? (
-          <div className="mt-3 flex items-center gap-2" aria-live="polite" aria-atomic="true">
-            <span className="brutal-label">Active filters</span>
-            <span className="font-mono text-xs text-muted-foreground">
-              {activeTags.size} tag{activeTags.size === 1 ? '' : 's'}
-            </span>
-            <button
-              type="button"
-              onClick={clearFilters}
-              className="ml-auto font-mono text-[0.65rem] uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground focus-visible:text-foreground"
-            >
-              Clear
-            </button>
-          </div>
-        ) : null}
       </section>
 
       {/* Browse catalog */}
@@ -160,8 +196,13 @@ export default function Home() {
         if (matches.length === 0) return null;
         return (
           <section key={group.title} className="mt-6">
-            <p className="brutal-label mb-2">{groupLabel(group.title)}</p>
-            <ul aria-label={groupLabel(group.title)} className="divide-y-2 divide-border border-2 border-border bg-card">
+            <div className="mb-2 flex items-baseline justify-between gap-3">
+              <p className="brutal-label">{group.title}</p>
+              <p className="hidden font-mono text-[0.65rem] uppercase tracking-wider text-muted-foreground sm:block">
+                {group.description}
+              </p>
+            </div>
+            <ul aria-label={group.title} className="divide-y-2 divide-border border-2 border-border bg-card">
               {matches.map((tool) => {
                 const Icon = getToolIcon(tool.icon);
                 const idx = toolIndex.get(tool.href);
@@ -171,10 +212,10 @@ export default function Home() {
                   <li key={tool.href}>
                     <a
                       href={tool.href}
-                      className="group flex items-center gap-3 px-3 py-3 transition-colors hover:bg-accent"
+                      className="group flex items-center gap-3 px-3 py-3 transition-colors hover:bg-accent hover:text-accent-foreground"
                     >
                       <span className="flex size-9 shrink-0 items-center justify-center border-2 border-border text-muted-foreground group-hover:border-primary group-hover:text-primary">
-                        <Icon className="size-4" />
+                        <Icon className="size-4" aria-hidden="true" />
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="flex items-center gap-2">
@@ -210,45 +251,10 @@ export default function Home() {
         );
       })}
 
-      {/* Recent strip */}
-      {hydrated ? (
-        <section className="mt-6">
-          <div className="mb-2 flex items-center justify-between">
-            <p className="brutal-label flex items-center gap-1.5">
-              <Clock className="size-3" /> Recent
-            </p>
-            {recentTools.length > 0 ? (
-              <button
-                type="button"
-                onClick={clearRecent}
-                className="font-mono text-[0.65rem] uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground focus-visible:text-foreground"
-              >
-                Clear
-              </button>
-            ) : null}
-          </div>
-          {recentTools.length > 0 ? (
-            <div className="flex flex-wrap gap-2">
-              {recentTools.map((tool) => {
-                const Icon = getToolIcon(tool.icon);
-                return (
-                  <a
-                    key={tool.href}
-                    href={tool.href}
-                    className="inline-flex items-center gap-2 border-2 border-border bg-card px-3 py-1.5 text-sm transition-colors hover:border-primary"
-                  >
-                    <Icon className="size-4 text-muted-foreground" />
-                    {tool.title}
-                  </a>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="border-2 border-border bg-card px-3 py-2 font-mono text-sm text-muted-foreground">
-              Tools you open appear here.
-            </div>
-          )}
-        </section>
+      {hasActiveFilters && visibleCount === 0 ? (
+        <div className="mt-6 border-2 border-border bg-card px-3 py-4 font-mono text-sm text-muted-foreground">
+          No tools match those tags.
+        </div>
       ) : null}
     </div>
   );

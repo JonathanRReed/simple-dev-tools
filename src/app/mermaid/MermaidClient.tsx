@@ -115,9 +115,7 @@ export default function MermaidClient() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const [{ default: mermaidModule }] = await Promise.all([
-        import("mermaid"),
-      ]);
+      const { default: mermaidModule } = await import("mermaid");
       if (cancelled) return;
       // Disable htmlLabels so flowchart node labels render as native SVG <text>
       // instead of <foreignObject> XHTML. Browsers cannot rasterize

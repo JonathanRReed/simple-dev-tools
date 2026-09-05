@@ -35,8 +35,9 @@ locally" badge making the no-backend guarantee visible where you work.
 ## Tech stack
 
 - Next.js 16 static export
-- React 19, Tailwind CSS 4, and Radix UI
+- React 19, Tailwind CSS 4 (CSS-first config in `src/app/globals.css`, no `tailwind.config.js`), and Radix UI
 - TypeScript 6 and Bun 1.4
+- Linting: [oxlint](https://oxc.rs/docs/guide/usage/linter) for the fast correctness pass, then `eslint-config-next` for the Next.js and React Hooks rules
 
 ## Development
 
@@ -56,10 +57,18 @@ bun run check
 ```
 
 That runs:
-- `bun run lint`
+- `bun run lint` (oxlint, then ESLint)
 - `bun run typecheck`
 - `bun run test`
 - `bun run build`
+
+Useful on their own:
+
+```bash
+bun run lint:fast      # oxlint only, sub-second, good as a pre-commit check
+bun run deps:check     # knip: unused files, exports, and dependencies
+bun run deps:outdated  # bun outdated + bun audit
+```
 
 Run the rendered desktop and mobile browser suite separately:
 

@@ -25,9 +25,9 @@ const SHARE_VERSION = 1;
 const COMPRESS_THRESHOLD = 400;
 /** Hard cap on the encoded `#s=` payload (chars). ~32k stays within
  * Firefox/Safari practical URL limits and bounds compression time. */
-export const MAX_SHARE_ENCODED_LENGTH = 32_000;
+const MAX_SHARE_ENCODED_LENGTH = 32_000;
 /** Hard cap on the decompressed JSON accepted when reading a share. */
-export const MAX_DECOMPRESSED_LENGTH = 2_000_000;
+const MAX_DECOMPRESSED_LENGTH = 2_000_000;
 
 export type ShareParams = Record<string, string>;
 
@@ -105,17 +105,12 @@ export function decodeShareState(encoded: string): ShareParams | null {
   return null;
 }
 
-/** Read share params from the current location hash (`#s=…`), if any. */
-export function readShareParamsFromLocation(): ShareParams | null {
+/** Read share params from the current location hash (`#s=…`), if any. Synchronous. */
+export function readShareParams(): ShareParams | null {
   if (typeof window === "undefined") return null;
   const hash = window.location.hash;
   if (!hash.startsWith("#s=")) return null;
   return decodeShareState(hash.slice(3));
-}
-
-/** Synchronous alias for readShareParamsFromLocation. */
-export function readShareParams(): ShareParams | null {
-  return readShareParamsFromLocation();
 }
 
 /** Build the full shareable URL for the current page with these params. */

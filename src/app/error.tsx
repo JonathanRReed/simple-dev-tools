@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { Home, RotateCcw } from 'lucide-react';
 
+import PageHeader from '@/components/layout/PageHeader';
 import ToolPage from '@/components/layout/ToolPage';
 import { Button } from '@/components/ui/button';
 
@@ -20,15 +21,12 @@ export default function Error({
 
   return (
     <ToolPage contentClassName="mx-auto max-w-3xl space-y-6">
-      <header className="space-y-2">
-        <p className="brutal-label">Error</p>
-        <h1 className="font-display text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-          Something went wrong
-        </h1>
-        <p className="text-muted-foreground">
-          This tool hit an unexpected error. Your data stays in the browser. Try again, or head back home.
+      <PageHeader eyebrow="Error" title="Something went wrong">
+        <p>
+          This tool hit an unexpected error. Your data stays in the browser. Try again, or head
+          back home.
         </p>
-      </header>
+      </PageHeader>
 
       <div className="border-2 border-destructive/60 bg-card p-4">
         <p className="font-mono text-sm text-muted-foreground">

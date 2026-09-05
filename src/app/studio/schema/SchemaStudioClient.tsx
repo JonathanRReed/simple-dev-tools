@@ -178,13 +178,13 @@ export default function SchemaStudioClient() {
       try {
         schema = JSON.parse(schemaStr);
       } catch (error: any) {
-        throw new Error(`Schema is not valid JSON: ${error?.message || "parse error"}`);
+        throw new Error(`Schema is not valid JSON: ${error?.message || "parse error"}`, { cause: error });
       }
       let data: any;
       try {
         data = JSON.parse(dataStr);
       } catch (error: any) {
-        throw new Error(`Data is not valid JSON: ${error?.message || "parse error"}`);
+        throw new Error(`Data is not valid JSON: ${error?.message || "parse error"}`, { cause: error });
       }
       try {
         // Pick an Ajv class that matches the schema's declared dialect, and use a
@@ -194,7 +194,7 @@ export default function SchemaStudioClient() {
         const valid = compiled(data);
         return { ok: !!valid, errors: compiled.errors || null };
       } catch (error: any) {
-        throw new Error(error?.message || "Failed to compile schema.");
+        throw new Error(error?.message || "Failed to compile schema.", { cause: error });
       }
     },
     []
@@ -358,7 +358,7 @@ export default function SchemaStudioClient() {
           const props = schema.properties || {};
           const required: string[] = schema.required || [];
           const propTypes = Object.entries(props).map(([, v]: [string, any]) => convertSchemaToType(v));
-          const entries = Object.entries(props).map(([k, v]: [string, any], i) => {
+          const entries = Object.keys(props).map((k, i) => {
             const optional = required.includes(k) ? "" : "?";
             return `  ${JSON.stringify(k)}${optional}: ${propTypes[i]};`;
           });

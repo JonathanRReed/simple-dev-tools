@@ -55,7 +55,7 @@ export type ToolPageInfo = {
 
 export const toolGroups = [
   {
-    title: "Developer accelerators",
+    title: "Tools",
     description: "Fast local utilities for everyday implementation work.",
     tools: [
       {
@@ -178,6 +178,24 @@ export const toolGroups = [
 }[];
 
 export const toolPages: ToolPageInfo[] = toolGroups.flatMap((group) => [...group.tools]);
+
+/** Canonical route key: strips the export trailing slash ("/tools/json/" → "/tools/json"). */
+export const normalizeHref = (href: string) => (href === "/" ? "/" : href.replace(/\/$/, ""));
+
+const toolByHref = new Map(toolPages.map((tool) => [normalizeHref(tool.href), tool] as const));
+
+/** Look up a catalog entry by route (trailing slash optional). */
+export function getToolPage(href: string): ToolPageInfo | undefined {
+  return toolByHref.get(normalizeHref(href));
+}
+
+/** Tools surfaced in the footer and the PWA manifest shortcuts. */
+export const featuredToolHrefs = [
+  "/tools/regex/",
+  "/tools/json/",
+  "/tools/timestamp/",
+  "/studio/security/",
+] as const;
 
 export const trustPages = [
   {

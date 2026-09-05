@@ -3,7 +3,7 @@
 import * as React from "react";
 import { usePathname } from "next/navigation";
 
-import { toolPages } from "@/lib/site";
+import { normalizeHref, toolPages } from "@/lib/site";
 
 const RECENT_KEY = "sdt:recent-tools";
 const PINNED_KEY = "sdt:pinned-tools";
@@ -29,8 +29,7 @@ function writeList(key: string, value: string[]) {
   }
 }
 
-const normalize = (href: string) => (href === "/" ? "/" : href.replace(/\/$/, ""));
-const toolHrefs = new Set(toolPages.map((t) => normalize(t.href)));
+const toolHrefs = new Set(toolPages.map((t) => normalizeHref(t.href)));
 
 type RecentToolsValue = {
   recent: string[];
@@ -58,7 +57,7 @@ export function RecentToolsProvider({ children }: { children: React.ReactNode })
   }, []);
 
   const recordVisit = React.useCallback((href: string) => {
-    const key = normalize(href);
+    const key = normalizeHref(href);
     if (!toolHrefs.has(key)) return;
     setRecent((prev) => {
       const next = [key, ...prev.filter((h) => h !== key)].slice(0, MAX_RECENT);
@@ -73,7 +72,7 @@ export function RecentToolsProvider({ children }: { children: React.ReactNode })
   }, [pathname, recordVisit]);
 
   const togglePin = React.useCallback((href: string) => {
-    const key = normalize(href);
+    const key = normalizeHref(href);
     if (!toolHrefs.has(key)) return;
     setPinned((prev) => {
       const next = prev.includes(key) ? prev.filter((h) => h !== key) : [...prev, key];
@@ -82,7 +81,7 @@ export function RecentToolsProvider({ children }: { children: React.ReactNode })
     });
   }, []);
 
-  const isPinned = React.useCallback((href: string) => pinned.includes(normalize(href)), [pinned]);
+  const isPinned = React.useCallback((href: string) => pinned.includes(normalizeHref(href)), [pinned]);
 
   const clearRecent = React.useCallback(() => {
     setRecent([]);

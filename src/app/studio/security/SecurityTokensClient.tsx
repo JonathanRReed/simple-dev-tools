@@ -4,7 +4,6 @@ import { Eraser, Eye, EyeOff, Loader2 } from "lucide-react";
 
 import {
   base64ToBytes as libBase64ToBytes,
-  base64urlToBytes as libBase64urlToBytes,
   bytesToArrayBuffer as libBytesToArrayBuffer,
   bytesToBase64url as libBytesToBase64url,
   te as libTe,

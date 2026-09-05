@@ -2,6 +2,7 @@ import './globals.css';
 import type { Metadata, Viewport } from 'next';
 import localFont from 'next/font/local';
 import type { ReactNode } from 'react';
+import type { Organization, Person, WebPage, WebSite, WithContext } from 'schema-dts';
 
 import AppHeader from '@/components/AppHeader';
 import { CommandMenuProvider } from '@/components/CommandMenu';
@@ -22,23 +23,24 @@ import { siteConfig, toolPages } from '@/lib/site';
 // Self-hosted (vendored) variable fonts — no build-time network fetch, so the
 // static export builds reliably in any CI sandbox (e.g. Cloudflare Pages) and
 // the fonts are served same-origin (satisfies the strict font-src 'self' CSP).
-const fontSans = localFont({
+// globals.css maps these variables onto Tailwind's --font-sans/display/mono.
+const fontInter = localFont({
   src: './fonts/inter-latin-variable.woff2',
-  variable: '--font-sans',
+  variable: '--font-inter',
   display: 'swap',
   weight: '100 900',
 });
 
-const fontDisplay = localFont({
+const fontSpaceGrotesk = localFont({
   src: './fonts/space-grotesk-latin-variable.woff2',
-  variable: '--font-display',
+  variable: '--font-space-grotesk',
   display: 'swap',
   weight: '300 700',
 });
 
-const fontMono = localFont({
+const fontJetBrainsMono = localFont({
   src: './fonts/jetbrains-mono-latin-variable.woff2',
-  variable: '--font-mono',
+  variable: '--font-jetbrains-mono',
   display: 'swap',
   weight: '100 800',
 });
@@ -103,34 +105,42 @@ export const viewport: Viewport = {
   themeColor: '#0a0d12',
 };
 
-const authorProfile = {
+// Structured data, typed against schema.org via schema-dts so a renamed
+// property or wrong enum fails typecheck instead of silently going stale.
+const authorProfile: Person = {
   '@type': 'Person',
   name: siteConfig.author.name,
   alternateName: 'Jonathan Reed',
   url: siteConfig.author.url,
-  sameAs: [
-    'https://jonathanrreed.com/',
-    'https://github.com/JonathanRReed',
-  ],
+  sameAs: ['https://jonathanrreed.com/', 'https://github.com/JonathanRReed'],
 };
 
-const providerProfile = {
+const providerProfile: Organization = {
   '@type': 'Organization',
   name: siteConfig.provider.name,
   url: siteConfig.provider.url,
 };
 
-const toolEntities = toolPages.map((toolPage) => ({
-  '@type': 'CreativeWork',
-  name: toolPage.title,
-  description: toolPage.description,
-  url: `${siteConfig.url}${toolPage.href}`,
-  creator: authorProfile,
-  publisher: providerProfile,
-  isAccessibleForFree: true,
-}));
+const toolWebPages: WebPage[] = toolPages.map((toolPage) => {
+  const url = `${siteConfig.url}${toolPage.href}`;
+  return {
+    '@type': 'WebPage',
+    name: toolPage.title,
+    description: toolPage.description,
+    url,
+    mainEntity: {
+      '@type': 'CreativeWork',
+      name: toolPage.title,
+      description: toolPage.description,
+      url,
+      creator: authorProfile,
+      publisher: providerProfile,
+      isAccessibleForFree: true,
+    },
+  };
+});
 
-const jsonLd = {
+const jsonLd: WithContext<WebSite> = {
   '@context': 'https://schema.org',
   '@type': 'WebSite',
   name: siteConfig.name,
@@ -139,27 +149,21 @@ const jsonLd = {
   publisher: providerProfile,
   creator: authorProfile,
   inLanguage: 'en',
-  hasPart: toolPages.map((toolPage) => ({
-    '@type': 'WebPage',
-    name: toolPage.title,
-    description: toolPage.description,
-    url: `${siteConfig.url}${toolPage.href}`,
-    mainEntity: toolEntities.find((tool) => tool.url === `${siteConfig.url}${toolPage.href}`),
-  })),
+  hasPart: toolWebPages,
 };
+
+// Escape "<" so the JSON can never close the <script> element early.
+const jsonLdHtml = JSON.stringify(jsonLd).replace(/</g, '\\u003c');
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${fontSans.variable} ${fontDisplay.variable} ${fontMono.variable}`}
+      className={`${fontInter.variable} ${fontSpaceGrotesk.variable} ${fontJetBrainsMono.variable}`}
     >
       <head>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdHtml }} />
       </head>
       <body className="bg-background text-foreground font-sans antialiased">
         <ServiceWorkerRegistration />
@@ -179,10 +183,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                     <AppSidebar />
                     <SidebarInset id="main-content" tabIndex={-1} className="flex min-w-0 flex-1 flex-col">
                       <AppHeader />
-                      <div className="flex min-w-0 flex-col overflow-x-hidden">
-                        <div className="px-4 py-5 sm:px-6">
-                          {children}
-                        </div>
+                      <div className="flex min-w-0 flex-1 flex-col overflow-x-hidden">
+                        <div className="flex-1 px-4 py-5 sm:px-6">{children}</div>
                         <Footer />
                       </div>
                       <RouteFocus />

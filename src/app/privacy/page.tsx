@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 
+import PageHeader from "@/components/layout/PageHeader";
+import PageSection from "@/components/layout/PageSection";
 import ToolPage from "@/components/layout/ToolPage";
 import { siteConfig } from "@/lib/site";
 
@@ -16,41 +18,35 @@ export default function PrivacyPage() {
   return (
     <ToolPage contentClassName="mx-auto max-w-3xl">
       <article className="flex flex-col gap-8">
-        <header className="flex flex-col gap-3">
-          <p className="text-sm font-semibold uppercase tracking-wide text-primary">
-            Privacy
-          </p>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-            Local-first tools with no account layer.
-          </h1>
-          <p className="text-base leading-7 text-muted-foreground">
+        <PageHeader eyebrow="Privacy" title="Local-first tools with no account layer.">
+          <p>
             {siteConfig.name} is a static browser application. It does not provide
-            authentication, database-backed accounts, analytics tracking, or a
-            server-side store for tool input.
+            authentication, database-backed accounts, analytics tracking, or a server-side store
+            for tool input.
           </p>
-        </header>
+        </PageHeader>
 
-        <section className="flex flex-col gap-3 border-t border-border/60 pt-6">
-          <h2 className="text-xl font-semibold text-foreground">Tool input</h2>
-          <p className="leading-7 text-muted-foreground">
-            Text, tokens, schemas, SQL, regex patterns, and QR payloads are handled
-            in your browser. Some tools use browser APIs such as Web Crypto,
-            clipboard, file download, or local runtime libraries to complete the
-            selected action.
+        <PageSection title="Tool input">
+          <p>
+            Text, tokens, schemas, SQL, regex patterns, and QR payloads are handled in your
+            browser. Some tools use browser APIs such as Web Crypto, clipboard, file download, or
+            local runtime libraries to complete the selected action.
           </p>
-        </section>
+          <p>
+            A few tools remember your last input in this browser&apos;s local storage so it
+            survives a reload. Use the tool&apos;s Reset action to clear it.
+          </p>
+        </PageSection>
 
-        <section className="flex flex-col gap-3 border-t border-border/60 pt-6">
-          <h2 className="text-xl font-semibold text-foreground">External resources</h2>
-          <p className="leading-7 text-muted-foreground">
-            The SQLite playground loads its SQL.js WebAssembly runtime from this
-            site&apos;s own origin (vendored, no third-party request). The schema
-            studio can optionally fetch a spec from a URL you paste, and the host
-            may enable Cloudflare&apos;s privacy-preserving Web Analytics for aggregate
-            traffic totals. Do not paste production secrets, private keys, or
-            regulated data into any developer utility.
+        <PageSection title="External resources">
+          <p>
+            The SQLite playground loads its SQL.js WebAssembly runtime from this site&apos;s own
+            origin (vendored, no third-party request). The schema studio can optionally fetch a
+            spec from a URL you paste, and the host may enable Cloudflare&apos;s privacy-preserving
+            Web Analytics for aggregate traffic totals. Do not paste production secrets, private
+            keys, or regulated data into any developer utility.
           </p>
-        </section>
+        </PageSection>
       </article>
     </ToolPage>
   );

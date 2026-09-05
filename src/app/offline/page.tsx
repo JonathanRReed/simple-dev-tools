@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
-import { Home, WifiOff } from 'lucide-react';
+import { Home } from 'lucide-react';
 
+import PageHeader from '@/components/layout/PageHeader';
 import ToolPage from '@/components/layout/ToolPage';
 
 export const metadata: Metadata = {
@@ -14,17 +15,12 @@ export const metadata: Metadata = {
 export default function OfflinePage() {
   return (
     <ToolPage contentClassName="mx-auto max-w-3xl space-y-6">
-      <header className="space-y-2">
-        <p className="brutal-label">No connection</p>
-        <h1 className="flex items-center gap-3 font-display text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-          <WifiOff className="size-8 text-muted-foreground" aria-hidden="true" />
-          You are offline
-        </h1>
-        <p className="text-muted-foreground">
-          Your connection dropped. Tools you&apos;ve already opened are usually
-          cached and should keep working without a network.
+      <PageHeader eyebrow="No connection" title="You are offline">
+        <p>
+          Your connection dropped. Tools you&apos;ve already opened are usually cached and should
+          keep working without a network.
         </p>
-      </header>
+      </PageHeader>
 
       {/* A full document load reapplies the route-specific CSP. */}
       {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}

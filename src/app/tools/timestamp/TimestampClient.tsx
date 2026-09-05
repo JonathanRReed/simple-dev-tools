@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Clock, RotateCcw, Sparkles } from "lucide-react";
 
 import type { ToolShortcut } from "@/components/KeyboardShortcuts";
@@ -65,6 +65,14 @@ async function copyToClipboard(text: string): Promise<boolean> {
  * Unix epoch; everything else is handed to the Date constructor (ISO 8601,
  * RFC 2822, etc.). Returns ok:false for empty or unparseable input.
  */
+// Intl formatters are expensive to construct; build the relative-time one
+// once per page (lazily, so SSR and non-Intl runtimes never touch it).
+let cachedRelativeTimeFormatter: Intl.RelativeTimeFormat | null = null;
+function relativeTimeFormatter(): Intl.RelativeTimeFormat {
+  cachedRelativeTimeFormatter ??= new Intl.RelativeTimeFormat(undefined, { numeric: "auto" });
+  return cachedRelativeTimeFormatter;
+}
+
 function parseMoment(raw: string): ParseResult {
   const trimmed = raw.trim();
   if (trimmed.length === 0) return { ok: false };
@@ -142,8 +150,7 @@ function relativeTime(target: number, now: number): string {
         chosenUnit = larger.unit;
       }
       try {
-        const rtf = new Intl.RelativeTimeFormat(undefined, { numeric: "auto" });
-        return rtf.format(value, chosenUnit);
+        return relativeTimeFormatter().format(value, chosenUnit);
       } catch {
         // Fallback if Intl.RelativeTimeFormat is unavailable.
         const n = Math.abs(value);

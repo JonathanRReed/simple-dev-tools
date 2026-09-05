@@ -34,7 +34,7 @@ The project is intentionally plain: open the tool, inspect or transform the inpu
 
 ## Technical Documentation
 
-- [README](https://github.com/JonathanRReed/simple-dev-tools/blob/main/README.md): Project overview and MIT license information
+- [README](https://github.com/JonathanRReed/simple-dev-tools/blob/main/README.md): Project overview, quality gate, deployment notes, and the Functional Source License (MIT after two years)
 - [Package Dependencies](https://github.com/JonathanRReed/simple-dev-tools/blob/main/package.json): Full list of dependencies including Next.js, React, Radix UI, Prism, Mermaid, and more
 
 ## Policies

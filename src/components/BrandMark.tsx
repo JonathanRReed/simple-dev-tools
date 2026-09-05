@@ -16,10 +16,10 @@ type BrandMarkProps = {
  * dark or light.
  */
 const CELLS = [
-  { Icon: Code2, color: 'text-rp-foam' },
-  { Icon: Database, color: 'text-rp-love' },
-  { Icon: Slash, color: 'text-rp-gold' },
-  { Icon: QrCode, color: 'text-rp-iris' },
+  { id: 'code', Icon: Code2, color: 'text-rp-foam' },
+  { id: 'database', Icon: Database, color: 'text-rp-love' },
+  { id: 'slash', Icon: Slash, color: 'text-rp-gold' },
+  { id: 'qr', Icon: QrCode, color: 'text-rp-iris' },
 ] as const;
 
 export default function BrandMark({ className, label = 'Simple Dev Tools logo' }: BrandMarkProps) {
@@ -32,8 +32,8 @@ export default function BrandMark({ className, label = 'Simple Dev Tools logo' }
         className
       )}
     >
-      {CELLS.map(({ Icon, color }, i) => (
-        <span key={i} className={cn('flex items-center justify-center bg-card', color)}>
+      {CELLS.map(({ id, Icon, color }) => (
+        <span key={id} className={cn('flex items-center justify-center bg-card', color)}>
           <Icon className="h-[62%] w-[62%]" strokeWidth={2.25} aria-hidden="true" />
         </span>
       ))}

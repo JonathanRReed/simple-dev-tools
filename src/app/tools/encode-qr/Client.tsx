@@ -9,8 +9,6 @@ import { readShareParams } from "@/lib/share";
 import { downloadFile } from "@/lib/download";
 import { useHotkey } from "@/hooks/use-hotkey";
 import {
-  bytesToBase64,
-  base64ToBytes,
   toBase64,
   fromBase64,
   toBase64Url,
@@ -19,7 +17,6 @@ import {
 } from "@/lib/base64";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { CopyButton } from "@/components/ui/copy-button";
 import { Field } from "@/components/ui/field";
 import { Label } from "@/components/ui/label";
 import { ResultPanel } from "@/components/ui/result-panel";
@@ -319,8 +316,12 @@ export default function EncodeQR() {
   function downloadPng() {
     if (!qrPngDataUrl) return;
     void fetch(qrPngDataUrl)
-      .then((res) => res.blob())
-      .then((blob) => downloadFile(blob, "qr.png"));
+      .then((res) => {
+        if (!res.ok) throw new Error(`Could not read the PNG (${res.status}).`);
+        return res.blob();
+      })
+      .then((blob) => downloadFile(blob, "qr.png"))
+      .catch((e: unknown) => setQrError(e instanceof Error ? e.message : "PNG download failed."));
   }
 
   function downloadSvg() {

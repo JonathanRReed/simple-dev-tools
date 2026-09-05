@@ -24,11 +24,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import BrandMark from '@/components/BrandMark';
 import { getToolIcon } from '@/components/ToolIcon';
 import { useRecentTools } from '@/hooks/use-recent-tools';
-import { siteConfig, toolGroups, toolPages, type ToolPageInfo } from '@/lib/site';
+import { getToolPage, normalizeHref, siteConfig, toolGroups, type ToolPageInfo } from '@/lib/site';
 import { cn } from '@/lib/utils';
-
-const normalize = (href: string) => (href === '/' ? '/' : href.replace(/\/$/, ''));
-const toolByHref = new Map(toolPages.map((t) => [normalize(t.href), t] as const));
 
 const navSections = [
   {
@@ -36,7 +33,7 @@ const navSections = [
     items: [{ title: 'Home', href: '/', icon: Home }],
   },
   ...toolGroups.map((group) => ({
-    label: group.title === 'Developer accelerators' ? 'Tools' : group.title,
+    label: group.title,
     items: group.tools.map((tool) => ({
       title: tool.title,
       href: tool.href,
@@ -73,18 +70,20 @@ export default function AppSidebar() {
 
   const isActive = (href: string) => {
     if (!pathname) return false;
-    const h = normalize(href);
-    const p = normalize(pathname);
+    const h = normalizeHref(href);
+    const p = normalizeHref(pathname);
     if (h === '/') return p === '/';
     return p === h || p.startsWith(`${h}/`);
   };
 
+  const pinnedSet = new Set(pinned);
   const pinnedTools = pinned
-    .map((h) => toolByHref.get(h))
-    .filter((t): t is ToolPageInfo => Boolean(t));
+    .map((h) => getToolPage(h))
+    .filter((t): t is ToolPageInfo => t != null);
   const recentTools = recent
-    .map((h) => toolByHref.get(h))
-    .filter((t): t is ToolPageInfo => Boolean(t) && !pinned.includes(normalize(t!.href)));
+    .filter((h) => !pinnedSet.has(h))
+    .map((h) => getToolPage(h))
+    .filter((t): t is ToolPageInfo => t != null);
 
   const renderQuickRow = (tool: ToolPageInfo) => {
     const Icon = getToolIcon(tool.icon);
@@ -150,7 +149,7 @@ export default function AppSidebar() {
                 <SidebarMenu>
                   {section.items.map((item) => {
                     const active = isActive(item.href);
-                    const pinnable = toolByHref.has(normalize(item.href));
+                    const pinnable = getToolPage(item.href) != null;
                     const pinnedNow = isPinned(item.href);
                     return (
                       <SidebarMenuItem key={item.href}>

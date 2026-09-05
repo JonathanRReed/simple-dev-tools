@@ -6,17 +6,15 @@ import { ChevronRight, Search } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 import { useCommandMenu } from "@/components/CommandMenu";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { siteConfig, toolPages, trustPages } from "@/lib/site";
-
-const normalize = (href: string) => (href === "/" ? "/" : href.replace(/\/$/, ""));
+import { normalizeHref, siteConfig, toolPages, trustPages } from "@/lib/site";
 
 function useActiveTitle(): string | null {
   const pathname = usePathname();
   if (!pathname) return null;
-  const key = normalize(pathname);
+  const key = normalizeHref(pathname);
   if (key === "/") return null;
   const all = [...toolPages, ...trustPages];
-  const match = all.find((p) => key === normalize(p.href) || key.startsWith(`${normalize(p.href)}/`));
+  const match = all.find((p) => key === normalizeHref(p.href) || key.startsWith(`${normalizeHref(p.href)}/`));
   return match?.title ?? null;
 }
 
@@ -51,7 +49,8 @@ export default function AppHeader() {
           type="button"
           onClick={() => setOpen(true)}
           className="group inline-flex h-9 items-center gap-2 border-2 border-border bg-card px-2.5 text-sm text-muted-foreground transition-colors hover:border-primary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-          aria-label="Search⌘K"
+          aria-label="Search"
+          aria-keyshortcuts="Meta+K Control+K"
         >
           <Search className="size-4" aria-hidden="true" />
           <span className="hidden sm:inline">Search</span>

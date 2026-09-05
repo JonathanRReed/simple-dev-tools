@@ -18,9 +18,7 @@ import {
 import { getToolIcon } from "@/components/ToolIcon";
 import { useRecentTools } from "@/hooks/use-recent-tools";
 import { appThemes } from "@/lib/themes";
-import { siteConfig, toolPages, trustPages } from "@/lib/site";
-
-const normalize = (href: string) => (href === "/" ? "/" : href.replace(/\/$/, ""));
+import { getToolPage, normalizeHref, siteConfig, toolPages, trustPages, type ToolPageInfo } from "@/lib/site";
 
 // Keyword aliases so typing "data", "feedback", etc. finds the right page.
 const PAGE_KEYWORDS: Record<string, string[]> = {
@@ -69,7 +67,7 @@ export function CommandMenuProvider({ children }: { children: React.ReactNode })
   // Move to prev/next tool in the flat toolPages order.
   const step = React.useCallback(
     (delta: number) => {
-      const idx = toolPages.findIndex((t) => normalize(t.href) === normalize(pathname ?? ""));
+      const idx = toolPages.findIndex((t) => normalizeHref(t.href) === normalizeHref(pathname ?? ""));
       const base = idx === -1 ? (delta > 0 ? -1 : 0) : idx;
       const next = (base + delta + toolPages.length) % toolPages.length;
       window.location.assign(toolPages[next].href);
@@ -106,16 +104,14 @@ export function CommandMenuProvider({ children }: { children: React.ReactNode })
     if (open) setQuery("");
   }, [open]);
 
-  const byHref = React.useMemo(() => {
-    const map = new Map<string, (typeof toolPages)[number]>();
-    for (const t of toolPages) map.set(normalize(t.href), t);
-    return map;
-  }, []);
-
-  const pinnedTools = pinned.map((h) => byHref.get(h)).filter(Boolean) as typeof toolPages;
+  const pinnedSet = new Set(pinned);
+  const pinnedTools = pinned
+    .map((h) => getToolPage(h))
+    .filter((t): t is ToolPageInfo => t != null);
   const recentTools = recent
-    .map((h) => byHref.get(h))
-    .filter((t): t is (typeof toolPages)[number] => Boolean(t) && !pinned.includes(normalize(t!.href)));
+    .filter((h) => !pinnedSet.has(h))
+    .map((h) => getToolPage(h))
+    .filter((t): t is ToolPageInfo => t != null);
 
   const showQuickGroups = query.trim() === "";
 

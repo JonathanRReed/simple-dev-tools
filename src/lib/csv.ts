@@ -111,7 +111,7 @@ export function parseCsv(text: string): Record<string, unknown>[] {
   return out;
 }
 
-export function escapeCsvCell(value: string): string {
+function escapeCsvCell(value: string): string {
   if (/[",\r\n]/.test(value)) {
     return `"${value.replace(/"/g, '""')}"`;
   }
@@ -119,7 +119,7 @@ export function escapeCsvCell(value: string): string {
 }
 
 /** Render a JS value as a single CSV cell. Objects/arrays are JSON-stringified. */
-export function csvCell(value: unknown): string {
+function csvCell(value: unknown): string {
   if (value === null || value === undefined) return "";
   if (typeof value === "string") return value;
   if (typeof value === "number" || typeof value === "boolean") return String(value);

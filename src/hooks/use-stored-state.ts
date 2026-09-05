@@ -13,7 +13,6 @@ export function useStoredState(
   initialValue: string
 ): [string, (value: string) => void, () => void] {
   const [value, setValue] = useState(initialValue);
-  const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
     try {
@@ -22,7 +21,6 @@ export function useStoredState(
     } catch {
       /* ignore storage access errors (private mode, etc.) */
     }
-    setHydrated(true);
   }, [key]);
 
   const update = useCallback(
@@ -47,13 +45,6 @@ export function useStoredState(
   }, [initialValue, key]);
 
   return [value, update, clear] as const;
-}
-
-/** Whether the stored value has been read from localStorage at least once. */
-export function useStoredHydrated(): boolean {
-  const [hydrated, setHydrated] = useState(false);
-  useEffect(() => setHydrated(true), []);
-  return hydrated;
 }
 
 /**

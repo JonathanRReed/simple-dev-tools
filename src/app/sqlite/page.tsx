@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 
 import ToolPage from "@/components/layout/ToolPage";
+import ToolNotes from "@/components/tool/ToolNotes";
+import ToolPageHeader from "@/components/tool/ToolPageHeader";
 import SQLiteClientOnly from "./ClientOnly";
 
 export const metadata: Metadata = {
@@ -15,15 +17,26 @@ export const metadata: Metadata = {
 export default function SQLitePage() {
   return (
     <ToolPage contentClassName="mx-auto max-w-5xl space-y-6">
-      <header className="space-y-2">
-        <h1 className="font-display text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-          SQLite Playground
-        </h1>
-        <p className="text-muted-foreground">
-          Run SQL experiments locally in your browser using SQLite WASM. Edit queries, execute, and inspect results without any backend.
+      <ToolPageHeader href="/sqlite/">
+        <p>
+          Run SQL experiments locally in your browser using SQLite WASM. Edit queries, execute,
+          and inspect results without any backend.
         </p>
-      </header>
+      </ToolPageHeader>
       <SQLiteClientOnly />
+      <ToolNotes>
+        <ul>
+          <li>
+            The database is in-memory and lives only for this tab. Export results as CSV or JSON
+            before you close it.
+          </li>
+          <li>
+            The SQL.js WebAssembly runtime is served from this site&apos;s own origin; no
+            third-party request is made.
+          </li>
+          <li>Statements run in order; a failing statement stops the batch and reports its error.</li>
+        </ul>
+      </ToolNotes>
     </ToolPage>
   );
 }

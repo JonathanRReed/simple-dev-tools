@@ -1,0 +1,47 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": [
+    "typescript",
+    "react",
+    "unicorn",
+    "oxc",
+    "nextjs",
+    "jsx-a11y"
+  ],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn"
+  },
+  "env": {
+    "browser": true,
+    "es2024": true
+  },
+  "ignorePatterns": [
+    ".next",
+    "out",
+    "public",
+    "node_modules",
+    "test-results",
+    "playwright-report",
+    "next-env.d.ts"
+  ],
+  "rules": {
+    "no-unused-vars": [
+      "error",
+      {
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_"
+      }
+    ],
+    "no-shadow": "off",
+    "unicorn/consistent-function-scoping": "off",
+    "jsx-a11y/prefer-tag-over-role": "off",
+    "react/react-in-jsx-scope": "off",
+    "react/set-state-in-effect": "off",
+    "nextjs/no-html-link-for-pages": "off",
+    "no-underscore-dangle": "off",
+    "unicorn/no-array-sort": "off",
+    "unicorn/prefer-add-event-listener": "off",
+    "react/exhaustive-effect-dependencies": "off"
+  }
+}

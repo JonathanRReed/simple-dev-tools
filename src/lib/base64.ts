@@ -50,15 +50,7 @@ export function base64urlToBytes(b64url: string): Uint8Array {
   return base64ToBytes(fromBase64Url(b64url));
 }
 
-export function toBase64UrlText(text: string): string {
-  return bytesToBase64url(te.encode(text));
-}
-
 /** Fatal: throws on invalid UTF-8 rather than emitting replacement chars. */
-export function fromBase64UrlText(b64url: string): string {
-  return tdFatal.decode(base64urlToBytes(b64url));
-}
-
 export function bytesToArrayBuffer(bytes: Uint8Array): ArrayBuffer {
   return bytes.buffer.slice(
     bytes.byteOffset,

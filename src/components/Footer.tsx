@@ -1,85 +1,114 @@
-import { ArrowUpRight, ExternalLink } from 'lucide-react';
+import { ArrowUpRight, ShieldCheck } from 'lucide-react';
 
 import BrandMark from '@/components/BrandMark';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { siteConfig, trustPages } from '@/lib/site';
+import { featuredToolHrefs, getToolPage, siteConfig, toolPages, trustPages } from '@/lib/site';
 import packageJson from '../../package.json';
 
+const featuredTools = featuredToolHrefs
+  .map((href) => getToolPage(href))
+  .filter((tool): tool is NonNullable<typeof tool> => tool != null);
+
+const siteLinks = [{ title: 'Home', href: '/' }, ...trustPages] as const;
+
+const elsewhereLinks = [
+  { title: 'GitHub', href: 'https://github.com/JonathanRReed/simple-dev-tools' },
+  { title: 'helloworldfirm.com', href: siteConfig.provider.url },
+  { title: 'JonathanRReed.com', href: siteConfig.author.url },
+  { title: 'More projects', href: `${siteConfig.author.url}/projects/` },
+] as const;
+
+/**
+ * Site footer: brand + local-first promise on the left, three link columns on
+ * the right, and a single meta line. Square, 2px rules, no cards-in-cards.
+ */
 export default function Footer() {
   return (
-    <footer className="footer-panel mt-12 px-4 py-10 sm:px-6">
-      <div className="mx-auto grid w-full max-w-6xl gap-8 border-2 border-border bg-card p-6 sm:p-8 lg:grid-cols-[1fr_0.9fr] lg:items-end">
-        <div className="space-y-5">
-          <div className="flex flex-col gap-3">
+    <footer className="mt-12 border-t-2 border-border bg-card">
+      <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6">
+        <div className="grid gap-10 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
+          <div className="flex flex-col gap-4">
             {/* A full document load reapplies the route-specific CSP. */}
             {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
             <a href="/" className="flex w-fit items-center gap-3" aria-label={`${siteConfig.name} home`}>
-              <BrandMark className="size-11 shrink-0" />
-              <span className="font-display text-2xl font-bold tracking-tight text-foreground">
+              <BrandMark className="size-10 shrink-0" />
+              <span className="font-display text-xl font-bold tracking-tight text-foreground">
                 {siteConfig.name}
               </span>
             </a>
-            <p className="text-sm text-muted-foreground">Quiet developer tools for focused browser work.</p>
+            <p className="max-w-xs text-pretty text-sm leading-6 text-muted-foreground">
+              {toolPages.length} local-first developer tools. Nothing you paste leaves your
+              browser: no accounts, no servers, no tracking.
+            </p>
+            <p className="inline-flex w-fit items-center gap-1.5 border border-border bg-background px-2 py-1 font-mono text-[0.65rem] uppercase tracking-wide text-muted-foreground">
+              <ShieldCheck className="size-3.5 text-rp-pine" aria-hidden="true" />
+              Runs locally
+            </p>
           </div>
-          <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-            <Badge variant="secondary" className="bg-secondary/70 text-secondary-foreground">
-              Built by Jonathan R. Reed
-            </Badge>
-            <Badge variant="outline" className="font-mono text-xs">
-              v{packageJson.version}
-            </Badge>
-            <span className="text-xs">© {new Date().getFullYear()} Jonathan R. Reed. All rights reserved.</span>
-          </div>
-          <p className="max-w-xl text-sm leading-6 text-muted-foreground">
-            Browser-based utilities for common development tasks, built and maintained by Jonathan R. Reed.
-          </p>
+
+          <FooterColumn label="Site">
+            {siteLinks.map((page) => (
+              <li key={page.href}>
+                <FooterLink href={page.href}>{page.title}</FooterLink>
+              </li>
+            ))}
+          </FooterColumn>
+
+          <FooterColumn label="Shortcuts">
+            {featuredTools.map((tool) => (
+              <li key={tool.href}>
+                <FooterLink href={tool.href}>{tool.title}</FooterLink>
+              </li>
+            ))}
+          </FooterColumn>
+
+          <FooterColumn label="Elsewhere">
+            {elsewhereLinks.map((link) => (
+              <li key={link.href}>
+                <FooterLink href={link.href} external>
+                  {link.title}
+                </FooterLink>
+              </li>
+            ))}
+          </FooterColumn>
         </div>
 
-        <div className="flex flex-col gap-4">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <FooterExternalLink href="https://github.com/JonathanRReed/simple-dev-tools" label="GitHub" />
-            <FooterExternalLink href={siteConfig.provider.url} label="helloworldfirm.com" />
-            <FooterExternalLink href="https://JonathanRReed.com" label="JonathanRReed.com" />
-          </div>
-          <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-            {trustPages.map((page) => (
-              <a key={page.href} href={page.href} className="inline-flex min-h-11 min-w-11 items-center text-primary underline-offset-4 hover:underline">
-                {page.title}
-              </a>
-            ))}
-            <a
-              href="https://jonathanrreed.com/projects/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex min-h-11 items-center gap-1 text-primary underline-offset-4 hover:underline"
-            >
-              More projects
-              <ArrowUpRight className="h-3.5 w-3.5" />
-            </a>
-          </div>
-          <Button asChild className="h-11 w-fit px-5">
-            <a href="/api-snippet/">
-              Explore tools
-              <ArrowUpRight className="h-4 w-4" />
-            </a>
-          </Button>
+        <div className="mt-10 flex flex-col gap-2 border-t-2 border-border pt-5 font-mono text-[0.7rem] uppercase tracking-wider text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+          <span>
+            © {new Date().getFullYear()} {siteConfig.author.name} · {siteConfig.provider.name}
+          </span>
+          <span>v{packageJson.version} · Functional Source License</span>
         </div>
       </div>
     </footer>
   );
 }
 
-function FooterExternalLink({ href, label }: { href: string; label: string }) {
+function FooterColumn({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <nav aria-label={label} className="flex flex-col gap-3">
+      <p className="brutal-label">{label}</p>
+      <ul className="flex flex-col gap-1.5">{children}</ul>
+    </nav>
+  );
+}
+
+function FooterLink({
+  href,
+  external,
+  children,
+}: {
+  href: string;
+  external?: boolean;
+  children: React.ReactNode;
+}) {
   return (
     <a
       href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="flex min-h-12 items-center justify-between border-2 border-border bg-card px-4 py-3 text-sm transition-colors hover:border-primary hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+      className="inline-flex min-h-9 items-center gap-1 text-sm text-foreground underline-offset-4 transition-colors hover:text-primary hover:underline focus-visible:text-primary"
     >
-      <span className="font-semibold text-primary">{label}</span>
-      <ExternalLink className="h-4 w-4 text-primary" />
+      {children}
+      {external ? <ArrowUpRight className="size-3.5 text-muted-foreground" aria-hidden="true" /> : null}
     </a>
   );
 }
