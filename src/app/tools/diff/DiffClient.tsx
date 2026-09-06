@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment, useEffect, useMemo, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import {
   diffWords,
   diffLines,
@@ -152,8 +152,13 @@ export default function DiffClient() {
     return { added, removed, unchanged };
   }, [lineChanges]);
 
-  const patch = useMemo(() => {
-    if (bothEmpty || tooLarge) return '';
+  // Built on demand rather than per keystroke. createTwoFilesPatch runs a third
+  // full line diff internally, and its only consumers are the copy and download
+  // actions below, so computing it eagerly tripled the diff work for output
+  // most sessions never ask for.
+  const canPatch = !bothEmpty && !tooLarge;
+  const buildPatch = useCallback((): string => {
+    if (!canPatch) return '';
     return (
       createTwoFilesPatch(
         'original.txt',
@@ -165,7 +170,7 @@ export default function DiffClient() {
         buildPatchOptions(ignoreWhitespace, ignoreCase)
       ) ?? ''
     );
-  }, [debouncedOriginal, debouncedChanged, ignoreWhitespace, ignoreCase, bothEmpty, tooLarge]);
+  }, [canPatch, debouncedOriginal, debouncedChanged, ignoreWhitespace, ignoreCase]);
 
   const handleSample = () => {
     setOriginal(SAMPLE_A);
@@ -186,6 +191,7 @@ export default function DiffClient() {
   };
 
   const handleDownload = (ext: 'diff' | 'patch') => {
+    const patch = buildPatch();
     if (!patch) return;
     downloadFile(patch, `changes.${ext}`, 'text/x-diff;charset=utf-8');
   };
@@ -392,16 +398,16 @@ export default function DiffClient() {
             actions={
               <>
                 <CopyButton
-                  value={() => patch}
+                  value={buildPatch}
                   label="Copy unified"
-                  disabled={!patch}
+                  disabled={!canPatch}
                 />
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   onClick={() => handleDownload('diff')}
-                  disabled={!patch}
+                  disabled={!canPatch}
                 >
                   .diff
                 </Button>
@@ -410,7 +416,7 @@ export default function DiffClient() {
                   variant="outline"
                   size="sm"
                   onClick={() => handleDownload('patch')}
-                  disabled={!patch}
+                  disabled={!canPatch}
                 >
                   .patch
                 </Button>

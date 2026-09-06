@@ -13,7 +13,26 @@ export interface FileDropProps
   accept?: string;
   /** Accessible label for the drop zone and its import control. */
   label?: string;
+  /**
+   * Skip reading the file as text and hand the consumer an empty string with
+   * the File. For consumers that only want the File itself (the hash tool
+   * reads it as an ArrayBuffer), reading it as text first is a wasted full
+   * copy into a JS string — and for a large binary that copy is what runs the
+   * tab out of memory, before the real read even starts.
+   */
+  skipTextRead?: boolean;
+  /** Reject files larger than this. Ignored when `skipTextRead` is set. */
+  maxBytes?: number;
   children: React.ReactNode;
+}
+
+/** Text imports are pasted into an editor, so a modest ceiling is plenty. */
+const DEFAULT_MAX_BYTES = 10 * 1024 * 1024;
+
+function formatBytes(n: number): string {
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+  return `${(n / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 /**
@@ -23,24 +42,47 @@ export interface FileDropProps
  * read errors are announced via a polite live region.
  */
 const FileDrop = React.forwardRef<HTMLDivElement, FileDropProps>(
-  ({ onFileText, accept, label = "Import file", className, children, ...props }, ref) => {
+  (
+    {
+      onFileText,
+      accept,
+      label = "Import file",
+      skipTextRead = false,
+      maxBytes = DEFAULT_MAX_BYTES,
+      className,
+      children,
+      ...props
+    },
+    ref
+  ) => {
     const [dragging, setDragging] = React.useState(false);
-    const [readError, setReadError] = React.useState(false);
+    const [readError, setReadError] = React.useState<string | null>(null);
     const depth = React.useRef(0);
     const inputRef = React.useRef<HTMLInputElement>(null);
     const inputId = React.useId();
 
     const readAndEmit = React.useCallback(
       async (file: File) => {
+        if (skipTextRead) {
+          setReadError(null);
+          onFileText("", file);
+          return;
+        }
+        if (file.size > maxBytes) {
+          setReadError(
+            `That file is ${formatBytes(file.size)} — the limit is ${formatBytes(maxBytes)}`
+          );
+          return;
+        }
         try {
           const text = await file.text();
-          setReadError(false);
+          setReadError(null);
           onFileText(text, file);
         } catch {
-          setReadError(true);
+          setReadError("Could not read that file");
         }
       },
-      [onFileText]
+      [onFileText, skipTextRead, maxBytes]
     );
 
     const onDragEnter = (event: React.DragEvent) => {
@@ -98,7 +140,7 @@ const FileDrop = React.forwardRef<HTMLDivElement, FileDropProps>(
           >
             <span className="brutal-label flex items-center gap-2 text-foreground">
               <Upload className="size-4" aria-hidden="true" />
-              {dragging ? "Drop file to import" : "Could not read that file"}
+              {dragging ? "Drop file to import" : readError}
             </span>
           </div>
         ) : null}

@@ -202,12 +202,29 @@ export default function QueryClient() {
 
   /** Serialize rows back into the canonical source string. */
   const serializeRows = useCallback(
-    (next: Row[]): string =>
+    (next: Row[], sp: boolean = spacePlus): string =>
       next
         .filter((row) => !(row.key === "" && row.value === ""))
-        .map((row) => `${encodeForm(row.key, spacePlus)}=${encodeForm(row.value, spacePlus)}`)
+        .map((row) => `${encodeForm(row.key, sp)}=${encodeForm(row.value, sp)}`)
         .join("&"),
     [spacePlus]
+  );
+
+  /**
+   * Switch the spacing convention and re-commit the source in it.
+   *
+   * refreshDisplay only rewrites the *displayed* cell strings, so previously a
+   * toggle left `input` — the value behind Copy link and localStorage — in the
+   * old encoding until the next cell edit. A link shared right after toggling
+   * did not round-trip to what the sharer was looking at.
+   */
+  const handleSpacing = useCallback(
+    (next: boolean) => {
+      setSpacePlus(next);
+      skipParseRef.current = true;
+      setInput(serializeRows(rows, next));
+    },
+    [rows, serializeRows, setInput]
   );
 
   /** Apply a row-list change and mirror it into the persisted/shared source. */
@@ -401,7 +418,7 @@ export default function QueryClient() {
                   type="button"
                   size="sm"
                   variant={spacePlus ? "default" : "outline"}
-                  onClick={() => setSpacePlus(true)}
+                  onClick={() => handleSpacing(true)}
                   aria-pressed={spacePlus}
                   aria-label="Encode spaces as plus"
                 >
@@ -411,7 +428,7 @@ export default function QueryClient() {
                   type="button"
                   size="sm"
                   variant={!spacePlus ? "default" : "outline"}
-                  onClick={() => setSpacePlus(false)}
+                  onClick={() => handleSpacing(false)}
                   aria-pressed={!spacePlus}
                   aria-label="Encode spaces as percent twenty"
                 >

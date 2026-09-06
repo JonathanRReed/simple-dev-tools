@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
 import { Label } from "@/components/ui/label";
 import { Alert } from "@/components/ui/alert";
+import { copyToClipboard } from "@/lib/clipboard";
 import { Badge } from "@/components/ui/badge";
 import { ResultPanel } from "@/components/ui/result-panel";
 import { readShareParams } from "@/lib/share";
@@ -34,31 +35,6 @@ type ParseResult =
   | { ok: true; date: Date; detected: Detection }
   | { ok: false };
 
-/** Copy text to the clipboard with a non-secure-context fallback. */
-async function copyToClipboard(text: string): Promise<boolean> {
-  try {
-    if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
-      await navigator.clipboard.writeText(text);
-      return true;
-    }
-  } catch {
-    /* fall through to execCommand */
-  }
-  try {
-    const ta = document.createElement("textarea");
-    ta.value = text;
-    ta.setAttribute("readonly", "");
-    ta.style.position = "fixed";
-    ta.style.top = "-9999px";
-    document.body.appendChild(ta);
-    ta.select();
-    const ok = document.execCommand("copy");
-    document.body.removeChild(ta);
-    return ok;
-  } catch {
-    return false;
-  }
-}
 
 /**
  * Parse the "moment" field. All-digit input (optionally signed) is treated as a
@@ -241,11 +217,23 @@ export default function TimestampClient() {
     if (lz && lz !== "local" && zones.includes(lz)) setZone(lz);
   }, [setInput, zones]);
 
-  // Tick once a second so "x seconds/minutes ago" advances on its own.
+  // The timezone list is ~420 entries from Intl.supportedValuesOf. Build the
+  // <option> elements once: they are otherwise reconciled on every tick below.
+  const zoneOptions = useMemo(
+    () => zones.map((z) => (<option key={z} value={z}>{z}</option>)),
+    [zones]
+  );
+
+  // Tick once a second so "x seconds/minutes ago" advances on its own — but
+  // only while there is something whose relative time is on screen. Previously
+  // this ran unconditionally, re-rendering the whole tool once a second even
+  // with an empty input and nothing displayed.
+  const needsTick = input.trim().length > 0;
   useEffect(() => {
+    if (!needsTick) return;
     const id = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(id);
-  }, []);
+  }, [needsTick]);
 
   const parsed = useMemo(() => parseMoment(input), [input]);
   const hasInput = input.trim().length > 0;
@@ -417,11 +405,7 @@ export default function TimestampClient() {
                 onChange={(e) => handleZoneChange(e.target.value)}
                 className="flex h-9 w-full rounded-none border-2 border-input bg-background px-3 py-1 font-mono text-sm transition-colors focus-visible:border-ring focus-visible:outline-none"
               >
-                {zones.map((z) => (
-                  <option key={z} value={z}>
-                    {z}
-                  </option>
-                ))}
+                {zoneOptions}
               </select>
             </div>
             <ResultPanel title={`In ${zone}`} copyValue={fields.inZone}>

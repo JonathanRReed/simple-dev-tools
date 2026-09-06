@@ -8,6 +8,7 @@ import ToolShell from "@/components/tool/ToolShell";
 import { useHotkey } from "@/hooks/use-hotkey";
 import { readShareParams } from "@/lib/share";
 import { Button } from "@/components/ui/button";
+import { copyToClipboard } from "@/lib/clipboard";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
 import { Label } from "@/components/ui/label";
@@ -384,31 +385,6 @@ function PassBadge({ ok, children }: { ok: boolean; children: React.ReactNode })
   );
 }
 
-/** Copy text to the clipboard with a non-secure-context fallback. */
-async function copyText(text: string): Promise<boolean> {
-  try {
-    if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
-      await navigator.clipboard.writeText(text);
-      return true;
-    }
-  } catch {
-    /* fall through to execCommand */
-  }
-  try {
-    const ta = document.createElement("textarea");
-    ta.value = text;
-    ta.setAttribute("readonly", "");
-    ta.style.position = "fixed";
-    ta.style.top = "-9999px";
-    document.body.appendChild(ta);
-    ta.select();
-    const ok = document.execCommand("copy");
-    document.body.removeChild(ta);
-    return ok;
-  } catch {
-    return false;
-  }
-}
 
 /** A click-to-copy ramp swatch: square color block over its hex label. */
 function Swatch({ hex, label }: { hex: string; label: string }) {
@@ -423,7 +399,7 @@ function Swatch({ hex, label }: { hex: string; label: string }) {
   );
 
   const onClick = async () => {
-    const ok = await copyText(hex);
+    const ok = await copyToClipboard(hex);
     setCopied(ok);
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(() => setCopied(false), 1200);
@@ -505,10 +481,15 @@ export default function ColorClient() {
 
   const [fg, setFg] = useState<Rgba | null>(null);
   const [bg, setBg] = useState<Rgba | null>(null);
+  // Split deliberately: parseCssColor forces a synchronous layout, and a single
+  // effect over both fields re-parsed the untouched one on every keystroke in
+  // the other, costing two forced reflows per character instead of one.
   useLayoutEffect(() => {
     setFg(parseCssColor(fgText));
+  }, [fgText]);
+  useLayoutEffect(() => {
     setBg(parseCssColor(bgText));
-  }, [fgText, bgText]);
+  }, [bgText]);
 
   const ramp = useMemo(() => (parsed ? buildRamp(parsed) : null), [parsed]);
 
@@ -578,7 +559,7 @@ export default function ColorClient() {
     (event) => {
       if (text.trim()) {
         event.preventDefault();
-        void copyText(text);
+        void copyToClipboard(text);
       }
     },
     { allowInInput: true }

@@ -19,7 +19,7 @@ import { NO_VALUE, resolvePath } from "@/lib/json-path";
 import { readShareParams } from "@/lib/share";
 import { downloadFile } from "@/lib/download";
 import { useHotkey } from "@/hooks/use-hotkey";
-import { useStoredState } from "@/hooks/use-stored-state";
+import { useDebounced, useStoredState } from "@/hooks/use-stored-state";
 
 type Format = "json" | "yaml" | "csv";
 
@@ -150,23 +150,30 @@ export default function JsonClient() {
     if (typeof params.q === "string") setQuery(params.q);
   }, [setSource]);
 
-  const isEmpty = source.trim() === "";
+  // Parsing, converting and measuring all run off a debounced copy. Each of
+  // them walks the whole document, and they previously ran synchronously on
+  // every keystroke — so a large pasted document was re-parsed and
+  // re-serialised per character typed. Diff already worked this way.
+  const debouncedSource = useDebounced(source, 250);
+
+  const isEmpty = debouncedSource.trim() === "";
 
   // Parse the source into { value } or { error }. Empty source is treated as a
   // benign "no value yet" state (error: null, value: null) — the UI guards on
   // isEmpty separately, so this never renders as a real error.
+
   const parsed = useMemo<{ value: unknown; error: string | null }>(() => {
-    if (source.trim() === "") {
+    if (debouncedSource.trim() === "") {
       return { value: null, error: null };
     }
     try {
-      const value = parseSource(source, sourceFormat);
+      const value = parseSource(debouncedSource, sourceFormat);
       return { value, error: null };
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       return { value: null, error: msg };
     }
-  }, [source, sourceFormat]);
+  }, [debouncedSource, sourceFormat]);
 
   const isValid = !isEmpty && parsed.error === null;
 
@@ -174,7 +181,7 @@ export default function JsonClient() {
   const stats = useMemo(() => {
     // Treat a whitespace-only ("empty") source as 0 B so the stats line agrees
     // with the "empty" badge.
-    const size = isEmpty ? byteSize("") : byteSize(source);
+    const size = isEmpty ? 0 : byteSize(debouncedSource);
     if (!isValid) {
       return { size, type: null as string | null, count: null as number | null, depth: 0 };
     }
@@ -185,7 +192,7 @@ export default function JsonClient() {
       count: topLevelCount(value),
       depth: maxDepth(value),
     };
-  }, [source, isEmpty, isValid, parsed]);
+  }, [debouncedSource, isEmpty, isValid, parsed]);
 
   // Converted output for target format. error is null/"" when there's nothing
   // to report; a non-empty string is a real conversion error (e.g. CSV needs an

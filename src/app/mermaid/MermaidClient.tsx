@@ -12,6 +12,7 @@ import { Alert } from "@/components/ui/alert";
 import { Label } from "@/components/ui/label";
 import { ResultPanel } from "@/components/ui/result-panel";
 import { cn } from "@/lib/utils";
+import { useTabEscape, TAB_ESCAPE_SHORTCUT } from "@/hooks/use-tab-escape";
 import { escapeHtml } from "@/lib/escape-html";
 import { readShareParams } from "@/lib/share";
 import { downloadFile } from "@/lib/download";
@@ -349,7 +350,11 @@ export default function MermaidClient() {
     </>
   );
 
-  const shortcuts = [{ keys: "—", description: "Auto-renders as you type" }];
+  const tabEscape = useTabEscape();
+  const shortcuts = [
+    { keys: "—", description: "Auto-renders as you type" },
+    TAB_ESCAPE_SHORTCUT,
+  ];
 
   return (
     <ToolShell
@@ -366,6 +371,7 @@ export default function MermaidClient() {
             accept=".mmd,.mermaid,.txt,text/plain"
             label="Import diagram"
             className="min-h-[260px] border-2 border-border bg-background font-mono text-sm text-foreground focus-within:ring-2 focus-within:ring-ring"
+            {...tabEscape.containerProps}
           >
             <Editor
               value={code}
@@ -376,8 +382,12 @@ export default function MermaidClient() {
               style={{ minHeight: 260, background: "none", opacity: highlightReady ? 1 : 0.85 }}
               textareaId="mermaid-editor"
               spellCheck={false}
+              ignoreTabKey={tabEscape.ignoreTabKey}
             />
           </FileDrop>
+          <p className="text-xs text-muted-foreground">
+            Tab indents. Press Esc then Tab to move focus out of the editor.
+          </p>
           {error ? <Alert variant="error">{error}</Alert> : null}
         </div>
         <ResultPanel

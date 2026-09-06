@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { ResultPanel } from "@/components/ui/result-panel";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { useTabEscape, TAB_ESCAPE_SHORTCUT } from "@/hooks/use-tab-escape";
 import { escapeHtml } from "@/lib/escape-html";
 import { readShareParams } from "@/lib/share";
 import { downloadFile } from "@/lib/download";
@@ -457,7 +458,8 @@ export default function SQLiteClient() {
     </>
   );
 
-  const shortcuts = [{ keys: "⌘ ↵", description: "Run query" }];
+  const tabEscape = useTabEscape();
+  const shortcuts = [{ keys: "⌘ ↵", description: "Run query" }, TAB_ESCAPE_SHORTCUT];
 
   return (
     <ToolShell
@@ -474,6 +476,7 @@ export default function SQLiteClient() {
             accept=".sql,.txt,text/plain"
             label="Import SQL"
             className="border-2 border-border bg-background focus-within:ring-2 focus-within:ring-ring"
+            {...tabEscape.containerProps}
           >
             <Editor
               value={sql}
@@ -484,8 +487,12 @@ export default function SQLiteClient() {
               style={{ minHeight: 200, background: "none", opacity: highlightReady ? 1 : 0.85 }}
               textareaId="sqlite-editor"
               spellCheck={false}
+              ignoreTabKey={tabEscape.ignoreTabKey}
             />
           </FileDrop>
+          <p className="text-xs text-muted-foreground">
+            Tab indents. Press Esc then Tab to move focus out of the editor.
+          </p>
           <div className="flex flex-wrap items-center gap-3">
             <Button onClick={runQuery} disabled={!dbReady || loading}>
               <Play aria-hidden="true" />

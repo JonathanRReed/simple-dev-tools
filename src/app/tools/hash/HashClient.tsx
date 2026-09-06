@@ -233,6 +233,7 @@ export default function HashClient() {
               <FileDrop
                 onFileText={handleFile}
                 label="Import file"
+                skipTextRead
                 className="group"
               >
                 <div className="relative flex min-h-[280px] flex-col items-center justify-center gap-4 border-2 border-dashed border-border bg-card p-6 text-center">
