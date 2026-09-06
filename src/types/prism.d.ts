@@ -13,7 +13,3 @@ declare module "prismjs/components/prism-javascript" {
   export = javascript;
 }
 
-declare module "prismjs/themes/prism-tomorrow.css" {
-  const css: unknown;
-  export default css;
-}

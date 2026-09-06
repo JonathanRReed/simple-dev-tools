@@ -167,6 +167,16 @@
   --border: 249 15% 49%;
   --input: 248 13% 46%;
   --ring: 267 57% 78%;
+
+  /* Syntax tokens: solved for >=4.5:1 on this theme's --rp-base. */
+  --code-comment: #89859f;
+  --code-punctuation: #908caa;
+  --code-keyword: #c4a7e7;
+  --code-string: #9ccfd8;
+  --code-number: #f6c177;
+  --code-operator: #ebbcba;
+  --code-function: #eb6f92;
+  --code-tag: #3d91b2;
 }
 
 :root[data-theme="moon"] {
@@ -212,6 +222,16 @@
   --border: 247 16% 56%;
   --input: 249 15% 50.5%;
   --ring: 267 57% 78%;
+
+  /* Syntax tokens: solved for >=4.5:1 on this theme's --rp-base. */
+  --code-comment: #9390a7;
+  --code-punctuation: #938fac;
+  --code-keyword: #c4a7e7;
+  --code-string: #9ccfd8;
+  --code-number: #f6c177;
+  --code-operator: #ea9a97;
+  --code-function: #eb6f92;
+  --code-tag: #479cbe;
 }
 
 :root[data-theme="dawn"] {
@@ -260,6 +280,16 @@
   --border: 315 4% 54%;
   --input: 10 9% 56.5%;
   --ring: 343 45% 42%;
+
+  /* Syntax tokens: solved for >=4.5:1 on this theme's --rp-base. */
+  --code-comment: #726b81;
+  --code-punctuation: #6f6b8a;
+  --code-keyword: #7e649b;
+  --code-string: #45767e;
+  --code-number: #97631b;
+  --code-operator: #c3443e;
+  --code-function: #a75069;
+  --code-tag: #286983;
 }
 
 :root[data-theme="raycast"] {
@@ -305,6 +335,16 @@
   --border: 0 0% 42%;
   --input: 0 0% 39.5%;
   --ring: 0 100% 69%;
+
+  /* Syntax tokens: solved for >=4.5:1 on this theme's --rp-base. */
+  --code-comment: #818181;
+  --code-punctuation: #a3a3a3;
+  --code-keyword: #b28ffc;
+  --code-string: #53d3d1;
+  --code-number: #fbd06a;
+  --code-operator: #fc8d83;
+  --code-function: #fb6767;
+  --code-tag: #21a0a0;
 }
 
 :root[data-theme="art-deco"] {
@@ -350,6 +390,16 @@
   --border: 210 40% 40%;
   --input: 211 43% 39%;
   --ring: 206 54% 69%;
+
+  /* Syntax tokens: solved for >=4.5:1 on this theme's --rp-base. */
+  --code-comment: #8f826f;
+  --code-punctuation: #c8b89e;
+  --code-keyword: #88b0d8;
+  --code-string: #6aa3cf;
+  --code-number: #e1bb62;
+  --code-operator: #f0dbb0;
+  --code-function: #c89a42;
+  --code-tag: #5f96b5;
 }
 
 :root[data-theme="paper"] {
@@ -395,6 +445,16 @@
   --border: 36 19% 48.5%;
   --input: 38 28% 49.5%;
   --ring: 210 49% 37%;
+
+  /* Syntax tokens: solved for >=4.5:1 on this theme's --rp-base. */
+  --code-comment: #726d62;
+  --code-punctuation: #5f6b73;
+  --code-keyword: #6e5f9b;
+  --code-string: #407579;
+  --code-number: #8f621e;
+  --code-operator: #9c593f;
+  --code-function: #b14f59;
+  --code-tag: #2f5d8c;
 }
 
 :root[data-theme] {
@@ -536,4 +596,63 @@
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* --- Syntax highlighting -----------------------------------------------
+   Replaces prismjs/themes/prism-tomorrow.css, which was a fixed dark theme
+   loaded on every theme: on the two light palettes its tokens measured
+   1.4-2.8:1 and were effectively unreadable. These rules are driven by the
+   per-theme --code-* variables above, so highlighting follows the active
+   theme and every token clears 4.5:1 (asserted in theme-contrast.test.ts).
+   ---------------------------------------------------------------------- */
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: var(--code-comment);
+}
+.token.punctuation {
+  color: var(--code-punctuation);
+}
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: var(--code-tag);
+}
+.token.boolean,
+.token.number,
+.token.regex {
+  color: var(--code-number);
+}
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: var(--code-string);
+}
+.token.operator,
+.token.entity,
+.token.url,
+.token.variable {
+  color: var(--code-operator);
+}
+.token.atrule,
+.token.attr-value,
+.token.function,
+.token.class-name {
+  color: var(--code-function);
+}
+.token.keyword {
+  color: var(--code-keyword);
+}
+.token.important,
+.token.bold {
+  font-weight: 700;
+}
+.token.italic {
+  font-style: italic;
 }

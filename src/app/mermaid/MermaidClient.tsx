@@ -150,7 +150,6 @@ export default function MermaidClient() {
     let cancelled = false;
     (async () => {
       const prismModule = await import("prismjs");
-      await import("prismjs/themes/prism-tomorrow.css");
       if (cancelled) return;
       const Prism = prismModule.default ?? prismModule;
       highlightRef.current = (value: string) => Prism.highlight(value, Prism.languages.markup, "markup");

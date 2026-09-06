@@ -139,6 +139,37 @@ describe("theme palettes meet WCAG contrast", () => {
           expect(contrast(fg, on)).toBeGreaterThanOrEqual(UI_MIN);
         });
       }
+
+      // Syntax highlighting replaced prismjs/themes/prism-tomorrow.css, a fixed
+      // dark theme that measured 1.4-2.8:1 on the light palettes. Tokens are
+      // code — normal text — so they owe the full 4.5:1. A highlighted block
+      // can sit on the page background, on a card, or on the raw --rp-base
+      // editor surface, so every token is checked against all three; measuring
+      // only one of them is how two tokens previously slipped through at 4.47.
+      const CODE_SURFACES: [string, Rgb][] = [
+        ["background", bg],
+        ["card", card],
+        ["rp-base", palette(block, "rp-base")],
+      ];
+      const CODE_TOKENS = [
+        "comment", "punctuation", "keyword", "string",
+        "number", "operator", "function", "tag",
+      ];
+
+      for (const name of CODE_TOKENS) {
+        test(`code: --code-${name}`, () => {
+          const color = palette(block, `code-${name}`);
+          for (const [surface, on] of CODE_SURFACES) {
+            const ratio = contrast(color, on);
+            if (ratio < TEXT_MIN) {
+              throw new Error(
+                `--code-${name} is ${ratio.toFixed(2)}:1 on ${surface} (needs ${TEXT_MIN})`
+              );
+            }
+            expect(ratio).toBeGreaterThanOrEqual(TEXT_MIN);
+          }
+        });
+      }
     });
   }
 });

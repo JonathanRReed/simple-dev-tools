@@ -295,10 +295,7 @@ export default function SQLiteClient() {
     let cancelled = false;
     (async () => {
       const prismModule = await import("prismjs");
-      await Promise.all([
-        import("prismjs/components/prism-sql"),
-        import("prismjs/themes/prism-tomorrow.css"),
-      ]);
+      await import("prismjs/components/prism-sql");
       if (cancelled) return;
       const Prism = prismModule.default ?? prismModule;
       highlightRef.current = (value: string) => Prism.highlight(value, Prism.languages.sql, "sql");
