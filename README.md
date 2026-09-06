@@ -36,6 +36,7 @@ locally" badge making the no-backend guarantee visible where you work.
 
 - Next.js 16 static export
 - React 19, Tailwind CSS 4 (CSS-first config in `src/app/globals.css`, no `tailwind.config.js`), and Radix UI
+- CodeMirror 6 for the SQL and Mermaid editors, themed from the same `--code-*` variables as the rest of the palette
 - TypeScript 6 and Bun 1.4
 - Linting: [oxlint](https://oxc.rs/docs/guide/usage/linter) for the fast correctness pass, then `eslint-config-next` for the Next.js and React Hooks rules
 

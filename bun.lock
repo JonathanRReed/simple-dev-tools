@@ -5,10 +5,8 @@
     "": {
       "name": "simple-dev-tools",
       "dependencies": {
-        "@codemirror/commands": "6",
         "@codemirror/lang-sql": "6.10.0",
         "@codemirror/language": "6",
-        "@codemirror/search": "6",
         "@codemirror/state": "6",
         "@codemirror/view": "6",
         "@lezer/highlight": "1",
