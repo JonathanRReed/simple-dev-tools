@@ -81,7 +81,15 @@ test('Schema Studio parses and documents a sample schema', async ({ page }) => {
   await page.getByRole('tab', { name: 'Validate' }).click();
   await expect(page.getByText('Valid. Data conforms to the schema.')).toBeVisible();
   await page.getByRole('tab', { name: 'Docs' }).click();
-  await expect(page.locator('.swagger-ui')).toBeVisible({ timeout: 20_000 });
+  // Assert the rendered documentation, not just that a container mounted —
+  // the previous `.swagger-ui` locator passed even when the widget rendered
+  // unstyled with no stylesheet loaded.
+  await expect(page.getByRole('heading', { name: 'Sample API' })).toBeVisible();
+  await expect(page.getByText('1 operation', { exact: true })).toBeVisible();
+  const operation = page.locator('details', { hasText: '/hello' }).first();
+  await expect(operation).toBeVisible();
+  await operation.locator('summary').click();
+  await expect(operation.getByText('OK', { exact: true })).toBeVisible();
 });
 
 test('unknown routes return a single noindex directive', async ({ page }) => {

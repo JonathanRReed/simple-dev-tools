@@ -1,9 +1,9 @@
 "use client";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import dynamic from "next/dynamic";
 import YAML from "yaml";
 import { AlignLeft, Download, RotateCcw, Sparkles, Wand2 } from "lucide-react";
 
+import OpenApiDocs from "@/components/tool/OpenApiDocs";
 import ToolShell from "@/components/tool/ToolShell";
 import { FileDrop } from "@/components/FileDrop";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -19,17 +19,6 @@ import { readShareParams } from "@/lib/share";
 import { downloadFile } from "@/lib/download";
 import { useHotkey } from "@/hooks/use-hotkey";
 import { useDebounced } from "@/hooks/use-stored-state";
-
-interface SwaggerUIProps {
-  spec?: unknown;
-  url?: string;
-  docExpansion?: "list" | "full" | "none";
-  defaultModelsExpandDepth?: number;
-  defaultModelExpandDepth?: number;
-  [key: string]: unknown;
-}
-
-const SwaggerUI = dynamic(() => import("swagger-ui-react"), { ssr: false }) as React.ComponentType<SwaggerUIProps>;
 
 type AjvInstance = import("ajv").default;
 
@@ -931,7 +920,7 @@ export default function SchemaStudioClient() {
             ) : (
               <ResultPanel title="API documentation" bodyClassName="p-0">
                 <div className="max-h-[640px] overflow-auto">
-                  <SwaggerUI spec={parsed.value} docExpansion="list" defaultModelsExpandDepth={1} />
+                  <OpenApiDocs spec={parsed.value} />
                 </div>
               </ResultPanel>
             )}
