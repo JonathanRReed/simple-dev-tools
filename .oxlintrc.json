@@ -42,6 +42,8 @@
     "no-underscore-dangle": "off",
     "unicorn/no-array-sort": "off",
     "unicorn/prefer-add-event-listener": "off",
-    "react/exhaustive-effect-dependencies": "off"
+    "react/exhaustive-effect-dependencies": "off",
+    "react/incompatible-library": "off",
+    "jsx-a11y/no-noninteractive-tabindex": "off"
   }
 }

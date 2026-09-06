@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   diffWords,
   diffLines,
@@ -27,6 +27,7 @@ import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { CopyButton } from '@/components/ui/copy-button';
 import { ResultPanel } from '@/components/ui/result-panel';
+import VirtualList from '@/components/tool/VirtualList';
 import { FileDrop } from '@/components/FileDrop';
 import { useDebounced } from '@/hooks/use-stored-state';
 import { downloadFile } from '@/lib/download';
@@ -394,7 +395,8 @@ export default function DiffClient() {
         ) : (
           <ResultPanel
             title="Diff"
-            scroll
+            scroll={mode === 'unified' && level === 'word'}
+            bodyClassName={mode === 'unified' && level === 'word' ? undefined : 'p-0'}
             actions={
               <>
                 <CopyButton
@@ -439,43 +441,66 @@ export default function DiffClient() {
   );
 }
 
+type UnifiedRow = {
+  marker: string;
+  colorClass: string;
+  line: string;
+  label: string;
+};
+
+/** Flatten the change chunks into one entry per rendered line. */
+function toUnifiedRows(changes: ChangeObject<string>[]): UnifiedRow[] {
+  const rows: UnifiedRow[] = [];
+  for (const c of changes) {
+    const marker = c.added ? '+' : c.removed ? '-' : ' ';
+    // Semantic color stays in the border/tint; text uses foreground so
+    // light themes (dawn/paper) keep WCAG AA contrast.
+    const colorClass = c.added
+      ? 'border-rp-foam bg-rp-foam/10 text-foreground'
+      : c.removed
+        ? 'border-rp-love bg-rp-love/10 text-foreground'
+        : 'border-border bg-card text-foreground';
+    const label = c.added ? 'added: ' : c.removed ? 'removed: ' : '';
+    for (const line of splitLines(c.value)) {
+      rows.push({ marker, colorClass, line, label });
+    }
+  }
+  return rows;
+}
+
 function LineUnified({ changes }: { changes: ChangeObject<string>[] }) {
+  const rows = useMemo(() => toUnifiedRows(changes), [changes]);
   return (
-    <div className="space-y-1 font-mono text-sm">
-      {changes.map((c, i) => {
-        const marker = c.added ? '+' : c.removed ? '-' : ' ';
-        // Semantic color stays in the border/tint; text uses foreground so
-        // light themes (dawn/paper) keep WCAG AA contrast.
-        const colorClass = c.added
-          ? 'border-rp-foam bg-rp-foam/10 text-foreground'
-          : c.removed
-            ? 'border-rp-love bg-rp-love/10 text-foreground'
-            : 'border-border bg-card text-foreground';
-        const lines = splitLines(c.value);
-        return lines.map((line, li) => (
+    <VirtualList
+      items={rows}
+      estimateSize={30}
+      className="font-mono text-sm"
+      ariaLabel="Unified diff"
+    >
+      {(row) => (
+        <div className="pb-1 pr-1">
           <div
-            key={`${i}-${li}`}
             className={cn(
               'grid grid-cols-[1.5rem_1fr] gap-3 border-2 px-2 py-1',
-              colorClass
+              row.colorClass
             )}
           >
             <span className="select-none text-center font-semibold" aria-hidden="true">
-              {marker}
+              {row.marker}
             </span>
             <span
               className={cn(
                 'whitespace-pre-wrap break-words',
-                line === '' ? 'text-muted-foreground' : ''
+                row.line === '' ? 'text-muted-foreground' : ''
               )}
             >
-              <span className="sr-only">{c.added ? 'added: ' : c.removed ? 'removed: ' : ''}</span>
-              {line}
+              <span className="sr-only">{row.label}</span>
+              {row.line}
             </span>
           </div>
-        ));
-      })}
-    </div>
+        </div>
+      )}
+    </VirtualList>
   );
 }
 
@@ -553,62 +578,62 @@ function SideBySide({
 }) {
   const rows = useMemo(() => toSideBySideRows(changes), [changes]);
 
+  // Each row is a single flex element holding both halves, rather than cells in
+  // one tall 2-column grid. Both halves still stretch to the row's height, so
+  // the columns stay aligned, and a row is now a unit the windowing can measure
+  // and mount on its own.
   return (
-    <div
-      className="grid grid-cols-2 gap-0 border-2 border-border bg-card"
-      role="group"
-      aria-label="Side by side diff"
-    >
-      <div className="border-b-2 border-r-2 border-border bg-rp-highlight-low px-2 py-1 font-mono text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-        Original
+    <div className="border-2 border-border bg-card" role="group" aria-label="Side by side diff">
+      <div className="flex border-b-2 border-border bg-rp-highlight-low font-mono text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <div className="w-1/2 border-r-2 border-border px-2 py-1">Original</div>
+        <div className="w-1/2 px-2 py-1">Changed</div>
       </div>
-      <div className="border-b-2 border-border bg-rp-highlight-low px-2 py-1 font-mono text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-        Changed
-      </div>
-      {rows.map((row, i) => {
-        if (row.kind === 'common') {
+      <VirtualList items={rows} estimateSize={30} ariaLabel="Side by side diff rows">
+        {(row) => {
+          if (row.kind === 'common') {
+            return (
+              <div className="flex items-stretch">
+                <div className="min-h-[1.5rem] w-1/2 whitespace-pre-wrap break-words border-b-2 border-r-2 border-border px-2 py-1 font-mono text-sm text-foreground">
+                  {row.value}
+                </div>
+                <div className="min-h-[1.5rem] w-1/2 whitespace-pre-wrap break-words border-b-2 border-border px-2 py-1 font-mono text-sm text-foreground">
+                  {row.value}
+                </div>
+              </div>
+            );
+          }
+
+          const hasLeft = row.left != null;
+          const hasRight = row.right != null;
+
           return (
-            <Fragment key={i}>
-              <div className="min-h-[1.5rem] whitespace-pre-wrap break-words border-b-2 border-r-2 border-border px-2 py-1 font-mono text-sm text-foreground">
-                {row.value}
+            <div className="flex items-stretch">
+              <div
+                className={cn(
+                  'min-h-[1.5rem] w-1/2 whitespace-pre-wrap break-words border-b-2 px-2 py-1 font-mono text-sm',
+                  hasLeft
+                    ? 'border-rp-love border-r-2 bg-rp-love/10 text-foreground'
+                    : 'border-r-2 border-border text-muted-foreground'
+                )}
+              >
+                <span className="sr-only">{hasLeft ? 'removed: ' : ''}</span>
+                {hasLeft ? row.left : level === 'word' ? '\u00A0' : ''}
               </div>
-              <div className="min-h-[1.5rem] whitespace-pre-wrap break-words border-b-2 border-border px-2 py-1 font-mono text-sm text-foreground">
-                {row.value}
+              <div
+                className={cn(
+                  'min-h-[1.5rem] w-1/2 whitespace-pre-wrap break-words border-b-2 px-2 py-1 font-mono text-sm',
+                  hasRight
+                    ? 'border-rp-foam bg-rp-foam/10 text-foreground'
+                    : 'border-border text-muted-foreground'
+                )}
+              >
+                <span className="sr-only">{hasRight ? 'added: ' : ''}</span>
+                {hasRight ? row.right : level === 'word' ? '\u00A0' : ''}
               </div>
-            </Fragment>
+            </div>
           );
-        }
-
-        const hasLeft = row.left != null;
-        const hasRight = row.right != null;
-
-        return (
-          <Fragment key={i}>
-            <div
-              className={cn(
-                'min-h-[1.5rem] whitespace-pre-wrap break-words border-b-2 px-2 py-1 font-mono text-sm',
-                hasLeft
-                  ? 'border-rp-love border-r-2 bg-rp-love/10 text-foreground'
-                  : 'border-r-2 border-border text-muted-foreground'
-              )}
-            >
-              <span className="sr-only">{hasLeft ? 'removed: ' : ''}</span>
-              {hasLeft ? row.left : level === 'word' ? '\u00A0' : ''}
-            </div>
-            <div
-              className={cn(
-                'min-h-[1.5rem] whitespace-pre-wrap break-words border-b-2 px-2 py-1 font-mono text-sm',
-                hasRight
-                  ? 'border-rp-foam bg-rp-foam/10 text-foreground'
-                  : 'border-border text-muted-foreground'
-              )}
-            >
-              <span className="sr-only">{hasRight ? 'added: ' : ''}</span>
-              {hasRight ? row.right : level === 'word' ? '\u00A0' : ''}
-            </div>
-          </Fragment>
-        );
-      })}
+        }}
+      </VirtualList>
     </div>
   );
 }

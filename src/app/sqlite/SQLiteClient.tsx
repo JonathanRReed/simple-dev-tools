@@ -16,16 +16,10 @@ import { Badge } from "@/components/ui/badge";
 import { readShareParams } from "@/lib/share";
 import { downloadFile } from "@/lib/download";
 import { useHotkey } from "@/hooks/use-hotkey";
+import { useVirtualizer } from "@tanstack/react-virtual";
+
 import { useStoredState } from "@/hooks/use-stored-state";
 
-/**
- * Cap on rows painted into the results table. A query is free to return far
- * more, and did: every row was rendered unconditionally, so a result set in
- * the tens of thousands built hundreds of thousands of cells in one commit and
- * locked up the tab. The full result is still counted, exported and
- * downloadable — only the on-screen table is truncated.
- */
-const MAX_RENDERED_ROWS = 1000;
 
 const DEFAULT_SQL = `-- Try: SELECT 42 AS answer;`;
 
@@ -247,6 +241,93 @@ function resultsToJson(results: ResultSet[]): string {
   return JSON.stringify(mapped.length === 1 ? mapped[0] : mapped, null, 2);
 }
 
+/**
+ * A single result set, windowed.
+ *
+ * Every returned row used to be mounted, so a result in the tens of thousands
+ * built hundreds of thousands of cells in one commit and locked the tab up.
+ * This keeps the semantic <table> — and its header, scopes and caption — and
+ * windows the body with spacer rows, so the whole result is scrollable without
+ * all of it being in the DOM.
+ */
+function ResultTable({ result }: { result: ResultSet }) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const virtualizer = useVirtualizer({
+    count: result.values.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => 37,
+    overscan: 16,
+  });
+
+  const virtualRows = virtualizer.getVirtualItems();
+  const totalSize = virtualizer.getTotalSize();
+  const paddingTop = virtualRows.length > 0 ? virtualRows[0].start : 0;
+  const paddingBottom =
+    virtualRows.length > 0 ? totalSize - virtualRows[virtualRows.length - 1].end : 0;
+
+  return (
+    <div ref={scrollRef} className="max-h-[420px] overflow-auto" tabIndex={0} role="region" aria-label="Query results">
+      <table className="min-w-full font-mono text-sm text-foreground">
+        <caption className="sr-only">
+          {result.values.length} rows by {result.columns.length} columns
+        </caption>
+        <thead className="sticky top-0 z-10 bg-card">
+          <tr className="border-b-2 border-border">
+            {result.columns.map((col, i) => (
+              <th
+                key={`${col}-${i}`}
+                scope="col"
+                className="bg-card px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+              >
+                {col}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {result.values.length === 0 ? (
+            <tr>
+              <td colSpan={result.columns.length} className="px-3 py-2 italic text-muted-foreground">
+                No rows.
+              </td>
+            </tr>
+          ) : (
+            <>
+              {paddingTop > 0 ? (
+                <tr aria-hidden="true">
+                  <td aria-hidden="true" colSpan={result.columns.length} style={{ height: paddingTop }}>&nbsp;</td>
+                </tr>
+              ) : null}
+              {virtualRows.map((virtualRow) => {
+                const row = result.values[virtualRow.index];
+                return (
+                  <tr
+                    key={virtualRow.key}
+                    data-index={virtualRow.index}
+                    ref={virtualizer.measureElement}
+                    className="border-b border-border last:border-b-0"
+                  >
+                    {row.map((cell, j) => (
+                      <td key={j} className="px-3 py-2 align-top">
+                        {renderCell(cell)}
+                      </td>
+                    ))}
+                  </tr>
+                );
+              })}
+              {paddingBottom > 0 ? (
+                <tr aria-hidden="true">
+                  <td aria-hidden="true" colSpan={result.columns.length} style={{ height: paddingBottom }}>&nbsp;</td>
+                </tr>
+              ) : null}
+            </>
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 export default function SQLiteClient() {
   const [sql, setSql, clearSql] = useStoredState(SQL_STORAGE_KEY, DEFAULT_SQL);
   const [results, setResults] = useState<ResultSet[] | null>(null);
@@ -408,11 +489,16 @@ export default function SQLiteClient() {
     [results]
   );
 
-  const csvValue = useMemo(() => (results ? resultsToCsv(results) : ""), [results]);
-  const jsonValue = useMemo(() => (results ? resultsToJson(results) : ""), [results]);
+  // Only the visible tab's serialisation is built. Both were computed for every
+  // result set, so a large result was serialised twice — into CSV and into
+  // pretty-printed JSON — before either export tab was opened.
+  const exportValue = useMemo(() => {
+    if (!results) return "";
+    return exportTab === "csv" ? resultsToCsv(results) : resultsToJson(results);
+  }, [results, exportTab]);
 
-  const downloadCsv = () => downloadFile(csvValue, "results.csv", "text/csv;charset=utf-8");
-  const downloadJson = () => downloadFile(jsonValue, "results.json", "application/json");
+  const downloadCsv = () => downloadFile(exportValue, "results.csv", "text/csv;charset=utf-8");
+  const downloadJson = () => downloadFile(exportValue, "results.json", "application/json");
 
   const handleFileText = (text: string) => {
     setSql(text);
@@ -491,13 +577,18 @@ export default function SQLiteClient() {
               <ResultPanel
                 title="Results"
                 actions={<Badge variant="outline">{`${totalRows} row${totalRows === 1 ? "" : "s"}`}</Badge>}
-                scroll
+                bodyClassName="p-0"
               >
-                <div className="overflow-auto">
+                {/* Each ResultTable owns its own scroll viewport. The panel used
+                    to add a second one around them, so on a wide result the
+                    horizontal scrollbar sat at the bottom of the content rather
+                    than the visible window — you had to scroll to the end of the
+                    rows to reach it. */}
+                <div>
                   {results.map((result, idx) => (
-                    <div key={idx} className="mb-4 last:mb-0">
+                    <div key={idx} className="border-b-2 border-border last:border-b-0">
                       {results.length > 1 ? (
-                        <p className="brutal-label mb-1">
+                        <p className="brutal-label px-3 pt-2">
                           {`#${idx + 1} · ${result.values.length} row${
                             result.values.length === 1 ? "" : "s"
                           } × ${result.columns.length} col${
@@ -505,52 +596,7 @@ export default function SQLiteClient() {
                           }`}
                         </p>
                       ) : null}
-                      <table className="min-w-full font-mono text-sm text-foreground">
-                      <thead>
-                        <tr className="border-b-2 border-border">
-                          {result.columns.map((col, i) => (
-                            <th
-                              key={`${col}-${i}`}
-                              className="px-3 py-2 text-left font-semibold uppercase tracking-wider text-xs text-muted-foreground"
-                            >
-                              {col}
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {result.values.length === 0 ? (
-                          <tr>
-                            <td
-                              colSpan={result.columns.length}
-                              className="px-3 py-2 text-muted-foreground italic"
-                            >
-                              No rows.
-                            </td>
-                          </tr>
-                        ) : (
-                          result.values.slice(0, MAX_RENDERED_ROWS).map((row, i) => (
-                            <tr key={i} className="border-b border-border last:border-b-0">
-                              {row.map((cell, j) => (
-                                <td key={j} className="px-3 py-2 align-top">
-                                  {renderCell(cell)}
-                                </td>
-                              ))}
-                            </tr>
-                          ))
-                        )}
-                      </tbody>
-                      </table>
-                      {result.values.length > MAX_RENDERED_ROWS ? (
-                        <p
-                          className="border-t-2 border-border px-3 py-2 text-sm text-muted-foreground"
-                          role="status"
-                        >
-                          Showing the first {MAX_RENDERED_ROWS.toLocaleString()} of{" "}
-                          {result.values.length.toLocaleString()} rows. Export as CSV or JSON to
-                          get the full result.
-                        </p>
-                      ) : null}
+                      <ResultTable result={result} />
                     </div>
                   ))}
                 </div>
@@ -580,26 +626,26 @@ export default function SQLiteClient() {
                       <Button variant="outline" size="sm" onClick={downloadCsv}>
                         Download .csv
                       </Button>
-                      <CopyButton value={() => csvValue} label="Copy CSV" />
+                      <CopyButton value={() => exportValue} label="Copy CSV" />
                     </>
                   ) : (
                     <>
                       <Button variant="outline" size="sm" onClick={downloadJson}>
                         Download .json
                       </Button>
-                      <CopyButton value={() => jsonValue} label="Copy JSON" />
+                      <CopyButton value={() => exportValue} label="Copy JSON" />
                     </>
                   )}
                 </div>
               </div>
               <TabsContent value="csv">
                 <ResultPanel scroll mono bodyClassName="text-xs">
-                  {csvValue}
+                  {exportValue}
                 </ResultPanel>
               </TabsContent>
               <TabsContent value="json">
                 <ResultPanel scroll mono bodyClassName="text-xs">
-                  {jsonValue}
+                  {exportValue}
                 </ResultPanel>
               </TabsContent>
             </Tabs>
