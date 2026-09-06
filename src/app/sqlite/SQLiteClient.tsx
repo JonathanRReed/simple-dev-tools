@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { ResultPanel } from "@/components/ui/result-panel";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { escapeHtml } from "@/lib/escape-html";
 import { readShareParams } from "@/lib/share";
 import { downloadFile } from "@/lib/download";
 import { useHotkey } from "@/hooks/use-hotkey";
@@ -71,13 +72,6 @@ type SqlDatabase = {
 type ResultSet = { columns: string[]; values: unknown[][] };
 
 type HighlightFn = (code: string) => string;
-
-/** Escape HTML-special characters. Used as the fallback highlighter so that, before
- *  Prism loads (or if its chunk fails), typed SQL is rendered as text rather than raw
- *  HTML — react-simple-code-editor injects the result via dangerouslySetInnerHTML. */
-function escapeHtml(value: string): string {
-  return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-}
 
 let sqlJsModulePromise: Promise<any> | null = null;
 
@@ -309,7 +303,9 @@ export default function SQLiteClient() {
       const Prism = prismModule.default ?? prismModule;
       highlightRef.current = (value: string) => Prism.highlight(value, Prism.languages.sql, "sql");
       setHighlightReady(true);
-    })();
+    })().catch(() => {
+      // Highlighting is optional; the escaping fallback above stays in place.
+    });
     return () => {
       cancelled = true;
     };
@@ -496,7 +492,7 @@ export default function SQLiteClient() {
           {error ? <Alert variant="error">{error}</Alert> : null}
           <p className="text-xs text-muted-foreground">
             Runs entirely in your browser. Your data stays in your browser (the SQLite WASM module
-            is fetched once from a CDN).
+            is served from this site’s own origin).
           </p>
         </div>
 

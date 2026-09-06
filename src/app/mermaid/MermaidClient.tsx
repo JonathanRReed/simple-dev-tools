@@ -12,6 +12,7 @@ import { Alert } from "@/components/ui/alert";
 import { Label } from "@/components/ui/label";
 import { ResultPanel } from "@/components/ui/result-panel";
 import { cn } from "@/lib/utils";
+import { escapeHtml } from "@/lib/escape-html";
 import { readShareParams } from "@/lib/share";
 import { downloadFile } from "@/lib/download";
 import { useStoredState, useDebounced } from "@/hooks/use-stored-state";
@@ -102,7 +103,12 @@ export default function MermaidClient() {
   const [zoom, setZoom] = useState(1);
   const diagramRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<string | null>(null);
-  const highlightRef = useRef<HighlightFn>((value: string) => value);
+  // MUST escape. react-simple-code-editor injects the highlighter's return
+  // value with dangerouslySetInnerHTML, and this fallback is what renders
+  // during the window between mount (when a #s= share link has already
+  // populated the editor) and Prism's lazy chunk arriving. An identity
+  // function here is a DOM XSS sink reachable from any share URL.
+  const highlightRef = useRef<HighlightFn>(escapeHtml);
   const [highlightReady, setHighlightReady] = useState(false);
 
   // URL hash share state takes precedence over localStorage (hydrated by useStoredState).
@@ -144,16 +150,14 @@ export default function MermaidClient() {
     let cancelled = false;
     (async () => {
       const prismModule = await import("prismjs");
-      await Promise.all([
-        import("prismjs/components/prism-markup"),
-        import("prismjs/components/prism-javascript"),
-        import("prismjs/themes/prism-tomorrow.css"),
-      ]);
+      await import("prismjs/themes/prism-tomorrow.css");
       if (cancelled) return;
       const Prism = prismModule.default ?? prismModule;
       highlightRef.current = (value: string) => Prism.highlight(value, Prism.languages.markup, "markup");
       setHighlightReady(true);
-    })();
+    })().catch(() => {
+      // Highlighting is optional; the escaping fallback above stays in place.
+    });
     return () => {
       cancelled = true;
     };
