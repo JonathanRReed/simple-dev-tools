@@ -59,20 +59,32 @@ function topLevelType(value: unknown): string {
   return typeof value;
 }
 
+/**
+ * Depth of the deepest nested container.
+ *
+ * Deliberately iterative. A recursive walk overflows the call stack at around
+ * 12,000 levels of nesting — and JSON.parse accepts documents that deep, so
+ * `[`x12000 parsed fine and then threw RangeError here. This runs inside a
+ * render-time memo with no try/catch around it, so that error unmounted the
+ * whole tool rather than showing a parse error.
+ */
 function maxDepth(value: unknown): number {
-  if (Array.isArray(value)) {
-    let d = 0;
-    for (const item of value) d = Math.max(d, maxDepth(item));
-    return d + 1;
+  let max = 0;
+  const stack: { node: unknown; depth: number }[] = [{ node: value, depth: 0 }];
+  while (stack.length > 0) {
+    const entry = stack.pop();
+    if (!entry) break;
+    const { node, depth } = entry;
+    const isArray = Array.isArray(node);
+    if (!isArray && (node === null || typeof node !== "object")) continue;
+    const next = depth + 1;
+    if (next > max) max = next;
+    const children = isArray
+      ? (node as unknown[])
+      : Object.values(node as Record<string, unknown>);
+    for (const child of children) stack.push({ node: child, depth: next });
   }
-  if (value !== null && typeof value === "object") {
-    let d = 0;
-    for (const v of Object.values(value as Record<string, unknown>)) {
-      d = Math.max(d, maxDepth(v));
-    }
-    return d + 1;
-  }
-  return 0;
+  return max;
 }
 
 /** key count (objects) or length (arrays) at the top level. */

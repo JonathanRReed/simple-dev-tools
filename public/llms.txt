@@ -29,7 +29,7 @@ The project is intentionally plain: open the tool, inspect or transform the inpu
 
 ## Studios
 
-- [Schema & Types Studio](https://dev-tools.helloworldfirm.com/studio/schema/): Convert sources between JSON Schema, TypeScript interfaces, Zod schemas, and preview Swagger documentation.
+- [Schema & Types Studio](https://dev-tools.helloworldfirm.com/studio/schema/): Convert sources between JSON Schema, TypeScript interfaces, Zod schemas, and read rendered OpenAPI documentation.
 - [Security & Tokens](https://dev-tools.helloworldfirm.com/studio/security/): Inspect and decode JWTs, verify signatures, sign and build new JWTs, compute cryptographic hashes, and generate HMAC signatures using Web Crypto APIs.
 
 ## Technical Documentation

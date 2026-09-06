@@ -15,9 +15,10 @@ import {
  * base64url-encoded, then placed in the URL hash so we never hit static-host
  * query-length limits or trigger refetches. Format: `#s=1:<payload>`.
  *
- * All APIs are synchronous: compression is bounded by MAX_SHARE_INPUT_LENGTH
- * and decompression by MAX_DECOMPRESSED_LENGTH, so hydration can happen in a
- * layout effect with no async race against user input.
+ * All APIs are synchronous, so hydration can happen in a layout effect with no
+ * async race against user input. Reads are bounded by MAX_DECOMPRESSED_LENGTH;
+ * writes are bounded after the fact by MAX_SHARE_ENCODED_LENGTH, which
+ * buildShareUrl checks once the payload is encoded.
  */
 
 const SHARE_VERSION = 1;

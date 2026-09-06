@@ -19,6 +19,15 @@ import { downloadFile } from "@/lib/download";
 import { useHotkey } from "@/hooks/use-hotkey";
 import { useStoredState } from "@/hooks/use-stored-state";
 
+/**
+ * Cap on rows painted into the results table. A query is free to return far
+ * more, and did: every row was rendered unconditionally, so a result set in
+ * the tens of thousands built hundreds of thousands of cells in one commit and
+ * locked up the tab. The full result is still counted, exported and
+ * downloadable — only the on-screen table is truncated.
+ */
+const MAX_RENDERED_ROWS = 1000;
+
 const DEFAULT_SQL = `-- Try: SELECT 42 AS answer;`;
 
 const SAMPLE_SQL = `-- Load sample seeds this schema, then runs the SELECT below.
@@ -538,7 +547,7 @@ export default function SQLiteClient() {
                             </td>
                           </tr>
                         ) : (
-                          result.values.map((row, i) => (
+                          result.values.slice(0, MAX_RENDERED_ROWS).map((row, i) => (
                             <tr key={i} className="border-b border-border last:border-b-0">
                               {row.map((cell, j) => (
                                 <td key={j} className="px-3 py-2 align-top">
@@ -550,6 +559,16 @@ export default function SQLiteClient() {
                         )}
                       </tbody>
                       </table>
+                      {result.values.length > MAX_RENDERED_ROWS ? (
+                        <p
+                          className="border-t-2 border-border px-3 py-2 text-sm text-muted-foreground"
+                          role="status"
+                        >
+                          Showing the first {MAX_RENDERED_ROWS.toLocaleString()} of{" "}
+                          {result.values.length.toLocaleString()} rows. Export as CSV or JSON to
+                          get the full result.
+                        </p>
+                      ) : null}
                     </div>
                   ))}
                 </div>
