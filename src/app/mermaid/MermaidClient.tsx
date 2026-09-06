@@ -12,8 +12,6 @@ import { Alert } from "@/components/ui/alert";
 import { Label } from "@/components/ui/label";
 import { ResultPanel } from "@/components/ui/result-panel";
 import { cn } from "@/lib/utils";
-import { useTabEscape, TAB_ESCAPE_SHORTCUT } from "@/hooks/use-tab-escape";
-import { escapeHtml } from "@/lib/escape-html";
 import { readShareParams } from "@/lib/share";
 import { downloadFile } from "@/lib/download";
 import { useStoredState, useDebounced } from "@/hooks/use-stored-state";
@@ -64,16 +62,14 @@ const TEMPLATES = [
   },
 ];
 
-const Editor = dynamic(() => import("react-simple-code-editor"), {
+const CodeEditor = dynamic(() => import("@/components/tool/CodeEditor"), {
   ssr: false,
   loading: () => (
-    <div className="min-h-[180px] border-2 border-border bg-background animate-pulse" />
+    <div className="min-h-[260px] border-2 border-border bg-background animate-pulse" />
   ),
 });
 
 type MermaidModule = typeof import("mermaid");
-
-type HighlightFn = (code: string) => string;
 
 /** Parse width/height out of an SVG's viewBox attribute as a dimensions fallback. */
 function viewBoxDimensions(svg: string): { width: number; height: number } | null {
@@ -104,13 +100,6 @@ export default function MermaidClient() {
   const [zoom, setZoom] = useState(1);
   const diagramRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<string | null>(null);
-  // MUST escape. react-simple-code-editor injects the highlighter's return
-  // value with dangerouslySetInnerHTML, and this fallback is what renders
-  // during the window between mount (when a #s= share link has already
-  // populated the editor) and Prism's lazy chunk arriving. An identity
-  // function here is a DOM XSS sink reachable from any share URL.
-  const highlightRef = useRef<HighlightFn>(escapeHtml);
-  const [highlightReady, setHighlightReady] = useState(false);
 
   // URL hash share state takes precedence over localStorage (hydrated by useStoredState).
   useEffect(() => {
@@ -147,21 +136,6 @@ export default function MermaidClient() {
     };
   }, []);
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const prismModule = await import("prismjs");
-      if (cancelled) return;
-      const Prism = prismModule.default ?? prismModule;
-      highlightRef.current = (value: string) => Prism.highlight(value, Prism.languages.markup, "markup");
-      setHighlightReady(true);
-    })().catch(() => {
-      // Highlighting is optional; the escaping fallback above stays in place.
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   // Debounced render: avoids re-rendering and flashing on every keystroke.
   const debouncedCode = useDebounced(code, 250);
@@ -350,10 +324,10 @@ export default function MermaidClient() {
     </>
   );
 
-  const tabEscape = useTabEscape();
   const shortcuts = [
     { keys: "—", description: "Auto-renders as you type" },
-    TAB_ESCAPE_SHORTCUT,
+    { keys: "⌘ F", description: "Find in the editor" },
+    { keys: "⌘ ]", description: "Indent selection" },
   ];
 
   return (
@@ -371,23 +345,17 @@ export default function MermaidClient() {
             accept=".mmd,.mermaid,.txt,text/plain"
             label="Import diagram"
             className="min-h-[260px] border-2 border-border bg-background font-mono text-sm text-foreground focus-within:ring-2 focus-within:ring-ring"
-            {...tabEscape.containerProps}
           >
-            <Editor
+            <CodeEditor
               value={code}
-              onValueChange={setCode}
-              highlight={(value) => highlightRef.current(value)}
-              padding={12}
-              className="min-h-[260px] w-full"
-              style={{ minHeight: 260, background: "none", opacity: highlightReady ? 1 : 0.85 }}
-              textareaId="mermaid-editor"
-              spellCheck={false}
-              ignoreTabKey={tabEscape.ignoreTabKey}
+              onChange={setCode}
+              language="mermaid"
+              id="mermaid-editor"
+              ariaLabel="Mermaid source"
+              placeholder="flowchart TD&#10;  A[Start] --> B[End]"
+              minHeight={260}
             />
           </FileDrop>
-          <p className="text-xs text-muted-foreground">
-            Tab indents. Press Esc then Tab to move focus out of the editor.
-          </p>
           {error ? <Alert variant="error">{error}</Alert> : null}
         </div>
         <ResultPanel

@@ -13,8 +13,6 @@ import { Label } from "@/components/ui/label";
 import { ResultPanel } from "@/components/ui/result-panel";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { useTabEscape, TAB_ESCAPE_SHORTCUT } from "@/hooks/use-tab-escape";
-import { escapeHtml } from "@/lib/escape-html";
 import { readShareParams } from "@/lib/share";
 import { downloadFile } from "@/lib/download";
 import { useHotkey } from "@/hooks/use-hotkey";
@@ -57,7 +55,7 @@ const SQL_JS_BASE = "/sqljs";
  *  only — never secrets. Guarded for static export (typeof window + try/catch). */
 const SQL_STORAGE_KEY = "sdt:sqlite:sql";
 
-const Editor = dynamic(() => import("react-simple-code-editor"), {
+const CodeEditor = dynamic(() => import("@/components/tool/CodeEditor"), {
   ssr: false,
   loading: () => (
     <div className="min-h-[200px] border-2 border-border bg-background animate-pulse" />
@@ -80,8 +78,6 @@ type SqlDatabase = {
 };
 
 type ResultSet = { columns: string[]; values: unknown[][] };
-
-type HighlightFn = (code: string) => string;
 
 let sqlJsModulePromise: Promise<any> | null = null;
 
@@ -262,8 +258,6 @@ export default function SQLiteClient() {
 
   const dbRef = useRef<SqlDatabase | null>(null);
   const sqlModuleRef = useRef<any>(null);
-  const highlightRef = useRef<HighlightFn>(escapeHtml);
-  const [highlightReady, setHighlightReady] = useState(false);
 
   // URL hash share state takes precedence over localStorage (hydrated by useStoredState).
   useEffect(() => {
@@ -301,22 +295,6 @@ export default function SQLiteClient() {
     };
   }, []);
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const prismModule = await import("prismjs");
-      await import("prismjs/components/prism-sql");
-      if (cancelled) return;
-      const Prism = prismModule.default ?? prismModule;
-      highlightRef.current = (value: string) => Prism.highlight(value, Prism.languages.sql, "sql");
-      setHighlightReady(true);
-    })().catch(() => {
-      // Highlighting is optional; the escaping fallback above stays in place.
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   const runSql = (source: string) => {
     const db = dbRef.current;
@@ -458,8 +436,11 @@ export default function SQLiteClient() {
     </>
   );
 
-  const tabEscape = useTabEscape();
-  const shortcuts = [{ keys: "⌘ ↵", description: "Run query" }, TAB_ESCAPE_SHORTCUT];
+  const shortcuts = [
+    { keys: "⌘ ↵", description: "Run query" },
+    { keys: "⌘ F", description: "Find in the editor" },
+    { keys: "⌘ ]", description: "Indent selection" },
+  ];
 
   return (
     <ToolShell
@@ -476,23 +457,17 @@ export default function SQLiteClient() {
             accept=".sql,.txt,text/plain"
             label="Import SQL"
             className="border-2 border-border bg-background focus-within:ring-2 focus-within:ring-ring"
-            {...tabEscape.containerProps}
           >
-            <Editor
+            <CodeEditor
               value={sql}
-              onValueChange={setSql}
-              highlight={(value) => highlightRef.current(value)}
-              padding={12}
-              className="font-mono text-sm min-h-[200px] w-full text-foreground"
-              style={{ minHeight: 200, background: "none", opacity: highlightReady ? 1 : 0.85 }}
-              textareaId="sqlite-editor"
-              spellCheck={false}
-              ignoreTabKey={tabEscape.ignoreTabKey}
+              onChange={setSql}
+              language="sql"
+              id="sqlite-editor"
+              ariaLabel="SQL query"
+              placeholder="SELECT * FROM users;"
+              minHeight={200}
             />
           </FileDrop>
-          <p className="text-xs text-muted-foreground">
-            Tab indents. Press Esc then Tab to move focus out of the editor.
-          </p>
           <div className="flex flex-wrap items-center gap-3">
             <Button onClick={runQuery} disabled={!dbReady || loading}>
               <Play aria-hidden="true" />
