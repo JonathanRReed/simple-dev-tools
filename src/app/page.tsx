@@ -118,9 +118,9 @@ export default function Home() {
       {hydrated && recentTools.length > 0 ? (
         <section className="mt-6" aria-label="Recently opened tools">
           <div className="mb-2 flex items-center justify-between">
-            <p className="brutal-label flex items-center gap-1.5">
+            <h2 className="brutal-label flex items-center gap-1.5">
               <Clock className="size-3" aria-hidden="true" /> Recent
-            </p>
+            </h2>
             <button
               type="button"
               onClick={clearRecent}
@@ -197,7 +197,7 @@ export default function Home() {
         return (
           <section key={group.title} className="mt-6">
             <div className="mb-2 flex items-baseline justify-between gap-3">
-              <p className="brutal-label">{group.title}</p>
+              <h2 className="brutal-label">{group.title}</h2>
               <p className="hidden font-mono text-[0.65rem] uppercase tracking-wider text-muted-foreground sm:block">
                 {group.description}
               </p>

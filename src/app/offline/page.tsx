@@ -6,6 +6,9 @@ import ToolPage from '@/components/layout/ToolPage';
 
 export const metadata: Metadata = {
   title: 'Offline',
+  alternates: {
+    canonical: '/offline/',
+  },
   robots: {
     index: false,
     follow: false,
