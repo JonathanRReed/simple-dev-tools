@@ -22,7 +22,7 @@ export function parseCsvGrid(text: string): string[][] {
     if (!hasEscapedQuotes && field === "") {
       row.push(text.slice(fieldStart, i));
     } else {
-      if (!hasEscapedQuotes && fieldStart < i) {
+      if (fieldStart < i) {
         field += text.slice(fieldStart, i);
       }
       row.push(field);
