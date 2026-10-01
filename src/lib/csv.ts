@@ -4,19 +4,33 @@
  * newlines inside quotes, `""` escaped quotes, and \r\n / \n / \r endings.
  */
 
-/** Parse CSV text into a 2D array of string cells. A trailing newline does not produce a final empty row. */
+/**
+ * Parse CSV text into a 2D array of string cells. A trailing newline does not produce a final empty row.
+ * Performance: uses slice ranges for contiguous character runs instead of char-by-char string concatenation.
+ */
 export function parseCsvGrid(text: string): string[][] {
   const rows: string[][] = [];
   let row: string[] = [];
   let field = "";
+  let hasEscapedQuotes = false;
   let inQuotes = false;
+  let fieldStart = 0;
   let i = 0;
   const n = text.length;
 
   const pushField = () => {
-    row.push(field);
-    field = "";
+    if (!hasEscapedQuotes && field === "") {
+      row.push(text.slice(fieldStart, i));
+    } else {
+      if (!hasEscapedQuotes && fieldStart < i) {
+        field += text.slice(fieldStart, i);
+      }
+      row.push(field);
+      field = "";
+      hasEscapedQuotes = false;
+    }
   };
+
   const pushRow = () => {
     pushField();
     rows.push(row);
@@ -29,27 +43,33 @@ export function parseCsvGrid(text: string): string[][] {
     if (inQuotes) {
       if (c === '"') {
         if (text[i + 1] === '"') {
-          field += '"';
+          field += text.slice(fieldStart, i) + '"';
+          hasEscapedQuotes = true;
           i += 2;
+          fieldStart = i;
           continue;
         }
+        field += text.slice(fieldStart, i);
         inQuotes = false;
         i += 1;
+        fieldStart = i;
         continue;
       }
-      field += c;
       i += 1;
       continue;
     }
 
     if (c === '"') {
+      field += text.slice(fieldStart, i);
       inQuotes = true;
       i += 1;
+      fieldStart = i;
       continue;
     }
     if (c === ",") {
       pushField();
       i += 1;
+      fieldStart = i;
       continue;
     }
     if (c === "\r") {
@@ -57,19 +77,20 @@ export function parseCsvGrid(text: string): string[][] {
       pushRow();
       if (text[i + 1] === "\n") i += 2;
       else i += 1;
+      fieldStart = i;
       continue;
     }
     if (c === "\n") {
       pushRow();
       i += 1;
+      fieldStart = i;
       continue;
     }
-    field += c;
     i += 1;
   }
 
   // flush trailing field/row unless the input ended exactly on a terminator
-  if (field.length > 0 || row.length > 0) {
+  if (fieldStart < n || field.length > 0 || row.length > 0 || hasEscapedQuotes) {
     pushRow();
   }
   return rows;
@@ -133,6 +154,8 @@ function csvCell(value: unknown): string {
 /**
  * Convert an array of objects to CSV. Header = union of keys in first-seen
  * order. Throws a friendly error when the value isn't an array of objects.
+ * Performance: pre-formats rows using index loops to avoid nested .map()
+ * allocations and array spread copying.
  */
 export function toCsv(value: unknown): string {
   if (!Array.isArray(value)) {
@@ -152,9 +175,16 @@ export function toCsv(value: unknown): string {
       }
     }
   }
-  const headerLine = keys.map(escapeCsvCell).join(",");
-  const lines = (value as Record<string, unknown>[]).map((row) =>
-    keys.map((k) => escapeCsvCell(csvCell(row[k]))).join(",")
-  );
-  return [headerLine, ...lines].join("\n");
+  const numKeys = keys.length;
+  const lines: string[] = [keys.map(escapeCsvCell).join(",")];
+
+  for (let i = 0; i < value.length; i++) {
+    const row = value[i] as Record<string, unknown>;
+    const rowCells: string[] = [];
+    for (let j = 0; j < numKeys; j++) {
+      rowCells.push(escapeCsvCell(csvCell(row[keys[j]])));
+    }
+    lines.push(rowCells.join(","));
+  }
+  return lines.join("\n");
 }

@@ -19,6 +19,12 @@ describe('parseCsvGrid', () => {
     expect(parseCsvGrid(csv)).toEqual([['line 1\nline 2', 'he said "hello"']]);
   });
 
+  test('handles fields with unquoted prefixes before quotes', () => {
+    expect(parseCsvGrid('pre"quoted", "leading space"')).toEqual([
+      ['prequoted', ' leading space'],
+    ]);
+  });
+
   test('normalises \\r\\n, \\n, and lone \\r', () => {
     expect(parseCsvGrid('a,b\r\nc,d')).toEqual([
       ['a', 'b'],
