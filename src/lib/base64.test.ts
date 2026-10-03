@@ -110,3 +110,17 @@ describe('bytesToArrayBuffer', () => {
     expect(ab).not.toBe(full.buffer);
   });
 });
+
+describe('binary encoder chunk boundaries', () => {
+  for (const size of [0, 32767, 32768, 32769, 65536, 65537, 262145]) {
+    test(`matches the independent encoder across ${size} bytes`, () => {
+      const backing = Uint8Array.from({ length: size + 17 }, (_, i) => (i * 37 + 251) & 255);
+      const bytes = backing.subarray(9, 9 + size);
+      const expected = Buffer.from(bytes).toString('base64');
+      expect(bytesToBase64(bytes)).toBe(expected);
+      expect(base64ToBytes(bytesToBase64(bytes))).toEqual(bytes);
+      expect(base64urlToBytes(bytesToBase64url(bytes))).toEqual(bytes);
+      expect(toHex(bytes)).toBe(Buffer.from(bytes).toString('hex'));
+    });
+  }
+});
