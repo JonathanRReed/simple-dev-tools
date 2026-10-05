@@ -3,10 +3,12 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Eraser, Eye, EyeOff, Loader2 } from "lucide-react";
 
 import {
-  base64ToBytes as libBase64ToBytes,
-  bytesToArrayBuffer as libBytesToArrayBuffer,
-  bytesToBase64url as libBytesToBase64url,
-  te as libTe,
+  base64ToBytes,
+  base64urlToBytes,
+  bytesToArrayBuffer,
+  bytesToBase64url,
+  te,
+  toHex,
 } from "@/lib/base64";
 import ToolShell from "@/components/tool/ToolShell";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -17,46 +19,7 @@ import { Alert } from "@/components/ui/alert";
 import { ResultPanel } from "@/components/ui/result-panel";
 
 // --- Helpers: encoding/decoding ---
-const te = new TextEncoder();
 const td = new TextDecoder();
-
-function toHex(bytes: Uint8Array) {
-  return Array.from(bytes)
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-}
-
-function base64ToBytes(b64: string): Uint8Array {
-  const bin = atob(b64);
-  const bytes = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-  return bytes;
-}
-
-function bytesToBase64(bytes: Uint8Array): string {
-  let s = "";
-  for (let i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
-  return btoa(s);
-}
-
-function bytesToArrayBuffer(bytes: Uint8Array): ArrayBuffer {
-  const buffer = new ArrayBuffer(bytes.byteLength);
-  new Uint8Array(buffer).set(bytes);
-  return buffer;
-}
-
-function base64urlToBytes(b64url: string): Uint8Array {
-  let s = b64url.replace(/-/g, "+").replace(/_/g, "/");
-  const pad = s.length % 4;
-  if (pad === 2) s += "==";
-  else if (pad === 3) s += "=";
-  else if (pad === 1) s += "==="; // shouldn't happen
-  return base64ToBytes(s);
-}
-
-function bytesToBase64url(bytes: Uint8Array): string {
-  return bytesToBase64(bytes).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
-}
 
 // --- PEM/JWK helpers for RS/ES ---
 function stripPem(pem: string): string {
@@ -191,7 +154,7 @@ function isPlainObject(v: unknown): v is Record<string, unknown> {
 
 async function importRsaPkcs8PrivateKey(pem: string): Promise<CryptoKey> {
   const clean = stripPem(pem);
-  const keyData = libBytesToArrayBuffer(libBase64ToBytes(clean));
+  const keyData = bytesToArrayBuffer(base64ToBytes(clean));
   return crypto.subtle.importKey(
     "pkcs8",
     keyData,
@@ -203,7 +166,7 @@ async function importRsaPkcs8PrivateKey(pem: string): Promise<CryptoKey> {
 
 async function importEcPkcs8PrivateKey(pem: string): Promise<CryptoKey> {
   const clean = stripPem(pem);
-  const keyData = libBytesToArrayBuffer(libBase64ToBytes(clean));
+  const keyData = bytesToArrayBuffer(base64ToBytes(clean));
   return crypto.subtle.importKey(
     "pkcs8",
     keyData,
@@ -254,14 +217,14 @@ async function signHS256(secret: string, data: string) {
   if (secret.length === 0) throw new Error("HMAC secret is required");
   const key = await crypto.subtle.importKey(
     "raw",
-    libTe.encode(secret),
+    te.encode(secret),
     { name: "HMAC", hash: { name: "SHA-256" } },
     false,
     ["sign"]
   );
-  const sig = await crypto.subtle.sign("HMAC", key, libTe.encode(data));
+  const sig = await crypto.subtle.sign("HMAC", key, te.encode(data));
   const bytes = new Uint8Array(sig);
-  return { b64url: libBytesToBase64url(bytes), size: bytes.byteLength };
+  return { b64url: bytesToBase64url(bytes), size: bytes.byteLength };
 }
 
 async function signJWT(
@@ -270,8 +233,8 @@ async function signJWT(
   header: Record<string, unknown>,
   payload: Record<string, unknown>
 ) {
-  const headerB64 = libBytesToBase64url(libTe.encode(JSON.stringify(header)));
-  const payloadB64 = libBytesToBase64url(libTe.encode(JSON.stringify(payload)));
+  const headerB64 = bytesToBase64url(te.encode(JSON.stringify(header)));
+  const payloadB64 = bytesToBase64url(te.encode(JSON.stringify(payload)));
   const data = `${headerB64}.${payloadB64}`;
   let sigB64: string;
   let size: number;
@@ -286,10 +249,10 @@ async function signJWT(
         ? { name: "RSASSA-PKCS1-v1_5" }
         : { name: "ECDSA", hash: { name: "SHA-256" } },
       key,
-      libTe.encode(data)
+      te.encode(data)
     );
     const sigBytes = new Uint8Array(sigBuf);
-    sigB64 = libBytesToBase64url(sigBytes);
+    sigB64 = bytesToBase64url(sigBytes);
     size = sigBytes.byteLength;
   }
   return { jwt: `${data}.${sigB64}`, signatureSize: size };
