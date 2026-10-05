@@ -104,14 +104,20 @@ export function CommandMenuProvider({ children }: { children: React.ReactNode })
     if (open) setQuery("");
   }, [open]);
 
-  const pinnedSet = new Set(pinned);
-  const pinnedTools = pinned
-    .map((h) => getToolPage(h))
-    .filter((t): t is ToolPageInfo => t != null);
-  const recentTools = recent
-    .filter((h) => !pinnedSet.has(h))
-    .map((h) => getToolPage(h))
-    .filter((t): t is ToolPageInfo => t != null);
+  // Performance optimization: Memoize pinned and recent tool derivations to avoid
+  // instantiating Sets, array mappings, and catalog lookups on every single
+  // keystroke as the user types into the search input.
+  const { pinnedTools, recentTools } = React.useMemo(() => {
+    const pinnedSet = new Set(pinned);
+    const pinnedToolsList = pinned
+      .map((h) => getToolPage(h))
+      .filter((t): t is ToolPageInfo => t != null);
+    const recentToolsList = recent
+      .filter((h) => !pinnedSet.has(h))
+      .map((h) => getToolPage(h))
+      .filter((t): t is ToolPageInfo => t != null);
+    return { pinnedTools: pinnedToolsList, recentTools: recentToolsList };
+  }, [pinned, recent]);
 
   const showQuickGroups = query.trim() === "";
 
