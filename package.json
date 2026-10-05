@@ -5,8 +5,9 @@
   "private": true,
   "packageManager": "bun@1.4.0",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "assets:prepare": "node scripts/prepare-sqljs.mjs",
+    "dev": "bun run assets:prepare && next dev",
+    "build": "bun run assets:prepare && next build",
     "preview": "wrangler pages dev out --compatibility-date=2026-08-04",
     "lint": "oxlint && eslint .",
     "lint:fast": "oxlint",
@@ -54,6 +55,7 @@
     "qrcode": "^1.5.4",
     "react": "19.2.8",
     "react-dom": "19.2.8",
+    "sql.js": "1.14.2",
     "ulid": "^3.0.2",
     "yaml": "^2.9.0"
   },
