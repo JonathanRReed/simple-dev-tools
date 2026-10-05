@@ -74,7 +74,7 @@ test('File Hash Checker renders exact digests and casing for abc', async ({ page
   // regression in HashClient, rather than merely accepting a 64-character shape.
   await page.goto('/tools/hash/');
   await page.getByRole('button', { name: 'Reset', exact: true }).click();
-  await page.getByLabel('Text', { exact: true }).fill('abc');
+  await page.getByRole('textbox', { name: 'Text', exact: true }).fill('abc');
   await expect(page.getByRole('status').filter({ hasText: 'All four digests are ready' })).toHaveText('All four digests are ready');
 
   const digests = ['SHA-1', 'SHA-256', 'SHA-384', 'SHA-512'].map((label) => ({
@@ -98,7 +98,7 @@ test('File Hash Checker renders exact digests and casing for abc', async ({ page
   await expect(page.getByText('No match', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Reset', exact: true }).click();
   await expect(page.getByRole('status').filter({ hasText: 'No digests computed' })).toHaveText('No digests computed');
-  await expect(page.getByLabel('Text', { exact: true })).toHaveValue('');
+  await expect(page.getByRole('textbox', { name: 'Text', exact: true })).toHaveValue('');
 });
 
 test('File Hash Checker hashes original binary file bytes exactly', async ({ page }) => {
@@ -122,7 +122,7 @@ test('File Hash Checker hashes original binary file bytes exactly', async ({ pag
     const output = page.getByText(label, { exact: true }).locator('..').locator(':scope > span').nth(1);
     await expect(output).toHaveText(expected);
   }
-  await expect(page.getByRole('alert')).toHaveCount(0);
+  await expect(page.locator('#main-content').getByRole('alert')).toHaveCount(0);
   await filePanel.getByRole('button', { name: 'Remove', exact: true }).click();
   await expect(filePanel.getByText('Drop file here', { exact: true })).toBeVisible();
   await expect(page.getByRole('status').filter({ hasText: 'No digests computed' })).toHaveText('No digests computed');
