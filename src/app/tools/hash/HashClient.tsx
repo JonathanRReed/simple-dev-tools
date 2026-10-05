@@ -14,6 +14,7 @@ import { Alert } from "@/components/ui/alert";
 import { FileDrop } from "@/components/FileDrop";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useStoredState, useDebounced } from "@/hooks/use-stored-state";
+import { toHex } from "@/lib/base64";
 
 type Mode = "text" | "file";
 type Algorithm = "SHA-1" | "SHA-256" | "SHA-384" | "SHA-512";
@@ -43,8 +44,7 @@ function byteSize(text: string): number {
 }
 
 function bufToHex(buffer: ArrayBuffer): string {
-  const bytes = new Uint8Array(buffer);
-  return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+  return toHex(new Uint8Array(buffer));
 }
 
 async function hashAll(data: ArrayBuffer): Promise<Record<Algorithm, string>> {
