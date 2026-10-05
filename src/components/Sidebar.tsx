@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { usePathname } from 'next/navigation';
 import { Clock, Home, Pin, PinOff } from 'lucide-react';
 
@@ -76,14 +76,19 @@ export default function AppSidebar() {
     return p === h || p.startsWith(`${h}/`);
   };
 
-  const pinnedSet = new Set(pinned);
-  const pinnedTools = pinned
-    .map((h) => getToolPage(h))
-    .filter((t): t is ToolPageInfo => t != null);
-  const recentTools = recent
-    .filter((h) => !pinnedSet.has(h))
-    .map((h) => getToolPage(h))
-    .filter((t): t is ToolPageInfo => t != null);
+  // Performance optimization: Memoize pinned and recent tool derivations to prevent
+  // recreating Sets and arrays on sidebar re-renders (e.g. navigation or layout state changes).
+  const { pinnedTools, recentTools } = useMemo(() => {
+    const pinnedSet = new Set(pinned);
+    const pinnedToolsList = pinned
+      .map((h) => getToolPage(h))
+      .filter((t): t is ToolPageInfo => t != null);
+    const recentToolsList = recent
+      .filter((h) => !pinnedSet.has(h))
+      .map((h) => getToolPage(h))
+      .filter((t): t is ToolPageInfo => t != null);
+    return { pinnedTools: pinnedToolsList, recentTools: recentToolsList };
+  }, [pinned, recent]);
 
   const renderQuickRow = (tool: ToolPageInfo) => {
     const Icon = getToolIcon(tool.icon);
