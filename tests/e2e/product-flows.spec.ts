@@ -59,7 +59,15 @@ test('local-first trust badge is surfaced in tool shells', async ({ page }) => {
   await expect(page.getByText(/Runs locally/i).first()).toBeVisible();
 });
 
-test('Mermaid and SQLite browser runtimes initialize', async ({ page }) => {
+test('Mermaid and SQLite browser runtimes initialize', async ({ page, request }) => {
+  const loader = await request.get('/sqljs/sql-wasm.js');
+  expect(loader.status()).toBe(200);
+  expect(loader.headers()['content-type']).toMatch(/javascript/);
+  const wasm = await request.get('/sqljs/sql-wasm.wasm');
+  expect(wasm.status()).toBe(200);
+  expect(wasm.headers()['content-type']).toMatch(/application\/wasm/);
+  expect(WebAssembly.validate(new Uint8Array(await wasm.body()))).toBe(true);
+
   await page.goto('/mermaid/');
   await expect(page.getByRole('img', { name: 'Rendered Mermaid diagram' }).locator('svg')).toBeVisible({ timeout: 20_000 });
 

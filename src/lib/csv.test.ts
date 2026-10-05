@@ -19,6 +19,25 @@ describe('parseCsvGrid', () => {
     expect(parseCsvGrid(csv)).toEqual([['line 1\nline 2', 'he said "hello"']]);
   });
 
+  test('handles fields with unquoted prefixes before quotes', () => {
+    expect(parseCsvGrid('pre"quoted", "leading space"')).toEqual([
+      ['prequoted', ' leading space'],
+    ]);
+  });
+
+  test('retains permissive trailing text after escaped quotes', () => {
+    for (const ending of ['', ',next', '\nnext', '\r\nnext', '\rnext']) {
+      const expected = ending.startsWith(',') ? [['a"btail', 'next']]
+        : ending ? [['a"btail'], ['next']] : [['a"btail']];
+      expect(parseCsvGrid('"a""b"tail' + ending)).toEqual(expected);
+    }
+  });
+
+  test('retains the remainder of unterminated quoted fields after escaped quotes', () => {
+    expect(parseCsvGrid('"a""btail')).toEqual([['a"btail']]);
+    expect(parseCsvGrid('"a""b,tail\nnext')).toEqual([['a"b,tail\nnext']]);
+  });
+
   test('normalises \\r\\n, \\n, and lone \\r', () => {
     expect(parseCsvGrid('a,b\r\nc,d')).toEqual([
       ['a', 'b'],
