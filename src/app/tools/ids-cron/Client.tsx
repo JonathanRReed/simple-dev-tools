@@ -19,6 +19,7 @@ import { ResultPanel } from "@/components/ui/result-panel";
 import { Alert } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { toHex } from "@/lib/base64";
 
 // Crockford's Base32 used by ULID (no I, L, O, U)
 const CROCK32 = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
@@ -69,22 +70,24 @@ function randomUUIDv4() {
   if (c && "randomUUID" in c && typeof c.randomUUID === "function")
     return c.randomUUID();
   if (c && "getRandomValues" in c) {
-    // Fallback (RFC4122 v4) using getRandomValues
+    // Fallback (RFC4122 v4) using getRandomValues.
+    // Uses precomputed lookup table via toHex to avoid 16 string method calls
+    // and intermediate array slice/join allocations per UUID.
     const bytes = new Uint8Array(16);
     c.getRandomValues(bytes);
     bytes[6] = (bytes[6] & 0x0f) | 0x40; // version 4
     bytes[8] = (bytes[8] & 0x3f) | 0x80; // variant 10
-    const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, "0"));
+    const h = toHex(bytes);
     return (
-      hex.slice(0, 4).join("") +
+      h.slice(0, 8) +
       "-" +
-      hex.slice(4, 6).join("") +
+      h.slice(8, 12) +
       "-" +
-      hex.slice(6, 8).join("") +
+      h.slice(12, 16) +
       "-" +
-      hex.slice(8, 10).join("") +
+      h.slice(16, 20) +
       "-" +
-      hex.slice(10, 16).join("")
+      h.slice(20, 32)
     );
   }
   // Non-crypto fallback (not secure). For environments without Web Crypto.

@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { ResultPanel } from "@/components/ui/result-panel";
+import { HEX_TABLE } from "@/lib/base64";
 
 /* ------------------------------------------------------------------ *
  * Constants
@@ -166,8 +167,10 @@ function clamp01(n: number): number {
  * Formatting: HEX / HEX8 / RGB / HSL
  * ------------------------------------------------------------------ */
 
+// Fast byte/channel to 2-character hex lookup via precomputed HEX_TABLE
+// to avoid toString(16) and padStart string method calls on color edits / ramps.
 function to2Hex(n: number): string {
-  return Math.round(clamp255(n)).toString(16).padStart(2, "0");
+  return HEX_TABLE[Math.round(clamp255(n))];
 }
 
 function toHex({ r, g, b }: Rgba): string {
@@ -176,7 +179,7 @@ function toHex({ r, g, b }: Rgba): string {
 
 function toHex8({ r, g, b, a }: Rgba): string {
   const alpha = Math.round(clamp01(a) * 255);
-  return `#${to2Hex(r)}${to2Hex(g)}${to2Hex(b)}${alpha.toString(16).padStart(2, "0")}`;
+  return `#${to2Hex(r)}${to2Hex(g)}${to2Hex(b)}${HEX_TABLE[alpha]}`;
 }
 
 function toRgbString({ r, g, b, a }: Rgba): string {

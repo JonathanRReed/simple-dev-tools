@@ -66,7 +66,7 @@ export function bytesToArrayBuffer(bytes: Uint8Array): ArrayBuffer {
 }
 
 // Precomputed lookup table for 0-255 hex strings to avoid toString(16) & padStart overhead in loops
-const HEX_TABLE = Array.from({ length: 256 }, (_, i) =>
+export const HEX_TABLE = Array.from({ length: 256 }, (_, i) =>
   i.toString(16).padStart(2, "0")
 );
 
