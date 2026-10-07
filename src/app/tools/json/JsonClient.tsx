@@ -24,6 +24,12 @@ import { useDebounced, useStoredState } from "@/hooks/use-stored-state";
 type Format = "json" | "yaml" | "csv";
 
 const STORAGE_KEY = "sdt:json:source";
+const SOURCE_FORMAT_KEY = "sdt:json:source-format";
+const TARGET_FORMAT_KEY = "sdt:json:target-format";
+
+function isFormat(value: string): value is Format {
+  return value === "json" || value === "yaml" || value === "csv";
+}
 
 const SAMPLE = `{
   "team": "Platform",
@@ -154,8 +160,10 @@ function serialize(value: unknown, format: Format): string {
 
 export default function JsonClient() {
   const [source, setSource, clearSource] = useStoredState(STORAGE_KEY, "");
-  const [sourceFormat, setSourceFormat] = useState<Format>("json");
-  const [targetFormat, setTargetFormat] = useState<Format>("yaml");
+  const [storedSourceFormat, setSourceFormat, clearSourceFormat] = useStoredState(SOURCE_FORMAT_KEY, "json");
+  const [storedTargetFormat, setTargetFormat, clearTargetFormat] = useStoredState(TARGET_FORMAT_KEY, "yaml");
+  const sourceFormat: Format = isFormat(storedSourceFormat) ? storedSourceFormat : "json";
+  const targetFormat: Format = isFormat(storedTargetFormat) ? storedTargetFormat : "yaml";
   const [query, setQuery] = useState("");
 
   // URL hash share state takes precedence over localStorage (hydrated by useStoredState).
@@ -163,14 +171,14 @@ export default function JsonClient() {
     const params = readShareParams();
     if (!params) return;
     if (typeof params.src === "string") setSource(params.src);
-    if (typeof params.sf === "string" && ["json", "yaml", "csv"].includes(params.sf)) {
-      setSourceFormat(params.sf as Format);
+    if (typeof params.sf === "string" && isFormat(params.sf)) {
+      setSourceFormat(params.sf);
     }
-    if (typeof params.tf === "string" && ["json", "yaml", "csv"].includes(params.tf)) {
-      setTargetFormat(params.tf as Format);
+    if (typeof params.tf === "string" && isFormat(params.tf)) {
+      setTargetFormat(params.tf);
     }
     if (typeof params.q === "string") setQuery(params.q);
-  }, [setSource]);
+  }, [setSource, setSourceFormat, setTargetFormat]);
 
   // Parsing, converting and measuring all run off a debounced copy. Each of
   // them walks the whole document, and they previously ran synchronously on
@@ -297,8 +305,8 @@ export default function JsonClient() {
 
   const handleReset = () => {
     clearSource();
-    setSourceFormat("json");
-    setTargetFormat("yaml");
+    clearSourceFormat();
+    clearTargetFormat();
     setQuery("");
   };
 
