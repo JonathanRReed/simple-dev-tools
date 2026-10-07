@@ -67,22 +67,38 @@ function topLevelType(value: unknown): string {
  * `[`x12000 parsed fine and then threw RangeError here. This runs inside a
  * render-time memo with no try/catch around it, so that error unmounted the
  * whole tool rather than showing a parse error.
+ * Performance: uses parallel stack arrays and for..in loops to avoid Object.values
+ * allocations and object wrapper allocations on every child node during traversal.
  */
 function maxDepth(value: unknown): number {
+  if (value === null || typeof value !== "object") return 0;
   let max = 0;
-  const stack: { node: unknown; depth: number }[] = [{ node: value, depth: 0 }];
-  while (stack.length > 0) {
-    const entry = stack.pop();
-    if (!entry) break;
-    const { node, depth } = entry;
+  const nodeStack: unknown[] = [value];
+  const depthStack: number[] = [0];
+
+  while (nodeStack.length > 0) {
+    const node = nodeStack.pop();
+    const depth = depthStack.pop()!;
     const isArray = Array.isArray(node);
     if (!isArray && (node === null || typeof node !== "object")) continue;
     const next = depth + 1;
     if (next > max) max = next;
-    const children = isArray
-      ? (node as unknown[])
-      : Object.values(node as Record<string, unknown>);
-    for (const child of children) stack.push({ node: child, depth: next });
+
+    if (isArray) {
+      const arr = node as unknown[];
+      for (let i = 0; i < arr.length; i++) {
+        nodeStack.push(arr[i]);
+        depthStack.push(next);
+      }
+    } else {
+      const obj = node as Record<string, unknown>;
+      for (const key in obj) {
+        if (Object.hasOwn(obj, key)) {
+          nodeStack.push(obj[key]);
+          depthStack.push(next);
+        }
+      }
+    }
   }
   return max;
 }
@@ -91,7 +107,13 @@ function maxDepth(value: unknown): number {
 function topLevelCount(value: unknown): number | null {
   if (Array.isArray(value)) return value.length;
   if (value !== null && typeof value === "object") {
-    return Object.keys(value as Record<string, unknown>).length;
+    let count = 0;
+    for (const key in value as Record<string, unknown>) {
+      if (Object.hasOwn(value as Record<string, unknown>, key)) {
+        count++;
+      }
+    }
+    return count;
   }
   return null;
 }

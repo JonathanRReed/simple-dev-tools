@@ -8,31 +8,12 @@ export type PathSeg = { kind: "key"; value: string } | { kind: "index"; value: n
 /**
  * Parse a path like `a.b[0].c`, `users[2]["weird key"]`, or `[0].name` into
  * segments. Bracket access supports numeric indices and quoted string keys.
+ * Performance: uses slice ranges for contiguous character runs instead of char-by-char string concatenation.
  */
 export function parsePath(path: string): PathSeg[] {
   const segs: PathSeg[] = [];
   let i = 0;
   const n = path.length;
-
-  const readQuoted = (quote: string): string => {
-    let s = "";
-    i += 1; // skip opening quote
-    while (i < n) {
-      const c = path[i];
-      if (c === "\\" && i + 1 < n) {
-        s += path[i + 1];
-        i += 2;
-        continue;
-      }
-      if (c === quote) {
-        i += 1; // skip closing quote
-        return s;
-      }
-      s += c;
-      i += 1;
-    }
-    throw new Error("Unterminated quote in path.");
-  };
 
   while (i < n) {
     const c = path[i];
@@ -46,20 +27,46 @@ export function parsePath(path: string): PathSeg[] {
       while (i < n && path[i] === " ") i += 1;
       const q = path[i];
       if (q === '"' || q === "'") {
-        const key = readQuoted(q);
+        i += 1; // skip opening quote
+        const start = i;
+        let hasEscape = false;
+        while (i < n) {
+          if (path[i] === "\\" && i + 1 < n) {
+            hasEscape = true;
+            i += 2;
+            continue;
+          }
+          if (path[i] === q) break;
+          i += 1;
+        }
+        if (i >= n) throw new Error("Unterminated quote in path.");
+        let key: string;
+        if (hasEscape) {
+          key = "";
+          let j = start;
+          while (j < i) {
+            if (path[j] === "\\") {
+              key += path[j + 1];
+              j += 2;
+            } else {
+              key += path[j];
+              j += 1;
+            }
+          }
+        } else {
+          key = path.slice(start, i);
+        }
+        i += 1; // skip closing quote
         while (i < n && path[i] === " ") i += 1;
         if (path[i] !== "]") throw new Error("Expected ']' after bracket key.");
         i += 1;
         segs.push({ kind: "key", value: key });
       } else {
-        let raw = "";
-        while (i < n && path[i] !== "]") {
-          raw += path[i];
-          i += 1;
-        }
-        if (path[i] !== "]") throw new Error("Expected ']' to close bracket.");
-        i += 1;
-        const trimmed = raw.trim();
+        const start = i;
+        while (i < n && path[i] !== "]") i += 1;
+        if (i >= n) throw new Error("Expected ']' to close bracket.");
+        const trimmed = path.slice(start, i).trim();
+        i += 1; // skip closing bracket
         if (/^-?\d+$/.test(trimmed)) {
           segs.push({ kind: "index", value: parseInt(trimmed, 10) });
         } else {
@@ -69,13 +76,15 @@ export function parsePath(path: string): PathSeg[] {
       }
       continue;
     }
+
     // bare key: read until . or [
-    let key = "";
+    const start = i;
     while (i < n && path[i] !== "." && path[i] !== "[") {
-      key += path[i];
       i += 1;
     }
-    if (key.length > 0) segs.push({ kind: "key", value: key });
+    if (i > start) {
+      segs.push({ kind: "key", value: path.slice(start, i) });
+    }
   }
   return segs;
 }
