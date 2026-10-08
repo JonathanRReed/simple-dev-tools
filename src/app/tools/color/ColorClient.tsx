@@ -16,6 +16,7 @@ import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { ResultPanel } from "@/components/ui/result-panel";
 import { HEX_TABLE } from "@/lib/base64";
+import { parseCssColor, type Rgba, clamp255, clamp01 } from "@/lib/color";
 
 /* ------------------------------------------------------------------ *
  * Constants
@@ -58,109 +59,6 @@ function clearStoredColor(): void {
   } catch {
     /* ignore */
   }
-}
-
-/* ------------------------------------------------------------------ *
- * RGBA type + parsing
- * ------------------------------------------------------------------ */
-
-type Rgba = { r: number; g: number; b: number; a: number };
-
-/**
- * Parse ANY CSS color by leaning on the browser's own engine: write the string
- * to a detached element's style.color and read getComputedStyle().color back.
- * The computed value is always rgb()/rgba() (or color(srgb ...) in some engines).
- * If the assignment is rejected (invalid color), style.color stays at our
- * sentinel and we return null.
- */
-function parseCssColor(input: string): Rgba | null {
-  const value = input.trim();
-  if (!value) return null;
-  // CSS-wide keywords (and currentcolor) round-trip through the engine and
-  // resolve to the document text color, so reject them as "not a color".
-  // "transparent" and real named colors stay valid.
-  if (/^(inherit|initial|unset|revert|revert-layer|currentcolor)$/i.test(value)) {
-    return null;
-  }
-  if (typeof document === "undefined") return null;
-
-  try {
-    const el = document.createElement("span");
-    // A sentinel the user can never legitimately produce via a *different*
-    // string; if both sentinels survive, the input was rejected outright.
-    el.style.color = "rgb(1, 2, 3)";
-    el.style.setProperty("color", value);
-    const sentinelA = el.style.color;
-
-    el.style.color = "rgb(4, 5, 6)";
-    el.style.setProperty("color", value);
-    const sentinelB = el.style.color;
-
-    // If the browser refused to set the property at all, style.color reflects
-    // the prior sentinel value in both passes and they differ → invalid.
-    if (sentinelA === "" && sentinelB === "") return null;
-    if (sentinelA !== sentinelB) return null;
-    if (sentinelA === "") return null;
-
-    // Now read the *computed* form, which normalizes to rgb()/rgba().
-    document.body.appendChild(el);
-    const computed = getComputedStyle(el).color;
-    document.body.removeChild(el);
-
-    return parseRgbFunction(computed);
-  } catch {
-    return null;
-  }
-}
-
-/** Parse an rgb()/rgba()/color(srgb ...) string into a 0..255 / 0..1 Rgba. */
-function parseRgbFunction(str: string): Rgba | null {
-  if (!str) return null;
-  const s = str.trim();
-
-  // Standard rgb()/rgba(): "rgb(59, 130, 246)" or "rgba(59, 130, 246, 0.5)"
-  let m = s.match(
-    /^rgba?\(\s*([\d.]+)\s*[, ]\s*([\d.]+)\s*[, ]\s*([\d.]+)\s*(?:[,/]\s*([\d.%]+)\s*)?\)$/i
-  );
-  if (m) {
-    const r = clamp255(parseFloat(m[1]));
-    const g = clamp255(parseFloat(m[2]));
-    const b = clamp255(parseFloat(m[3]));
-    const a = parseAlpha(m[4]);
-    return { r, g, b, a };
-  }
-
-  // Some engines return color(srgb 0.231 0.51 0.965 / 0.5)
-  m = s.match(
-    /^color\(\s*srgb\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)\s*(?:\/\s*([\d.%]+)\s*)?\)$/i
-  );
-  if (m) {
-    const r = clamp255(parseFloat(m[1]) * 255);
-    const g = clamp255(parseFloat(m[2]) * 255);
-    const b = clamp255(parseFloat(m[3]) * 255);
-    const a = parseAlpha(m[4]);
-    return { r, g, b, a };
-  }
-
-  return null;
-}
-
-function parseAlpha(raw: string | undefined): number {
-  if (raw == null || raw === "") return 1;
-  if (raw.endsWith("%")) {
-    return clamp01(parseFloat(raw) / 100);
-  }
-  return clamp01(parseFloat(raw));
-}
-
-function clamp255(n: number): number {
-  if (!Number.isFinite(n)) return 0;
-  return Math.min(255, Math.max(0, n));
-}
-
-function clamp01(n: number): number {
-  if (!Number.isFinite(n)) return 0;
-  return Math.min(1, Math.max(0, n));
 }
 
 /* ------------------------------------------------------------------ *
