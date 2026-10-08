@@ -1,5 +1,20 @@
 export type Rgba = { r: number; g: number; b: number; a: number };
 
+// Deliberately narrow fast paths. Advanced CSS expressions/units still go
+// through the browser below. CSS whitespace excludes non-breaking spaces.
+const NUMBER = String.raw`[+-]?(?:\d*\.\d+|\d+)(?:[eE][+-]?\d+)?`;
+const WS = String.raw`[\t\n\f\r ]`;
+const COMPONENT = `(${NUMBER}%?)`;
+const RGB_LEGACY = new RegExp(`^rgba?\\(${WS}*${COMPONENT}${WS}*,${WS}*${COMPONENT}${WS}*,${WS}*${COMPONENT}${WS}*(?:,${WS}*${COMPONENT}${WS}*)?\\)$`, "i");
+const RGB_MODERN = new RegExp(`^rgba?\\(${WS}*${COMPONENT}${WS}+${COMPONENT}${WS}+${COMPONENT}${WS}*(?:/${WS}*${COMPONENT}${WS}*)?\\)$`, "i");
+const HSL_LEGACY = new RegExp(`^hsla?\\(${WS}*(${NUMBER})(?:deg)?${WS}*,${WS}*(${NUMBER})%${WS}*,${WS}*(${NUMBER})%${WS}*(?:,${WS}*${COMPONENT}${WS}*)?\\)$`, "i");
+const HSL_MODERN = new RegExp(`^hsla?\\(${WS}*(${NUMBER})(?:deg)?${WS}+(${NUMBER})%${WS}+(${NUMBER})%${WS}*(?:/${WS}*${COMPONENT}${WS}*)?\\)$`, "i");
+const SRGB = new RegExp(`^color\\(${WS}*srgb${WS}+(${NUMBER})${WS}+(${NUMBER})${WS}+(${NUMBER})${WS}*(?:/${WS}*${COMPONENT}${WS}*)?\\)$`, "i");
+
+function finiteComponents(match: RegExpMatchArray): boolean {
+  return match.slice(1).every(value => value === undefined || Number.isFinite(Number(value.replace(/%$/, ""))));
+}
+
 export function parseAlpha(raw: string | undefined): number {
   if (raw == null || raw === "") return 1;
   if (raw.endsWith("%")) {
@@ -20,7 +35,7 @@ export function clamp01(n: number): number {
 
 /**
  * Fast-path parsing for Hex color formats (#rgb, #rgba, #rrggbb, #rrggbbaa).
- * Avoids DOM element creation and getComputedStyle reflows.
+ * Avoids DOM element creation and computed-style reads.
  */
 export function parseHexColor(input: string): Rgba | null {
   const hexMatch = input.match(/^#([0-9a-f]{3,8})$/i);
@@ -77,9 +92,9 @@ export function hslToRgb(h: number, s: number, l: number, a: number): Rgba {
   else if (h < 300) { r = x; g = 0; b = c; }
   else { r = c; g = 0; b = x; }
   return {
-    r: Math.round((r + m) * 255),
-    g: Math.round((g + m) * 255),
-    b: Math.round((b + m) * 255),
+    r: (r + m) * 255,
+    g: (g + m) * 255,
+    b: (b + m) * 255,
     a,
   };
 }
@@ -88,10 +103,8 @@ export function hslToRgb(h: number, s: number, l: number, a: number): Rgba {
 export function parseHslFunction(str: string): Rgba | null {
   if (!str) return null;
   const s = str.trim();
-  const m = s.match(
-    /^hsla?\(\s*([\d.]+)(?:deg)?\s*[, ]\s*([\d.]+)%\s*[, ]\s*([\d.]+)%\s*(?:[,/]\s*([\d.%]+)\s*)?\)$/i
-  );
-  if (!m) return null;
+  const m = s.match(HSL_LEGACY) ?? s.match(HSL_MODERN);
+  if (!m || !finiteComponents(m)) return null;
   const h = parseFloat(m[1]);
   const sPct = parseFloat(m[2]) / 100;
   const lPct = parseFloat(m[3]) / 100;
@@ -104,26 +117,27 @@ export function parseRgbFunction(str: string): Rgba | null {
   if (!str) return null;
   const s = str.trim();
 
-  // Standard rgb()/rgba(): "rgb(59, 130, 246)" or "rgba(59, 130, 246, 0.5)"
-  let m = s.match(
-    /^rgba?\(\s*([\d.]+)(%?)\s*[, ]\s*([\d.]+)(%?)\s*[, ]\s*([\d.]+)(%?)\s*(?:[,/]\s*([\d.%]+)\s*)?\)$/i
-  );
+  // Legacy comma syntax requires all channels to use the same unit.
+  const legacy = s.match(RGB_LEGACY);
+  let m = legacy ?? s.match(RGB_MODERN);
   if (m) {
-    const r = m[2] ? clamp255((parseFloat(m[1]) / 100) * 255) : clamp255(parseFloat(m[1]));
-    const g = m[4] ? clamp255((parseFloat(m[3]) / 100) * 255) : clamp255(parseFloat(m[3]));
-    const b = m[6] ? clamp255((parseFloat(m[5]) / 100) * 255) : clamp255(parseFloat(m[5]));
-    const a = parseAlpha(m[7]);
+    if (!finiteComponents(m)) return null;
+    if (legacy && !m.slice(1, 4).every(value => value.endsWith("%") === m![1].endsWith("%"))) return null;
+    const channel = (value: string) => value.endsWith("%") ? clamp01(parseFloat(value) / 100) * 255 : clamp255(parseFloat(value));
+    const r = channel(m[1]);
+    const g = channel(m[2]);
+    const b = channel(m[3]);
+    const a = parseAlpha(m[4]);
     return { r, g, b, a };
   }
 
   // Some engines return color(srgb 0.231 0.51 0.965 / 0.5)
-  m = s.match(
-    /^color\(\s*srgb\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)\s*(?:\/\s*([\d.%]+)\s*)?\)$/i
-  );
+  m = s.match(SRGB);
   if (m) {
-    const r = clamp255(parseFloat(m[1]) * 255);
-    const g = clamp255(parseFloat(m[2]) * 255);
-    const b = clamp255(parseFloat(m[3]) * 255);
+    if (!finiteComponents(m)) return null;
+    const r = clamp01(parseFloat(m[1])) * 255;
+    const g = clamp01(parseFloat(m[2])) * 255;
+    const b = clamp01(parseFloat(m[3])) * 255;
     const a = parseAlpha(m[4]);
     return { r, g, b, a };
   }
@@ -134,7 +148,7 @@ export function parseRgbFunction(str: string): Rgba | null {
 /**
  * Parse ANY CSS color:
  * Performance optimization: check pure JS fast paths first for Hex, RGB/RGBA, and HSL/HSLA
- * to avoid DOM element creation, DOM attachment, and layout-thrashing getComputedStyle calls
+ * to avoid DOM element creation, DOM attachment, and computed-style reads
  * on every color edit / picker drag. Falls back to DOM parsing for named colors (e.g. tomato)
  * and advanced CSS color functions.
  */
