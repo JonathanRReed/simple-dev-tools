@@ -33,6 +33,7 @@ import { useDebounced } from '@/hooks/use-stored-state';
 import { downloadFile } from '@/lib/download';
 import { readShareParams } from '@/lib/share';
 import { cn } from '@/lib/utils';
+import { countLines } from '@/lib/line-count';
 
 type ViewMode = 'side' | 'unified';
 type DiffLevel = 'word' | 'line';
@@ -46,11 +47,6 @@ const SAMPLE_B = `The quick brown fox
 jumps over the lazy cat.
 Pack my box with
 five dozen beer jugs.`;
-
-function countLines(text: string): number {
-  if (text === '') return 0;
-  return text.split(/\r\n|\r|\n/).length;
-}
 
 function countChars(text: string): number {
   return text.length;
