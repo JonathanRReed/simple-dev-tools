@@ -15,3 +15,7 @@
 ## 2026-10-08 - Pure JS Fast-Path for CSS Color Parsing
 **Learning:** Common hexadecimal, RGB, and HSL inputs can be parsed without creating and attaching a DOM element or reading computed styles. A fast path must validate complete numeric tokens and distinguish legacy comma syntax from modern space/slash syntax. Fractional HSL-derived channels preserve precision until an output formatter requires rounding. Inputs outside these narrow patterns retain the existing browser fallback.
 **Action:** Test invalid syntax, fractional channels, and fallback behavior before adding a color fast path. DOM avoidance alone does not establish a speedup ratio, interaction coverage percentage, or forced layout cost; those require representative browser measurements.
+
+## 2026-10-10 - Zero-Allocation Line Counting for Synchronous Input Labels
+**Learning:** Functions calculating metadata (such as line count) inside component render blocks run synchronously on every keystroke. Using `.split(/\r\n|\r|\n/).length` allocates thousands of short-lived string objects per keypress for large text buffers, causing garbage collection spikes and typing latency. An iterative `charCodeAt` loop counts lines in $O(n)$ time with zero heap allocations.
+**Action:** Replace `text.split(/\r\n|\r|\n/).length` in synchronous render paths and text input labels with a zero-allocation `charCodeAt` loop handling `\n`, `\r\n`, and `\r`.

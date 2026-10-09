@@ -47,9 +47,28 @@ jumps over the lazy cat.
 Pack my box with
 five dozen beer jugs.`;
 
+/**
+ * Count lines in a string without allocating array or substring objects.
+ * Performance: runs synchronously on every keystroke in Field labels. Avoiding
+ * regex splitting avoids allocating thousands of short-lived strings for large
+ * documents on every keypress.
+ */
 function countLines(text: string): number {
   if (text === '') return 0;
-  return text.split(/\r\n|\r|\n/).length;
+  let lines = 1;
+  const len = text.length;
+  for (let i = 0; i < len; i++) {
+    const ch = text.charCodeAt(i);
+    if (ch === 10) { // \n
+      lines++;
+    } else if (ch === 13) { // \r
+      if (i + 1 < len && text.charCodeAt(i + 1) === 10) {
+        i++;
+      }
+      lines++;
+    }
+  }
+  return lines;
 }
 
 function countChars(text: string): number {
