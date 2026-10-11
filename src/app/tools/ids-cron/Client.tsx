@@ -20,17 +20,8 @@ import { Alert } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toHex } from "@/lib/base64";
+import { decodeUlidTimestamp } from "@/lib/ulid";
 
-// Crockford's Base32 used by ULID (no I, L, O, U)
-const CROCK32 = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
-const CROCK32_MAP: Record<string, number> = Object.fromEntries(
-  CROCK32.split("").map((c, i) => [c, i])
-);
-
-// Maximum value representable by a ULID's 48-bit timestamp.
-const MAX_ULID_TIMESTAMP = 0xffffffffffff; // 281474976710655
-
-const ULID_RE = new RegExp(`^[${CROCK32}]{26}$`, "i");
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -38,32 +29,6 @@ type CryptoLike = {
   getRandomValues: (array: Uint8Array) => Uint8Array;
   randomUUID?: () => string;
 };
-
-/**
- * Decode the 48-bit timestamp embedded in a ULID. Validates length, character
- * set (Crockford base32, case-insensitive) and that the decoded timestamp does
- * not overflow 48 bits — instead of silently reporting a wrong result.
- */
-function decodeUlidTimestamp(u: string): number {
-  const value = u.trim();
-  if (value.length !== 26) {
-    throw new Error("A ULID must be exactly 26 characters.");
-  }
-  if (!ULID_RE.test(value)) {
-    throw new Error("ULID contains characters outside Crockford base32.");
-  }
-  const t = value.slice(0, 10).toUpperCase();
-  let ms = 0;
-  for (const ch of t) {
-    const v = CROCK32_MAP[ch];
-    if (v === undefined) throw new Error(`Invalid ULID char: ${ch}`);
-    ms = ms * 32 + v;
-  }
-  if (ms > MAX_ULID_TIMESTAMP) {
-    throw new Error("ULID timestamp overflows 48 bits.");
-  }
-  return ms; // milliseconds since epoch
-}
 
 function randomUUIDv4() {
   const c = (globalThis as { crypto?: CryptoLike }).crypto;
