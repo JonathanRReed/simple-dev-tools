@@ -89,6 +89,14 @@ describe('toHex', () => {
     expect(toHex(new Uint8Array([0x01, 0x10, 0xff]))).toBe('0110ff');
     expect(toHex(new Uint8Array([0x00, 0x0a]))).toBe('000a');
   });
+
+  test('handles 4KB chunk boundaries accurately', () => {
+    for (const size of [4095, 4096, 4097, 8192]) {
+      const bytes = Uint8Array.from({ length: size }, (_, i) => (i * 13 + 7) & 255);
+      const expected = Buffer.from(bytes).toString('hex');
+      expect(toHex(bytes)).toBe(expected);
+    }
+  });
 });
 
 describe('bytesToArrayBuffer', () => {
