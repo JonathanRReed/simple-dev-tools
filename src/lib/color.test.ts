@@ -115,4 +115,17 @@ describe("parseCssColor", () => {
     expect(parseCssColor("initial")).toBeNull();
     expect(parseCssColor("unset")).toBeNull();
   });
+
+  test("uses fast path for named CSS colors case-insensitively", () => {
+    expect(parseCssColor("rebeccapurple")).toEqual({ r: 102, g: 51, b: 153, a: 1 });
+    expect(parseCssColor("Tomato")).toEqual({ r: 255, g: 99, b: 71, a: 1 });
+    expect(parseCssColor("TRANSPARENT")).toEqual({ r: 0, g: 0, b: 0, a: 0 });
+    expect(parseCssColor("aliceblue")).toEqual({ r: 240, g: 248, b: 255, a: 1 });
+  });
+
+  test("returns cached results on repeated queries", () => {
+    const first = parseCssColor("rebeccapurple");
+    const second = parseCssColor("rebeccapurple");
+    expect(second).toBe(first); // Exact reference match from LRU cache
+  });
 });
