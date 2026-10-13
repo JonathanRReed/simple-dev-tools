@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, spyOn, test } from "bun:test";
 import {
   parseHexColor,
   parseHslFunction,
@@ -114,5 +114,49 @@ describe("parseCssColor", () => {
     expect(parseCssColor("inherit")).toBeNull();
     expect(parseCssColor("initial")).toBeNull();
     expect(parseCssColor("unset")).toBeNull();
+  });
+
+  test("uses fast path for named CSS colors case-insensitively", () => {
+    expect(parseCssColor("rebeccapurple")).toEqual({ r: 102, g: 51, b: 153, a: 1 });
+    expect(parseCssColor("Tomato")).toEqual({ r: 255, g: 99, b: 71, a: 1 });
+    expect(parseCssColor("TRANSPARENT")).toEqual({ r: 0, g: 0, b: 0, a: 0 });
+    expect(parseCssColor("aliceblue")).toEqual({ r: 240, g: 248, b: 255, a: 1 });
+  });
+
+  test.each(["constructor", "__proto__", "CONSTRUCTOR", " __proto__ "])("rejects inherited dictionary key %s", (value) => {
+    expect(parseCssColor(value)).toBeNull();
+  });
+
+  test.each([
+    ["rebeccapurple", { r: 102, g: 51, b: 153, a: 1 }],
+    ["#123456", { r: 18, g: 52, b: 86, a: 1 }],
+    ["rgba(12, 34, 56, .5)", { r: 12, g: 34, b: 56, a: .5 }],
+    ["hsl(120, 100%, 50%)", { r: 0, g: 255, b: 0, a: 1 }],
+  ] as const)("protects cached %s from caller mutations", (value, expected) => {
+    const first = parseCssColor(value)!;
+    first.r = 999;
+    expect(parseCssColor(value)).toEqual(expected);
+    const second = parseCssColor(value)!;
+    second.a = 0;
+    expect(parseCssColor(value)).toEqual(expected);
+  });
+
+  test("evicts the least recently used result after 256 entries", () => {
+    for (let i = 0; i < 256; i++) {
+      parseCssColor(`#${i.toString(16).padStart(6, "0")}`);
+    }
+    parseCssColor("#000000");
+    parseCssColor("#000100");
+
+    // Cache hits skip the string matching used by the pure parsers.
+    const match = spyOn(String.prototype, "match");
+    try {
+      expect(parseCssColor("#000000")).toEqual({ r: 0, g: 0, b: 0, a: 1 });
+      expect(match).not.toHaveBeenCalled();
+      expect(parseCssColor("#000001")).toEqual({ r: 0, g: 0, b: 1, a: 1 });
+      expect(match).toHaveBeenCalledTimes(1);
+    } finally {
+      match.mockRestore();
+    }
   });
 });
