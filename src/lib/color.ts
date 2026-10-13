@@ -301,18 +301,11 @@ const NAMED_COLORS: Record<string, Rgba> = {
   yellowgreen: { r: 154, g: 205, b: 50, a: 1 },
 };
 
-/** Bounded cache for parseCssColor to avoid DOM reflows on repeated/keystroke inputs. */
+/** Bounded LRU cache for successful, document-independent fast-path results. */
 const PARSE_COLOR_CACHE_MAX_SIZE = 256;
-const parseColorCache = new Map<string, Rgba | null>();
+const parseColorCache = new Map<string, Rgba>();
 
-function parseCssColorUncached(value: string): Rgba | null {
-  // CSS-wide keywords (and currentcolor) round-trip through the engine and
-  // resolve to the document text color, so reject them as "not a color".
-  // "transparent" and real named colors stay valid.
-  if (/^(inherit|initial|unset|revert|revert-layer|currentcolor)$/i.test(value)) {
-    return null;
-  }
-
+function parseCssColorFast(value: string): Rgba | null {
   // Fast path 1: Hex format (#rgb, #rgba, #rrggbb, #rrggbbaa)
   const hexParsed = parseHexColor(value);
   if (hexParsed) return hexParsed;
@@ -326,9 +319,13 @@ function parseCssColorUncached(value: string): Rgba | null {
   if (hslParsed) return hslParsed;
 
   // Fast path 4: Named CSS colors (e.g. tomato, rebeccapurple, transparent)
-  const namedParsed = NAMED_COLORS[value.toLowerCase()];
-  if (namedParsed) return { ...namedParsed };
+  const name = value.toLowerCase();
+  if (Object.hasOwn(NAMED_COLORS, name)) return { ...NAMED_COLORS[name] };
 
+  return null;
+}
+
+function parseCssColorWithBrowser(value: string): Rgba | null {
   if (typeof document === "undefined") return null;
 
   try {
@@ -364,22 +361,33 @@ function parseCssColorUncached(value: string): Rgba | null {
  * Parse ANY CSS color:
  * Performance optimization: check pure JS fast paths first for Hex, RGB/RGBA, HSL/HSLA,
  * and standard CSS named colors to avoid DOM element creation, DOM attachment, and computed-style
- * reads on every color edit / picker drag / keystroke. A 256-element LRU cache prevents repeated
- * DOM layout reflows on identical/intermediate typing inputs.
+ * reads on every color edit / picker drag / keystroke. A 256-entry LRU cache saves
+ * repeated fast-path parsing. Browser resolutions and failures are never cached
+ * because they can change with the document's custom properties or color scheme.
  */
 export function parseCssColor(input: string): Rgba | null {
   const value = input.trim();
   if (!value) return null;
 
-  const cached = parseColorCache.get(value);
-  if (cached !== undefined) return cached;
+  // These keywords resolve to the document text color, not a standalone color.
+  if (/^(inherit|initial|unset|revert|revert-layer|currentcolor)$/i.test(value)) {
+    return null;
+  }
 
-  const result = parseCssColorUncached(value);
+  const cached = parseColorCache.get(value);
+  if (cached !== undefined) {
+    parseColorCache.delete(value);
+    parseColorCache.set(value, cached);
+    return { ...cached };
+  }
+
+  const result = parseCssColorFast(value);
+  if (!result) return parseCssColorWithBrowser(value);
 
   if (parseColorCache.size >= PARSE_COLOR_CACHE_MAX_SIZE) {
     const firstKey = parseColorCache.keys().next().value;
     if (firstKey !== undefined) parseColorCache.delete(firstKey);
   }
   parseColorCache.set(value, result);
-  return result;
+  return { ...result };
 }
