@@ -208,4 +208,31 @@ describe('toCsv', () => {
   test('returns an empty string for an empty array', () => {
     expect(toCsv([])).toBe('');
   });
+
+  test('serializes ordinary empty objects as an empty header and blank data lines', () => {
+    expect(toCsv([{}])).toBe('\n');
+    expect(toCsv([{}, {}])).toBe('\n\n');
+  });
+
+  test('does not read an inherited undefined property when there are no own keys', () => {
+    expect(toCsv([Object.create({ undefined: 'inherited' })])).toBe('\n');
+  });
+
+  test('does not invoke a throwing inherited undefined getter', () => {
+    const throwing = Object.create(
+      Object.create(null, {
+        undefined: {
+          enumerable: true,
+          get() {
+            throw new Error('inherited undefined getter');
+          },
+        },
+      }),
+    );
+    expect(toCsv([throwing])).toBe('\n');
+  });
+
+  test('still serializes an own property named undefined', () => {
+    expect(toCsv([{ undefined: 'own' }])).toBe('undefined\nown');
+  });
 });

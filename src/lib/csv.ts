@@ -194,6 +194,9 @@ export function toCsv(value: unknown): string {
     }
   }
   const numKeys = keys.length;
+  // With no columns, row[keys[0]] would be row[undefined] and could read an
+  // inherited "undefined" property. Emit the empty header plus one blank line per row.
+  if (numKeys === 0) return "\n".repeat(value.length);
   const lines: string[] = [keys.map(escapeCsvCell).join(",")];
 
   for (let i = 0; i < value.length; i++) {
