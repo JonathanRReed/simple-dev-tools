@@ -38,11 +38,11 @@ export function parseCsvGrid(text: string): string[][] {
   };
 
   while (i < n) {
-    const c = text[i];
+    const code = text.charCodeAt(i);
 
     if (inQuotes) {
-      if (c === '"') {
-        if (text[i + 1] === '"') {
+      if (code === 34 /* " */) {
+        if (i + 1 < n && text.charCodeAt(i + 1) === 34) {
           field += text.slice(fieldStart, i) + '"';
           hasEscapedQuotes = true;
           i += 2;
@@ -59,28 +59,28 @@ export function parseCsvGrid(text: string): string[][] {
       continue;
     }
 
-    if (c === '"') {
+    if (code === 34 /* " */) {
       field += text.slice(fieldStart, i);
       inQuotes = true;
       i += 1;
       fieldStart = i;
       continue;
     }
-    if (c === ",") {
+    if (code === 44 /* , */) {
       pushField();
       i += 1;
       fieldStart = i;
       continue;
     }
-    if (c === "\r") {
+    if (code === 13 /* \r */) {
       // treat \r\n (and a lone \r) as one row terminator
       pushRow();
-      if (text[i + 1] === "\n") i += 2;
+      if (i + 1 < n && text.charCodeAt(i + 1) === 10) i += 2;
       else i += 1;
       fieldStart = i;
       continue;
     }
-    if (c === "\n") {
+    if (code === 10 /* \n */) {
       pushRow();
       i += 1;
       fieldStart = i;
@@ -96,18 +96,28 @@ export function parseCsvGrid(text: string): string[][] {
   return rows;
 }
 
+const NUMERIC_RE = /^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?$/;
+const ESCAPE_RE = /[",\r\n]/;
+const QUOTE_RE = /"/g;
+
 /** Coerce a raw CSV string cell to a JS value: numbers, booleans, null, else string. */
 export function coerceCsvValue(raw: string): unknown {
   if (raw === "") return "";
-  const lower = raw.toLowerCase();
-  if (lower === "true") return true;
-  if (lower === "false") return false;
-  if (lower === "null") return null;
-  // Numeric (avoid coercing things like "+", "1.2.3", or leading-zero ids loosely;
-  // require a clean JSON-style number).
-  if (/^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?$/.test(raw)) {
-    const num = Number(raw);
-    if (Number.isFinite(num)) return num;
+  const len = raw.length;
+  if (len === 4 || len === 5) {
+    const lower = raw.toLowerCase();
+    if (lower === "true") return true;
+    if (lower === "false") return false;
+    if (lower === "null") return null;
+  }
+
+  // Fast first-character check before regex: JSON numbers start with '0'..'9' or '-'
+  const code = raw.charCodeAt(0);
+  if ((code >= 48 && code <= 57) || code === 45) {
+    if (NUMERIC_RE.test(raw)) {
+      const num = Number(raw);
+      if (Number.isFinite(num)) return num;
+    }
   }
   return raw;
 }
@@ -117,15 +127,23 @@ export function parseCsv(text: string): Record<string, unknown>[] {
   if (grid.length === 0) return [];
   const header = grid[0];
   if (header.length === 0) return [];
+
+  // Performance optimization: Pre-derive fallback header keys once rather than
+  // re-evaluating `header[c] || column_${c + 1}` inside nested row/cell loops.
+  const numCols = header.length;
+  const keys: string[] = [];
+  for (let c = 0; c < numCols; c++) {
+    keys.push(header[c] || `column_${c + 1}`);
+  }
+
   const out: Record<string, unknown>[] = [];
   for (let r = 1; r < grid.length; r++) {
     const cells = grid[r];
     // skip fully blank rows (a single empty cell from a stray blank line)
     if (cells.length === 1 && cells[0] === "") continue;
     const obj: Record<string, unknown> = {};
-    for (let c = 0; c < header.length; c++) {
-      const key = header[c] || `column_${c + 1}`;
-      obj[key] = c < cells.length ? coerceCsvValue(cells[c]) : "";
+    for (let c = 0; c < numCols; c++) {
+      obj[keys[c]] = c < cells.length ? coerceCsvValue(cells[c]) : "";
     }
     out.push(obj);
   }
@@ -133,8 +151,8 @@ export function parseCsv(text: string): Record<string, unknown>[] {
 }
 
 function escapeCsvCell(value: string): string {
-  if (/[",\r\n]/.test(value)) {
-    return `"${value.replace(/"/g, '""')}"`;
+  if (ESCAPE_RE.test(value)) {
+    return `"${value.replace(QUOTE_RE, '""')}"`;
   }
   return value;
 }
@@ -176,15 +194,18 @@ export function toCsv(value: unknown): string {
     }
   }
   const numKeys = keys.length;
+  // With no columns, row[keys[0]] would be row[undefined] and could read an
+  // inherited "undefined" property. Emit the empty header plus one blank line per row.
+  if (numKeys === 0) return "\n".repeat(value.length);
   const lines: string[] = [keys.map(escapeCsvCell).join(",")];
 
   for (let i = 0; i < value.length; i++) {
     const row = value[i] as Record<string, unknown>;
-    const rowCells: string[] = [];
-    for (let j = 0; j < numKeys; j++) {
-      rowCells.push(escapeCsvCell(csvCell(row[keys[j]])));
+    let line = escapeCsvCell(csvCell(row[keys[0]]));
+    for (let j = 1; j < numKeys; j++) {
+      line += "," + escapeCsvCell(csvCell(row[keys[j]]));
     }
-    lines.push(rowCells.join(","));
+    lines.push(line);
   }
   return lines.join("\n");
 }
