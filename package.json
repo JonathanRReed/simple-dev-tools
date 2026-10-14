@@ -3,7 +3,7 @@
   "version": "1.1.0",
   "license": "SEE LICENSE IN LICENSE",
   "private": true,
-  "packageManager": "bun@1.4.0",
+  "packageManager": "bun@1.4.3",
   "scripts": {
     "assets:prepare": "node scripts/prepare-sqljs.mjs",
     "dev": "bun run assets:prepare && next dev",
@@ -11,7 +11,8 @@
     "preview": "wrangler pages dev out --compatibility-date=2026-08-04",
     "lint": "oxlint && eslint .",
     "lint:fast": "oxlint",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "bun --check",
+    "typecheck:tsc": "tsc --noEmit",
     "test": "bun test --path-ignore-patterns='tests/e2e/**'",
     "test:e2e": "playwright test",
     "deps:check": "bunx knip",
