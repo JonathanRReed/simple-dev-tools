@@ -19,7 +19,7 @@ bun install --frozen-lockfile
 bun run dev
 ```
 
-The app uses Next.js 16 static export, React 19, TypeScript 6, Bun 1.4, Tailwind CSS 4, and Radix UI. CodeMirror 6 powers SQL and Mermaid editors. Theme tokens, including `--code-*`, live in `src/app/globals.css`; there is no Tailwind JavaScript configuration.
+The app uses Next.js 16 static export, React 19, TypeScript 6, Bun 1.4.3, Tailwind CSS 4, and Radix UI. CodeMirror 6 powers SQL and Mermaid editors. Theme tokens, including `--code-*`, live in `src/app/globals.css`; there is no Tailwind JavaScript configuration.
 
 `dev` and `build` first copy the matching SQL.js JavaScript, WebAssembly, and license from the pinned `sql.js` package into `public/sqljs/`. These generated assets are ignored by Git and served from the same origin. To prepare them separately, run `bun run assets:prepare`.
 
@@ -51,7 +51,7 @@ These run oxlint alone, Knip, and dependency freshness and vulnerability checks 
 | Build command | `bun install --frozen-lockfile && bun run build` |
 | Output | `out` |
 | Production branch | `main` |
-| Bun | `1.4.0`, pinned by `packageManager` |
+| Bun | `1.4.3`, pinned by `packageManager` |
 
 Crawler metadata lives in `public/robots.txt`, `public/sitemap.xml`, and `public/llms.txt`.
 
