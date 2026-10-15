@@ -1,6 +1,6 @@
 /* global caches, clients, fetch, self, Request, Response, URL */
 
-const CACHE_NAME = 'sdt-v2';
+const CACHE_NAME = 'sdt-v3';
 
 const PRECACHE_ASSETS = [
   '/',
@@ -14,8 +14,6 @@ const PRECACHE_ASSETS = [
   '/simple_dev_tools_logo_assets/android-chrome-192x192.png',
   '/simple_dev_tools_logo_assets/simple-dev-tools-favicon-512x512.png',
 ];
-
-const NAVIGATION_TIMEOUT = 3000;
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
@@ -78,7 +76,8 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (url.origin === self.location.origin) {
-    event.respondWith(handleStaticAsset(request));
+    const versionSensitive = request.destination === 'script' || request.headers.get('RSC') === '1' || url.pathname.endsWith('.txt');
+    event.respondWith(versionSensitive ? handleFreshAsset(request) : handleStaticAsset(request));
   }
 });
 
@@ -87,13 +86,15 @@ async function handleNavigation(request) {
   // that no longer exist after a deploy, so fresh HTML always wins when the
   // network is available. The cache is the offline fallback.
   try {
-    const networkResponse = await withTimeout(fetch(request), NAVIGATION_TIMEOUT);
-    if (networkResponse && networkResponse.ok) {
-      await putInCache(request, networkResponse.clone());
-      return networkResponse;
+    const networkResponse = await fetch(request);
+    if (networkResponse.ok) {
+      // Storage exhaustion must never turn a successful request into an offline page.
+      await putInCache(request, networkResponse).catch(() => {});
     }
-  } catch (error) {
-    // Network failed or timed out — fall through to the cache.
+    // HTTP errors are real responses, not evidence that the browser is offline.
+    return networkResponse;
+  } catch {
+    // Only a failed network request should enter the offline fallback.
   }
 
   const cached = await caches.match(request);
@@ -133,6 +134,17 @@ async function handleNextStatic(request) {
   }
 }
 
+async function handleFreshAsset(request) {
+  // Unhashed worker scripts and App Router payloads must agree with the current deployment.
+  try {
+    const response = await fetch(request);
+    if (response.ok) await putInCache(request, response).catch(() => {});
+    return response;
+  } catch {
+    return await caches.match(request) || new Response('Network unavailable', { status: 503 });
+  }
+}
+
 async function handleStaticAsset(request) {
   // Stale-while-revalidate for same-origin fonts, images, etc.
   const cached = await caches.match(request);
@@ -167,19 +179,4 @@ async function fetchAndCache(request) {
 async function putInCache(request, response) {
   const cache = await caches.open(CACHE_NAME);
   await cache.put(request, response.clone());
-}
-
-function withTimeout(promise, ms) {
-  return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error('Timeout')), ms);
-    promise
-      .then((value) => {
-        clearTimeout(timer);
-        resolve(value);
-      })
-      .catch((error) => {
-        clearTimeout(timer);
-        reject(error);
-      });
-  });
 }

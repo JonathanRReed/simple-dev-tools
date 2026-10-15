@@ -1,12 +1,13 @@
 "use client";
-import React, { useEffect, useMemo, useState, useCallback } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import React, { useEffect, useMemo, useState } from "react";
+import { readShareParams } from "@/lib/share";
+import { useRegexEvaluation } from "@/hooks/use-regex-evaluation";
 import { RotateCcw } from "lucide-react";
 
 import ToolShell from "@/components/tool/ToolShell";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { CopyButton } from "@/components/ui/copy-button";
+import { ShareButton } from "@/components/ui/share-button";
 import { Field } from "@/components/ui/field";
 import { Label } from "@/components/ui/label";
 import { ResultPanel } from "@/components/ui/result-panel";
@@ -27,6 +28,8 @@ type FlagsState = Record<(typeof FLAG_LIST)[number]["key"], boolean>;
 
 const DEFAULT_TEXT = `The quick brown fox jumps over the lazy dog.\nTHE QUICK BROWN FOX. fox-123.`;
 const DEFAULT_PATTERN = "fox";
+const MAX_MATCHES = 5000;
+const SPLIT_INPUT_CAP = 50000;
 
 const SAMPLES: { label: string; pattern: string; flags?: string; test: string; replace?: string }[] = [
   {
@@ -96,14 +99,6 @@ function parseFlags(str: string): FlagsState {
   return base;
 }
 
-interface MatchInfo {
-  match: string;
-  index: number;
-  length: number;
-  groups: (string | undefined)[];
-  named: Record<string, string | undefined>;
-}
-
 interface Segment {
   text: string;
   matched: boolean;
@@ -116,19 +111,11 @@ function RegexLabInner() {
   const [flags, setFlags] = useState<FlagsState>({ g: true, i: false, m: false, s: false, u: false, y: false });
   const [sampleValue, setSampleValue] = useState("");
 
-  const router = useRouter();
-  const searchParams = useSearchParams();
-
-  const getSP = useCallback((): URLSearchParams => {
-    // Fallback in case typings mark searchParams as possibly null
-    // In client components it should be available, but guard defensively
-    if (searchParams) return new URLSearchParams(searchParams.toString());
-    if (typeof window !== "undefined") return new URLSearchParams(window.location.search);
-    return new URLSearchParams();
-  }, [searchParams]);
-
   const flagsStr = useMemo(() => buildFlags(flags), [flags]);
-  const { re, error } = useMemo(() => safeRegExp(pattern, flagsStr), [pattern, flagsStr]);
+  const { re, error: syntaxError } = useMemo(() => safeRegExp(pattern, flagsStr), [pattern, flagsStr]);
+
+  const evaluation = useRegexEvaluation(pattern, flagsStr, text, replacement);
+  const error = syntaxError ?? evaluation.error;
 
   // Effective regex literal /pattern/flags (escape any unescaped forward slashes for display)
   const regexLiteral = useMemo(
@@ -136,9 +123,10 @@ function RegexLabInner() {
     [pattern, flagsStr]
   );
 
-  // Hydrate state from query params (?p=pattern&f=flags&t=test&r=replacement)
+  // Read old links, but create only fragment links: query strings reach the host.
   useEffect(() => {
-    const sp = getSP();
+    const shared = readShareParams();
+    const sp = new URLSearchParams(shared ?? window.location.search);
     const qp = sp.get("p");
     const qf = sp.get("f");
     const qt = sp.get("t");
@@ -152,87 +140,12 @@ function RegexLabInner() {
     if (qt !== null && qt !== text) setText(qt);
     if (qr !== null && qr !== replacement) setReplacement(qr);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [getSP]);
+  }, []);
 
-  // Debounce URL updates when pattern/flags/test/replacement change
-  useEffect(() => {
-    const sp = getSP();
-    const currentP = sp.get("p") || "";
-    const currentF = sp.get("f") || "";
-    const currentT = sp.get("t") || "";
-    const currentR = sp.get("r") || "";
-    const needUpdate =
-      currentP !== pattern ||
-      currentF !== flagsStr ||
-      currentT !== text ||
-      currentR !== replacement;
-    const t = setTimeout(() => {
-      if (!needUpdate) return;
-      const params = getSP();
-      if (pattern) params.set("p", pattern); else params.delete("p");
-      if (flagsStr) params.set("f", flagsStr); else params.delete("f");
-      if (text) params.set("t", text); else params.delete("t");
-      if (replacement) params.set("r", replacement); else params.delete("r");
-      const qs = params.toString();
-      router.replace(qs ? `?${qs}` : "?", { scroll: false });
-    }, 300);
-    return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pattern, flagsStr, text, replacement, getSP]);
-
-  // Build the share URL from CURRENT state at click time. Reading
-  // window.location.href would lag the 300ms-debounced URL sync and copy a
-  // stale link right after an edit, so serialize the live fields here instead.
-  const getShareUrl = useCallback(() => {
-    if (typeof window === "undefined") return "";
-    try {
-      const params = new URLSearchParams();
-      if (pattern) params.set("p", pattern);
-      if (flagsStr) params.set("f", flagsStr);
-      if (text) params.set("t", text);
-      if (replacement) params.set("r", replacement);
-      const qs = params.toString();
-      const { origin, pathname } = window.location;
-      return `${origin}${pathname}${qs ? `?${qs}` : ""}`;
-    } catch {
-      return typeof window !== "undefined" ? window.location.href : "";
-    }
-  }, [pattern, flagsStr, text, replacement]);
-
-  // Cap the number of matches collected so large/pathological inputs stay
-  // responsive. matchAll advances unicode zero-length matches correctly, which
-  // a hand-rolled exec loop with `lastIndex++` does not under the `u` flag
-  // (it can hang forever on a surrogate-pair boundary).
-  const MAX_MATCHES = 5000;
-  const matchesResult = useMemo<{ list: MatchInfo[]; truncated: boolean }>(() => {
-    if (!re) return { list: [], truncated: false };
-    const list: MatchInfo[] = [];
-    const pushMatch = (m: RegExpMatchArray) => {
-      list.push({
-        match: m[0],
-        index: m.index ?? 0,
-        length: m[0].length,
-        groups: Array.from(m).slice(1),
-        named: m.groups ? { ...m.groups } : {},
-      });
-    };
-    if (re.global || re.sticky) {
-      // Copy to avoid lastIndex side-effects on the memoized regex.
-      const r = new RegExp(re.source, re.flags);
-      // matchAll requires the global flag; sticky-only regexes need it added.
-      const iterable = r.global ? text.matchAll(r) : text.matchAll(new RegExp(r.source, r.flags + "g"));
-      for (const m of iterable) {
-        if (list.length >= MAX_MATCHES) return { list, truncated: true };
-        pushMatch(m);
-      }
-    } else {
-      const m = re.exec(text);
-      if (m) pushMatch(m);
-    }
-    return { list, truncated: false };
-  }, [re, text]);
-
-  const matches = matchesResult.list;
+  const matchesResult = evaluation;
+  const matches = evaluation.list;
+  const replaced = evaluation.replaced;
+  const split = evaluation.split;
 
   // Build highlight segments from match index + length.
   const segments = useMemo<Segment[]>(() => {
@@ -254,30 +167,6 @@ function RegexLabInner() {
     }
     return segs;
   }, [re, matches, text]);
-
-  // Distinguish invalid regex from a genuinely empty replacement result.
-  const replaced = useMemo<{ value: string | null; error: string | null }>(() => {
-    if (!re) return { value: null, error };
-    try {
-      return { value: text.replace(re, replacement), error: null };
-    } catch (e: any) {
-      return { value: null, error: e?.message || "Replacement failed" };
-    }
-  }, [re, text, replacement, error]);
-
-  // Split the test string by the pattern. Cap very large inputs to keep the UI
-  // responsive; distinguish invalid regex from a genuinely empty split result.
-  const SPLIT_INPUT_CAP = 50000;
-  const split = useMemo<{ parts: string[] | null; error: string | null; truncated: boolean }>(() => {
-    if (!re) return { parts: null, error, truncated: false };
-    const truncated = text.length > SPLIT_INPUT_CAP;
-    const input = truncated ? text.slice(0, SPLIT_INPUT_CAP) : text;
-    try {
-      return { parts: input.split(re), error: null, truncated };
-    } catch (e: any) {
-      return { parts: null, error: e?.message || "Split failed", truncated: false };
-    }
-  }, [re, text, error]);
 
   const splitJson = useMemo(
     () => (split.parts ? JSON.stringify(split.parts, null, 2) : ""),
@@ -376,7 +265,7 @@ function RegexLabInner() {
           </option>
         ))}
       </select>
-      <CopyButton value={getShareUrl} label="Copy Link" />
+      <ShareButton getParams={() => ({ p: pattern, f: flagsStr, t: text, r: replacement })} />
       <Button type="button" variant="outline" size="sm" onClick={handleReset}>
         <RotateCcw className="size-4" aria-hidden="true" />
         <span>Reset</span>
@@ -459,6 +348,7 @@ function RegexLabInner() {
       </div>
 
       {/* Inputs */}
+      {evaluation.pending && <p role="status" className="text-sm text-muted-foreground">Checking pattern…</p>}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <Field label="Test String" htmlFor="regex-test">
           <textarea
