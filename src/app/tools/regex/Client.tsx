@@ -84,6 +84,7 @@ export default function RegexLab() {
 }
 
 function safeRegExp(pattern: string, flags: string): { re: RegExp | null; error: string | null } {
+  if (pattern.length > 10000) return { re: null, error: "Use at most 10,000 characters in the pattern." };
   try {
     return { re: new RegExp(pattern, flags), error: null };
   } catch (e: any) {
@@ -173,39 +174,7 @@ function RegexLabInner() {
     [split.parts]
   );
 
-  // Count capture groups in the pattern by compiling a tolerant wrapper and
-  // reading numberOfCaptureGroups via the resulting match. Falls back to a
-  // lexical scan that ignores escaped "\(" and non-capturing "(?...)" groups.
-  const captureGroups = useMemo<number>(() => {
-    if (!re) return 0;
-    try {
-      // Anchored empty-alternative wrapper always matches, exposing group arity.
-      const probe = new RegExp(`${re.source}|`);
-      const m = probe.exec("");
-      if (m) return m.length - 1;
-    } catch {
-      /* fall through to lexical scan */
-    }
-    let count = 0;
-    let inClass = false;
-    for (let i = 0; i < pattern.length; i++) {
-      const c = pattern[i];
-      if (c === "\\") {
-        i++; // skip escaped char
-        continue;
-      }
-      if (inClass) {
-        if (c === "]") inClass = false;
-        continue;
-      }
-      if (c === "[") {
-        inClass = true;
-        continue;
-      }
-      if (c === "(" && pattern[i + 1] !== "?") count++;
-    }
-    return count;
-  }, [re, pattern]);
+  const captureGroups = evaluation.captureGroups;
 
   // How many replacements String.replace would perform: every match when the
   // g flag is set, otherwise the first match only (1 if anything matched).
@@ -241,7 +210,8 @@ function RegexLabInner() {
     setSampleValue("");
   };
 
-  const matchCountLabel = `${matches.length} ${matches.length === 1 ? "match" : "matches"}`;
+  const resultUnavailable = Boolean(error) || evaluation.pending;
+  const matchCountLabel = error ? "Not evaluated" : evaluation.pending ? "Checking…" : `${matchesResult.truncated ? "At least " : ""}${matches.length} ${matches.length === 1 ? "match" : "matches"}`;
 
   const toolbar = (
     <>
@@ -332,15 +302,15 @@ function RegexLabInner() {
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
           <span className="flex items-center gap-1.5">
             <span className="brutal-label">Matches</span>
-            <span className="font-mono text-sm text-foreground">{matches.length}</span>
+            <span className="font-mono text-sm text-foreground">{resultUnavailable ? "—" : `${matches.length}${matchesResult.truncated ? "+" : ""}`}</span>
           </span>
           <span className="flex items-center gap-1.5">
             <span className="brutal-label">Groups</span>
-            <span className="font-mono text-sm text-foreground">{captureGroups}</span>
+            <span className="font-mono text-sm text-foreground">{resultUnavailable ? "—" : captureGroups}</span>
           </span>
           <span className="flex items-center gap-1.5">
             <span className="brutal-label">Replacements</span>
-            <span className="font-mono text-sm text-foreground">{replaceCount}</span>
+            <span className="font-mono text-sm text-foreground">{resultUnavailable ? "—" : `${replaceCount}${matchesResult.truncated ? "+" : ""}`}</span>
           </span>
         </div>
 
@@ -390,7 +360,7 @@ function RegexLabInner() {
 
         <TabsContent value="highlight">
           <ResultPanel title="Highlighted Test String" scroll>
-            {!re && error ? (
+            {error ? (
               <Alert variant="error">{error}</Alert>
             ) : (
               <pre className="whitespace-pre-wrap break-words font-mono text-sm leading-6 text-foreground">
@@ -417,8 +387,10 @@ function RegexLabInner() {
             copyValue={matchesText}
             scroll
           >
-            {!re && error ? (
+            {error ? (
               <Alert variant="error">{error}</Alert>
+            ) : evaluation.pending ? (
+              <p role="status">Checking pattern…</p>
             ) : matches.length === 0 ? (
               <p className="font-mono text-sm text-muted-foreground">No matches.</p>
             ) : (

@@ -114,37 +114,16 @@ export default function EncodeQR() {
     "https://example.com/?q=hello world&x=1+2"
   );
   const [urlMode, setUrlMode] = useState<EncodeMode>("encode");
-  const [urlOutput, setUrlOutput] = useState<string>("");
-  const [urlError, setUrlError] = useState<string>("");
-
-  // Auto/debounced URL transform.
-  useEffect(() => {
-    const id = setTimeout(() => {
-      if (urlInput === "") {
-        setUrlOutput("");
-        setUrlError("");
-        return;
-      }
-      try {
-        setUrlError("");
-        setUrlOutput(
-          urlMode === "encode"
-            ? encodeURIComponent(urlInput)
-            : decodeURIComponent(urlInput)
-        );
-      } catch (e: any) {
-        setUrlOutput("");
-        setUrlError(e?.message || `${urlMode === "encode" ? "Encode" : "Decode"} error`);
-      }
-    }, 200);
-    return () => clearTimeout(id);
+  const urlResult = useMemo(() => {
+    try {
+      return { value: urlMode === "encode" ? encodeURIComponent(urlInput) : decodeURIComponent(urlInput), error: "" };
+    } catch (error) {
+      return { value: "", error: error instanceof Error ? error.message : "Invalid URL encoding" };
+    }
   }, [urlInput, urlMode]);
-
-  function resetUrl() {
-    setUrlInput("");
-    setUrlOutput("");
-    setUrlError("");
-  }
+  const urlOutput = urlResult.value;
+  const urlError = urlResult.error;
+  function resetUrl() { setUrlInput(""); }
   function swapUrl() {
     if (!urlOutput) return;
     setUrlInput(urlOutput);
@@ -156,49 +135,20 @@ export default function EncodeQR() {
   const [b64Input, setB64Input] = useState<string>("Hello, world");
   const [b64Mode, setB64Mode] = useState<EncodeMode>("encode");
   const [b64UrlSafe, setB64UrlSafe] = useState<boolean>(false);
-  const [b64Output, setB64Output] = useState<string>("");
-  const [b64Error, setB64Error] = useState<string>("");
-
-  // Auto/debounced Base64 transform. Re-runs when the URL-safe toggle
-  // changes so the output never goes stale.
-  useEffect(() => {
-    const id = setTimeout(() => {
-      if (b64Input === "") {
-        setB64Output("");
-        setB64Error("");
-        return;
+  const b64Result = useMemo(() => {
+    try {
+      if (b64Mode === "encode") {
+        const encoded = toBase64(b64Input);
+        return { value: b64UrlSafe ? toBase64Url(encoded) : encoded, error: "" };
       }
-      try {
-        setB64Error("");
-        if (b64Mode === "encode") {
-          let b64 = toBase64(b64Input);
-          if (b64UrlSafe) b64 = toBase64Url(b64);
-          setB64Output(b64);
-        } else {
-          let src = b64Input;
-          if (b64UrlSafe) src = fromBase64Url(src);
-          setB64Output(fromBase64(src));
-        }
-      } catch (e: any) {
-        setB64Output("");
-        // Distinguish a fatal UTF-8 decode (valid Base64, but not text) from a
-        // malformed-Base64 error so the message is actionable.
-        setB64Error(
-          e instanceof TypeError
-            ? "Decoded bytes are not valid UTF-8 text (the data may be binary)."
-            : e?.message ||
-                "Decode error (ensure valid Base64 and toggle URL-safe appropriately)"
-        );
-      }
-    }, 200);
-    return () => clearTimeout(id);
+      return { value: fromBase64(b64UrlSafe ? fromBase64Url(b64Input) : b64Input), error: "" };
+    } catch (error) {
+      return { value: "", error: error instanceof TypeError ? "Valid Base64, but the decoded bytes are not UTF-8 text." : error instanceof Error ? error.message : "Invalid Base64" };
+    }
   }, [b64Input, b64Mode, b64UrlSafe]);
-
-  function resetB64() {
-    setB64Input("");
-    setB64Output("");
-    setB64Error("");
-  }
+  const b64Output = b64Result.value;
+  const b64Error = b64Result.error;
+  function resetB64() { setB64Input(""); }
   function swapB64() {
     if (!b64Output) return;
     setB64Input(b64Output);
@@ -214,9 +164,14 @@ export default function EncodeQR() {
   const [qrFormat, setQrFormat] = useState<"png" | "svg">("png");
   // Quiet-zone margin (modules of whitespace around the symbol).
   const [qrMargin, setQrMargin] = useState<number>(QR_MARGIN_DEFAULT);
-  const [qrPngDataUrl, setQrPngDataUrl] = useState<string>("");
-  const [qrSvg, setQrSvg] = useState<string>("");
+  const [rawQrPngDataUrl, setQrPngDataUrl] = useState<string>("");
+  const [rawQrSvg, setQrSvg] = useState<string>("");
   const [qrError, setQrError] = useState<string>("");
+  const qrKey = JSON.stringify([qrText, qrSizeInput, qrEcc, qrFormat, qrMargin]);
+  const [completedQrKey, setCompletedQrKey] = useState<string | null>(null);
+  const qrPngDataUrl = completedQrKey === qrKey ? rawQrPngDataUrl : "";
+  const qrSvg = completedQrKey === qrKey ? rawQrSvg : "";
+
 
   // URL hash share state takes precedence over defaults.
   useEffect(() => {
@@ -275,6 +230,7 @@ export default function EncodeQR() {
           margin: qrMargin,
         });
         if (gen !== qrGenRef.current) return;
+        setCompletedQrKey(qrKey);
         setQrPngDataUrl(url);
         setQrSvg("");
       } else {
@@ -285,6 +241,7 @@ export default function EncodeQR() {
           margin: qrMargin,
         } as any);
         if (gen !== qrGenRef.current) return;
+        setCompletedQrKey(qrKey);
         setQrSvg(svg);
         setQrPngDataUrl("");
       }
@@ -294,7 +251,7 @@ export default function EncodeQR() {
       setQrSvg("");
       setQrError(e?.message || "QR generation error");
     }
-  }, [qrText, qrSizeInput, qrEcc, qrFormat, qrMargin]);
+  }, [qrText, qrSizeInput, qrEcc, qrFormat, qrMargin, qrKey]);
 
   // Debounced auto-generation. Re-running on format change also clears the
   // previous (stale) preview, since only one of png/svg is ever set.
@@ -302,7 +259,7 @@ export default function EncodeQR() {
     const id = setTimeout(() => {
       void generateQR();
     }, 300);
-    return () => clearTimeout(id);
+    return () => { clearTimeout(id); qrGenRef.current += 1; };
   }, [generateQR]);
 
   function resetQr() {

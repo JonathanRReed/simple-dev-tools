@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { CopyButton } from "@/components/ui/copy-button";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { shareRequest } from "@/lib/share-request";
 import { readShareParams } from "@/lib/share";
 import { downloadFile } from "@/lib/download";
 import { useHotkey } from "@/hooks/use-hotkey";
@@ -413,22 +414,7 @@ export default function ApiSnippetClient() {
     setBody(text);
   };
 
-  const shareParams = useCallback(() => {
-    const cleanUrl = url.trim();
-    if (!cleanUrl) return null;
-    const out: Record<string, string> = { url: cleanUrl, method };
-    if (body.trim()) out.body = body;
-    if (authToken.trim()) out.auth = authToken.trim();
-    const headerEntries = headers
-      .filter((h) => h.key.trim() || h.value.trim())
-      .map((h) => ({ key: h.key, value: h.value }));
-    if (headerEntries.length) out.headers = JSON.stringify(headerEntries);
-    const paramEntries = params
-      .filter((p) => p.key.trim())
-      .map((p) => ({ key: p.key, value: p.value }));
-    if (paramEntries.length) out.params = JSON.stringify(paramEntries);
-    return out;
-  }, [url, method, body, authToken, headers, params]);
+  const shareParams = useCallback(() => shareRequest({ url, method, body, headers, params }), [url, method, body, headers, params]);
 
   const regenerateSnippets = useCallback(() => {
     setRegenToken((n) => n + 1);
@@ -470,6 +456,7 @@ export default function ApiSnippetClient() {
       shareParams={shareParams}
       shortcuts={shortcuts}
     >
+      <p className="mb-4 text-xs text-muted-foreground">Share links include request content. Common authentication fields are omitted; review the URL, headers and body before sharing.</p>
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Request definition */}
         <div className="flex flex-col gap-4">

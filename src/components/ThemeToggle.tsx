@@ -14,7 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { appThemes, getAppTheme, type AppThemeId } from '@/lib/themes';
+import { appThemes, getAppTheme, resolveAppThemeId, type AppThemeId } from '@/lib/themes';
 import { cn } from '@/lib/utils';
 
 const THEME_ICONS = {
@@ -35,7 +35,7 @@ export default function ThemeToggle() {
   }, []);
 
   const isSystem = mounted ? theme === 'system' : false;
-  const current = ((isSystem ? resolvedTheme : theme) ?? resolvedTheme ?? 'art-deco') as AppThemeId;
+  const current = resolveAppThemeId(theme, resolvedTheme);
   const currentTheme = getAppTheme(current) ?? appThemes[0];
 
   return (

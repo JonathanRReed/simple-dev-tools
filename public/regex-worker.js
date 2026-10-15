@@ -15,6 +15,7 @@ self.onmessage = ({ data }) => {
     }
     self.postMessage({
       list, truncated, error: null,
+      captureGroups: (new RegExp(`${pattern}|`, flags.replace(/[gy]/g, "")).exec("")?.length ?? 1) - 1,
       replaced: { value: text.replace(new RegExp(pattern, flags), replacement), error: null },
       split: { parts: text.slice(0, 50000).split(new RegExp(pattern, flags)), error: null, truncated: text.length > 50000 },
     });

@@ -12,6 +12,7 @@ function evaluate(pattern: string, flags: string, text: string, replacement = '$
 test('returns named groups, replacement and splitting in one worker result', () => {
   const result = evaluate('(?<word>fox)', 'gi', 'fox FOX', '$<word>!');
   expect(result.list).toHaveLength(2);
+  expect(result.captureGroups).toBe(1);
   expect(result.list[1].named.word).toBe('FOX');
   expect(result.replaced.value).toBe('fox! FOX!');
   expect(result.split.parts).toEqual(['', 'fox', ' ', 'FOX', '']);
