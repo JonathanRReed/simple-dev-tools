@@ -236,3 +236,34 @@ test('unmatched long named captures stay bounded and the page remains usable',as
   await expect(page.getByRole('textbox',{name:'Pattern',exact:true})).toHaveValue('fox');
   await expect(page.getByText(/additional matches were omitted/)).toHaveCount(0);
 });
+
+
+test('boolean JSON schemas keep their meaning in generated types and validation', async ({ page }) => {
+  await page.goto('/studio/schema/');
+  await page.getByRole('radio', { name: 'JSON', exact: true }).check();
+  await page.getByRole('textbox', { name: 'Schema or OpenAPI source', exact: true }).fill('false');
+  await page.getByRole('button', { name: 'Use source as JSON Schema', exact: true }).click();
+  const schema = page.getByRole('textbox', { name: 'JSON Schema', exact: true });
+  for (const [input, ts, zod] of [
+    ['false', 'export type Root = never;', 'export const RootSchema = z.never();'],
+    ['true', 'export type Root = unknown;', 'export const RootSchema = z.unknown();'],
+    ['{}', 'export type Root = any;', 'export const RootSchema = z.any();'],
+    ['{"type":"array","items":false}', 'export type Root = (never)[];', 'z.array(z.never())'],
+    ['{"type":"object","properties":{"blocked":false}}', '"blocked"?: never;', '"blocked": z.never().optional()'],
+    ['{"$defs":{"Blocked":false},"$ref":"#/$defs/Blocked"}', 'export type Blocked = never;', 'export const BlockedSchema = z.never();'],
+  ]) {
+    await schema.fill(input);
+    await page.getByRole('radio', { name: 'TS types', exact: true }).check();
+    await page.getByRole('button', { name: 'Generate', exact: true }).click();
+    await expect(page.getByRole('textbox', { name: 'TypeScript output', exact: true })).toHaveValue(new RegExp(ts.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+    await page.getByRole('radio', { name: 'Zod schema', exact: true }).check();
+    await page.getByRole('button', { name: 'Generate', exact: true }).click();
+    await expect(page.getByRole('textbox', { name: 'Zod output', exact: true })).toHaveValue(new RegExp(zod.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+  }
+  await page.getByRole('tab', { name: 'Validate', exact: true }).click();
+  await schema.fill('false');
+  await page.getByRole('textbox', { name: 'Data', exact: true }).fill('42');
+  await expect(page.getByText('Invalid. Data does not conform to the schema.', { exact: true })).toBeVisible();
+  await schema.fill('true');
+  await expect(page.getByText('Valid. Data conforms to the schema.', { exact: true })).toBeVisible();
+});

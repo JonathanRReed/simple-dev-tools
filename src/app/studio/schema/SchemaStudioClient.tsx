@@ -297,7 +297,9 @@ export default function SchemaStudioClient() {
   );
 
   const isLikelyJsonSchema = useCallback((obj: any): boolean => {
-    if (!obj || typeof obj !== "object") return false;
+    if (typeof obj === "boolean") return true;
+    if (!obj || typeof obj !== "object" || Array.isArray(obj)) return false;
+    if (Object.keys(obj).length === 0) return true;
     if (
       obj.$schema ||
       obj.properties ||
@@ -332,6 +334,8 @@ export default function SchemaStudioClient() {
 
   const tsTypeFromSchema = useCallback(
     function convertSchemaToType(schema: JSONSchema): string {
+      if (schema === false) return "never";
+      if (schema === true) return "unknown";
       if (!schema || typeof schema !== "object") return "any";
       if (schema.$ref && typeof schema.$ref === "string") {
         // External/remote refs can't be resolved in-browser — emit a safe
@@ -357,7 +361,7 @@ export default function SchemaStudioClient() {
         case "null":
           return "null";
         case "array":
-          return `(${convertSchemaToType(schema.items || {})})[]`;
+          return `(${convertSchemaToType(schema.items ?? {})})[]`;
         case "object": {
           const props = schema.properties || {};
           const required: string[] = schema.required || [];
@@ -484,7 +488,7 @@ export default function SchemaStudioClient() {
       const blocks = [...defBlocks];
       // Only emit a Root declaration when the document itself describes a type
       // (i.e. it's not just a container of definitions).
-      if (schema && (schema.type || schema.properties || schema.enum || schema.$ref || schema.anyOf || schema.oneOf || schema.allOf)) {
+      if (typeof schema === "boolean" || (schema && (Object.keys(schema).length === 0 || schema.type || schema.properties || schema.enum || schema.$ref || schema.anyOf || schema.oneOf || schema.allOf))) {
         blocks.push(emitTsDeclaration(rootName, schema));
       }
       if (!blocks.length) return "// No types found in JSON Schema";
@@ -495,6 +499,8 @@ export default function SchemaStudioClient() {
 
   const zodFromSchema = useCallback(
     function convertSchemaToZod(schema: JSONSchema): string {
+      if (schema === false) return "z.never()";
+      if (schema === true) return "z.unknown()";
       if (!schema || typeof schema !== "object") return "z.any()";
       if (schema.$ref && typeof schema.$ref === "string") {
         // External/remote refs can't be resolved in-browser — emit a safe
@@ -536,7 +542,7 @@ export default function SchemaStudioClient() {
         case "null":
           return "z.null()";
         case "array": {
-          let code = `z.array(${convertSchemaToZod(schema.items || {})})`;
+          let code = `z.array(${convertSchemaToZod(schema.items ?? {})})`;
           if (Number.isInteger(schema.minItems) && schema.minItems >= 0) code += `.min(${schema.minItems})`;
           if (Number.isInteger(schema.maxItems) && schema.maxItems >= 0) code += `.max(${schema.maxItems})`;
           return code;
@@ -576,7 +582,7 @@ export default function SchemaStudioClient() {
       const header = `import { z } from "zod";`;
       const defBlocks = Object.entries(defs).map(([name, def]) => `export const ${name}Schema = ${zodFromSchema(def)};`);
       const blocks = [header, ...defBlocks];
-      if (schema && (schema.type || schema.properties || schema.enum || schema.$ref || schema.anyOf || schema.oneOf || schema.allOf)) {
+      if (typeof schema === "boolean" || (schema && (Object.keys(schema).length === 0 || schema.type || schema.properties || schema.enum || schema.$ref || schema.anyOf || schema.oneOf || schema.allOf))) {
         blocks.push(
           `export const ${rootName}Schema = ${zodFromSchema(schema)};\nexport type ${rootName} = z.infer<typeof ${rootName}Schema>;`
         );
