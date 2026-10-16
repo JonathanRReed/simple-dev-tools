@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { Play, RotateCcw, Sparkles } from "lucide-react";
 
@@ -18,6 +18,7 @@ import { downloadFile } from "@/lib/download";
 import { useHotkey } from "@/hooks/use-hotkey";
 import { useVirtualizer } from "@tanstack/react-virtual";
 
+import { SqliteExecutor, SqliteWorkerFailure, type SqliteResultSet } from "@/lib/sqlite-executor";
 import { useStoredState } from "@/hooks/use-stored-state";
 
 
@@ -40,11 +41,6 @@ INSERT INTO users (name, email, age, active) VALUES
 
 SELECT id, name, email, age, active FROM users ORDER BY id;`;
 
-// sql.js is vendored same-origin (public/sqljs/) instead of loaded from a CDN:
-// no third-party request, no CSP script-src exception, and the WASM payload is
-// served with the same origin guarantees as the app itself.
-const SQL_JS_BASE = "/sqljs";
-
 /** localStorage key for persisting the SQL editor buffer across reloads. Settings/input
  *  only — never secrets. Guarded for static export (typeof window + try/catch). */
 const SQL_STORAGE_KEY = "sdt:sqlite:sql";
@@ -56,108 +52,7 @@ const CodeEditor = dynamic(() => import("@/components/tool/CodeEditor"), {
   ),
 });
 
-type SqlStatement = {
-  getColumnNames: () => string[];
-  getSQL?: () => string;
-  step: () => boolean;
-  get: () => unknown[];
-  free: () => void;
-};
-
-type SqlDatabase = {
-  exec: (sql: string) => Array<{ columns: string[]; values: unknown[][] }>;
-  iterateStatements: (sql: string) => Iterable<SqlStatement>;
-  getRowsModified: () => number;
-  close: () => void;
-};
-
-type ResultSet = { columns: string[]; values: unknown[][] };
-
-let sqlJsModulePromise: Promise<any> | null = null;
-
-declare global {
-  interface Window {
-    __initSqlJsPromise?: Promise<any>;
-    initSqlJs?: any;
-  }
-}
-
-async function ensureSqlJsLoader() {
-  if (typeof window === "undefined") return null;
-  const w = window;
-  if (w.__initSqlJsPromise) return w.__initSqlJsPromise;
-  if (w.initSqlJs) {
-    w.__initSqlJsPromise = Promise.resolve(w.initSqlJs);
-    return w.__initSqlJsPromise;
-  }
-  const script = document.createElement("script");
-  script.src = `${SQL_JS_BASE}/sql-wasm.js`;
-  script.async = true;
-
-  w.__initSqlJsPromise = new Promise((resolve, reject) => {
-    const handleFailure = (error: Error) => {
-      if (script.parentNode) {
-        script.parentNode.removeChild(script);
-      }
-      // allow subsequent retries to re-run loader
-      delete w.__initSqlJsPromise;
-      reject(error);
-    };
-
-    script.onload = () => {
-      if (w.initSqlJs) {
-        resolve(w.initSqlJs);
-      } else {
-        handleFailure(new Error("SQL.js loader failed to initialize"));
-      }
-    };
-    script.onerror = () => handleFailure(new Error("Failed to load SQL.js script"));
-  });
-
-  document.body.appendChild(script);
-
-  return w.__initSqlJsPromise;
-}
-
-async function ensureSqlJsModule() {
-  if (typeof window === "undefined") return null;
-  if (sqlJsModulePromise) return sqlJsModulePromise;
-
-  const loadPromise = (async () => {
-    const initSqlJs = await ensureSqlJsLoader();
-    if (!initSqlJs) return null;
-    return initSqlJs({
-      locateFile: (file: string) => `${SQL_JS_BASE}/${file}`,
-    });
-  })();
-
-  sqlJsModulePromise = loadPromise.then(
-    (module) => module,
-    (error) => {
-      sqlJsModulePromise = null;
-      throw error;
-    }
-  );
-
-  return sqlJsModulePromise;
-}
-
-/** True when a SQL statement is DML (INSERT/UPDATE/DELETE/REPLACE) and therefore
- *  actually affects sqlite3_changes(). DDL/PRAGMA do not touch the changes counter,
- *  so re-reading getRowsModified() after them would double-count the prior DML. */
-function isDmlStatement(sql: string): boolean {
-  // Strip leading whitespace and SQL comments (-- line and /* block */) so we can
-  // read the real leading keyword.
-  let s = sql;
-  let prev;
-  do {
-    prev = s;
-    s = s.replace(/^\s+/, "");
-    s = s.replace(/^--[^\n\r]*/, "");
-    s = s.replace(/^\/\*[\s\S]*?\*\//, "");
-  } while (s !== prev);
-  return /^(insert|update|delete|replace)\b/i.test(s);
-}
+type ResultSet = SqliteResultSet;
 
 /** Render a SQLite cell value, handling NULL, BLOB (Uint8Array), number, string. */
 function renderCell(cell: unknown): React.ReactNode {
@@ -337,8 +232,32 @@ export default function SQLiteClient() {
   const [dbReady, setDbReady] = useState(false);
   const [exportTab, setExportTab] = useState("csv");
 
-  const dbRef = useRef<SqlDatabase | null>(null);
-  const sqlModuleRef = useRef<any>(null);
+  const executorRef = useRef<SqliteExecutor | null>(null);
+  const generationRef = useRef(0);
+  const busyRef = useRef(false);
+  const [warning, setWarning] = useState<string | null>(null);
+  const stopSession = useCallback(() => {
+    generationRef.current++;
+    executorRef.current?.stop();
+    executorRef.current = null;
+    busyRef.current = false;
+  }, []);
+  const startSession = useCallback(() => {
+    stopSession();
+    setDbReady(false);
+    setLoading(false);
+    try {
+      const executor = new SqliteExecutor();
+      executorRef.current = executor;
+      executor.ready.then(() => {
+        if (executorRef.current === executor) setDbReady(true);
+      }).catch((reason: Error) => {
+        if (executorRef.current === executor) setError(reason.message);
+      });
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "SQLite worker could not start.");
+    }
+  }, [stopSession]);
 
   // URL hash share state takes precedence over localStorage (hydrated by useStoredState).
   useEffect(() => {
@@ -348,130 +267,51 @@ export default function SQLiteClient() {
   }, [setSql]);
 
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const SQL = await ensureSqlJsModule();
-        if (cancelled) return;
-        if (!SQL) throw new Error("SQL.js failed to initialize");
-        sqlModuleRef.current = SQL;
-        dbRef.current = new SQL.Database();
-        setDbReady(true);
-      } catch (err: any) {
-        if (cancelled) return;
-        setError("Failed to load SQL.js: " + (err?.message || err));
-      }
-    })();
-    return () => {
-      cancelled = true;
-      // Free the WASM-backed database to avoid leaking memory.
-      if (dbRef.current) {
-        try {
-          dbRef.current.close();
-        } catch {
-          /* ignore */
-        }
-        dbRef.current = null;
-      }
-    };
-  }, []);
+    startSession();
+    return stopSession;
+  }, [startSession, stopSession]);
 
-
-  const runSql = (source: string) => {
-    const db = dbRef.current;
-    if (!db) return;
+  const runSql = async (source: string, fresh = false) => {
+    const executor = executorRef.current;
+    if (!executor || !dbReady || busyRef.current) return;
+    busyRef.current = true;
+    const generation = generationRef.current;
     setLoading(true);
     setError(null);
     setResults(null);
     setOkMessage(null);
+    setWarning(null);
     try {
-      // Step statements individually so a query that returns ZERO rows is still
-      // recognized as a query (it has column names) and not mislabeled as a
-      // write. Writes have no column names; sum their row counts across the batch.
-      const out: ResultSet[] = [];
-      let sawWrite = false;
-      let changed = 0;
-      for (const stmt of db.iterateStatements(source)) {
-        try {
-          const columns = stmt.getColumnNames();
-          if (columns.length > 0) {
-            const values: unknown[][] = [];
-            while (stmt.step()) values.push(stmt.get());
-            out.push({ columns, values });
-          } else {
-            stmt.step(); // execute the write/DDL
-            sawWrite = true;
-            // Only DML (INSERT/UPDATE/DELETE/REPLACE) updates sqlite3_changes().
-            // A trailing DDL/PRAGMA leaves the counter at the previous DML's value,
-            // so adding it again would double-count. Guard with isDmlStatement().
-            const stmtSql = stmt.getSQL?.() ?? "";
-            if (isDmlStatement(stmtSql)) {
-              changed += db.getRowsModified();
-            }
-          }
-        } finally {
-          // Finalize each prepared statement so it doesn't keep tables locked
-          // for later DROP/ALTER in the same session. free() is idempotent.
-          stmt.free();
-        }
-      }
-      if (out.length > 0) {
-        setResults(out);
-        if (sawWrite) {
-          setOkMessage(`Query OK. ${changed} row${changed === 1 ? "" : "s"} changed`);
-        }
-      } else if (sawWrite) {
-        setOkMessage(`Query OK. ${changed} row${changed === 1 ? "" : "s"} changed`);
-      } else {
-        setOkMessage("Query OK");
-      }
-    } catch (e: any) {
-      setError(e?.message || "Query failed");
+      const reply = await executor.run(source, fresh);
+      if (generationRef.current !== generation) return;
+      setResults(reply.results.length ? reply.results : null);
+      setOkMessage(reply.sawWrite ? `Query OK. ${reply.changed} row${reply.changed === 1 ? "" : "s"} changed` : "Query OK");
+      if (reply.truncated) setWarning("Result limit reached (10,000 rows, 20 result sets, 100 statements, or 4 MB). Only displayed rows are exported. Remaining statements were not executed.");
+    } catch (reason) {
+      if (generationRef.current !== generation) return;
+      if (reason instanceof SqliteWorkerFailure && reason.databaseLost) startSession();
+      setError(reason instanceof Error ? reason.message : "Query failed.");
     } finally {
-      setLoading(false);
+      if (generationRef.current === generation) { busyRef.current = false; setLoading(false); }
     }
   };
-
-  const runQuery = () => runSql(sql);
-
-  const loadSample = () => {
-    // Reset to a fresh database before seeding (mirrors reset()) so SAMPLE_SQL's
-    // CREATE TABLE is always re-runnable — without this, a 2nd click (or any prior
-    // table creation) throws "table users already exists" and aborts the batch.
-    const SQL = sqlModuleRef.current;
-    if (SQL) {
-      if (dbRef.current) {
-        try {
-          dbRef.current.close();
-        } catch {
-          /* ignore */
-        }
-      }
-      dbRef.current = new SQL.Database();
-    }
-    setSql(SAMPLE_SQL);
-    runSql(SAMPLE_SQL);
-  };
-
+  const runQuery = () => { void runSql(sql); };
+  const loadSample = () => { setSql(SAMPLE_SQL); void runSql(SAMPLE_SQL, true); };
   const reset = () => {
-    // Recreate a fresh in-memory database so seeded tables are dropped.
-    const SQL = sqlModuleRef.current;
-    if (SQL) {
-      if (dbRef.current) {
-        try {
-          dbRef.current.close();
-        } catch {
-          /* ignore */
-        }
-      }
-      dbRef.current = new SQL.Database();
-    }
-    // Clear the persisted buffer so Reset durably restores the default.
+    startSession();
     clearSql();
     setSql(DEFAULT_SQL);
     setResults(null);
     setOkMessage(null);
     setError(null);
+    setWarning(null);
+  };
+  const cancelQuery = () => {
+    startSession();
+    setResults(null);
+    setOkMessage(null);
+    setWarning(null);
+    setError("Query cancelled. The in-memory database was discarded; load the sample or create your tables again.");
   };
 
   useHotkey(
@@ -515,7 +355,7 @@ export default function SQLiteClient() {
         <Sparkles aria-hidden="true" />
         Load sample
       </Button>
-      <Button variant="outline" size="sm" onClick={reset} disabled={!dbReady || loading}>
+      <Button variant="outline" size="sm" onClick={reset}>
         <RotateCcw aria-hidden="true" />
         Reset
       </Button>
@@ -559,14 +399,16 @@ export default function SQLiteClient() {
               <Play aria-hidden="true" />
               {loading ? "Running…" : "Run query"}
             </Button>
+            {loading && <Button variant="outline" onClick={cancelQuery}>Cancel and discard database</Button>}
             <span className="font-mono text-xs text-muted-foreground">
               {dbReady ? "Press ⌘/Ctrl + Enter to run" : "Loading SQLite WASM…"}
             </span>
           </div>
           {error ? <Alert variant="error">{error}</Alert> : null}
+          {warning ? <Alert variant="warning">{warning}</Alert> : null}
           <p className="text-xs text-muted-foreground">
             Runs entirely in your browser. Your data stays in your browser (the SQLite WASM module
-            is served from this site’s own origin).
+            is served from this site’s own origin). Queries run in a separate worker and stop after 5 seconds. Cancel, timeout, or Reset discards the in-memory database; the SQL editor text is kept unless you choose Reset.
           </p>
         </div>
 
