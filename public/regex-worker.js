@@ -1,16 +1,35 @@
 /* global self */
 const MAX_OUTPUT = 1000000;
-function captureSizeExceeds(match, limit) {
-  let size = 0;
-  for (const capture of match) {
-    size += capture?.length ?? 0;
-    if (size > limit) return true;
+const MAX_CAPTURE_FIELDS = 10000;
+function quotedSize(value, limit) {
+  let size = 2;
+  for (let i = 0; i < value.length && size <= limit; i++) {
+    const code = value.charCodeAt(i);
+    if (code === 34 || code === 92 || [8, 9, 10, 12, 13].includes(code)) size += 2;
+    else if (code < 32) size += 6;
+    else if (code >= 0xd800 && code <= 0xdbff) {
+      const next = value.charCodeAt(i + 1);
+      if (next >= 0xdc00 && next <= 0xdfff) { size += 2; i++; }
+      else size += 6;
+    } else size += code >= 0xdc00 && code <= 0xdfff ? 6 : 1;
   }
-  for (const [key, value] of Object.entries(match.groups ?? {})) {
-    size += key.length + (value?.length ?? 0);
-    if (size > limit) return true;
+  return size;
+}
+function captureRecordSize(match, keys, limit) {
+  let size = '{"match":,"index":,"length":,"groups":[],"named":{}}'.length;
+  size += String(match.index ?? 0).length + String(match[0].length).length;
+  size += quotedSize(match[0], limit - size);
+  for (let i = 1; i < match.length && size <= limit; i++) {
+    if (i > 1) size++;
+    size += match[i] === undefined ? 4 : quotedSize(match[i], limit - size);
   }
-  return false;
+  for (let i = 0; i < keys.length && size <= limit; i++) {
+    if (i) size++;
+    size += quotedSize(keys[i], limit - size) + 1;
+    const value = match.groups[keys[i]];
+    size += value === undefined ? 4 : quotedSize(value, limit - size);
+  }
+  return size;
 }
 function boundedReplace(text, regex, replacement) {
   const chunks = [];
@@ -60,15 +79,24 @@ self.onmessage = ({ data }) => {
     const regex = new RegExp(pattern, flags);
     const list = [];
     let truncated = false;
-    let matchOutputSize = 0;
+    let matchOutputSize = 2;
+    let captureFields = 0;
     const iterable = regex.global ? text.matchAll(regex) : [regex.exec(text)].filter(Boolean);
     for (const match of iterable) {
       if (list.length >= 5000) { truncated = true; break; }
-      // Bound raw captures before JSON escaping can allocate an amplified payload.
-      if (captureSizeExceeds(match, MAX_OUTPUT - matchOutputSize)) { truncated = true; break; }
-      const entry = { match: match[0], index: match.index ?? 0, length: match[0].length, groups: Array.from(match).slice(1), named: { ...match.groups } };
-      matchOutputSize += JSON.stringify(entry).length + 1;
-      if (matchOutputSize > MAX_OUTPUT) { truncated = true; break; }
+      const keys = Object.keys(match.groups ?? {});
+      const fields = match.length - 1 + keys.length;
+      if (captureFields + fields > MAX_CAPTURE_FIELDS) { truncated = true; break; }
+      // Count the normalized representation without allocating amplified JSON.
+      const separator = list.length ? 1 : 0;
+      const remaining = MAX_OUTPUT - matchOutputSize - separator;
+      const size = captureRecordSize(match, keys, remaining);
+      if (size > remaining) { truncated = true; break; }
+      const entry = { match: match[0], index: match.index ?? 0, length: match[0].length,
+        groups: Array.from(match).slice(1).map(value => value ?? null),
+        named: Object.fromEntries(keys.map(key => [key, match.groups[key] ?? null])) };
+      matchOutputSize += size + separator;
+      captureFields += fields;
       list.push(entry);
     }
     let replaced;

@@ -77,3 +77,43 @@ test('rejects amplified captures before allocating their serialized JSON', () =>
   expect(result.truncated).toBe(true);
   expect(result.error).toBeNull();
 });
+
+test('bounds unmatched named keys in the same representation used by the UI', () => {
+  const key='x'.repeat(9900);
+  const result=evaluate(`(?<${key}>z)?.`,'g','a'.repeat(5000));
+  expect(result.truncated).toBe(true);
+  expect(result.list.reduce((size:number,match:any)=>size+Object.keys(match.named).reduce((sum:number,name:string)=>sum+name.length,0),0)).toBeLessThan(1000000);
+  expect(result.list[0].named[key]).toBeNull();
+});
+
+test('preflight accounts for JSON escaping before any oversized serialization', () => {
+  let oversized=false;
+  const guardedJson={...JSON,stringify(value:any){const serialized=JSON.stringify(value);if(serialized.length>1000000){oversized=true;throw new Error('Oversized JSON allocation');}return serialized;}} as JSON;
+  const result=evaluate('(?=([\\s\\S]+))'.repeat(3)+'[\\s\\S]+','','\u0001'.repeat(100000),'$&',guardedJson);
+  expect(oversized).toBe(false);
+  expect(result.list).toHaveLength(0);
+  expect(result.truncated).toBe(true);
+});
+
+test('bounds aggregate capture fields even when every capture is unmatched',()=>{
+  const result=evaluate('(z)?'.repeat(1000)+'.','g','a'.repeat(5000));
+  expect(result.truncated).toBe(true);
+  expect(result.list.reduce((n:number,row:any)=>n+row.groups.length+Object.keys(row.named).length,0)).toBeLessThanOrEqual(10000);
+});
+
+test('size preflight matches normalized JSON for escapes, Unicode and absent captures',()=>{
+  const pieces=['a','"','\\','\n','\u0001','😀','\ud800','\udfff','\u2028',''];
+  for(const value of pieces){
+    const match:any=[value,undefined,'',value];match.index=123;match.groups={word:value,missing:undefined};
+    let actual=0;
+    runInNewContext(`${script}\nresult(captureRecordSize(match,Object.keys(match.groups),1000000));`,{self:{},match,result:(n:number)=>actual=n});
+    const entry={match:value,index:123,length:value.length,groups:[null,'',value],named:{word:value,missing:null}};
+    expect(actual).toBe(JSON.stringify(entry).length);
+  }
+});
+
+test('ordinary large captures that fit are retained without a worst-case multiplier',()=>{
+  const result=evaluate('(?=(a+))'.repeat(3)+'a+','','a'.repeat(100000));
+  expect(result.list).toHaveLength(1);
+  expect(result.truncated).toBe(false);
+});

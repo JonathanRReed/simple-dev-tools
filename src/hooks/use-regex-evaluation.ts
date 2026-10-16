@@ -5,8 +5,8 @@ export interface MatchInfo {
   match: string;
   index: number;
   length: number;
-  groups: (string | undefined)[];
-  named: Record<string, string | undefined>;
+  groups: (string | null)[];
+  named: Record<string, string | null>;
 }
 interface Evaluation {
   list: MatchInfo[];

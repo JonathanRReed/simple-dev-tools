@@ -224,3 +224,15 @@ test('large capture data is reported as omitted rather than no matches', async (
   await expect(page.getByText('Matches found, but their capture data exceeds the display limit. Use smaller input or fewer captures.', { exact: true })).toBeVisible();
   await expect(page.getByText('No matches.', { exact: true })).toHaveCount(0);
 });
+
+test('unmatched long named captures stay bounded and the page remains usable',async({page})=>{
+  await page.goto('/tools/regex/');
+  await page.getByRole('textbox',{name:'Pattern',exact:true}).fill(`(?<${'x'.repeat(9900)}>z)?.`);
+  await page.getByRole('textbox',{name:'Test String',exact:true}).fill('a'.repeat(5000));
+  await page.getByRole('tab',{name:'Matches',exact:true}).click();
+  await expect(page.getByText(/additional matches were omitted to keep the result within display limits/)).toBeVisible({timeout:10000});
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+  await page.getByRole('button',{name:'Reset',exact:true}).click();
+  await expect(page.getByRole('textbox',{name:'Pattern',exact:true})).toHaveValue('fox');
+  await expect(page.getByText(/additional matches were omitted/)).toHaveCount(0);
+});
