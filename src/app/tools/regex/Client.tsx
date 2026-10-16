@@ -402,10 +402,10 @@ function RegexLabInner() {
                   Showing {matches.length.toLocaleString()} matches; additional matches were omitted to keep the result within display limits.
                 </Alert>
               ) : null}
-              <table className="w-full font-mono text-sm text-foreground">
+              <table className="w-full table-fixed font-mono text-sm text-foreground">
                 <thead>
                   <tr className="border-b-2 border-border">
-                    <th className="px-2 py-1 text-left">
+                    <th className="w-20 px-2 py-1 text-left">
                       <Label>Index</Label>
                     </th>
                     <th className="px-2 py-1 text-left">
@@ -504,7 +504,7 @@ function RegexLabInner() {
                     Split output is limited to 5,000 parts from the first 50,000 input characters. Additional input or parts were omitted.
                   </Alert>
                 ) : null}
-                <table className="w-full font-mono text-sm text-foreground">
+                <table className="w-full table-fixed font-mono text-sm text-foreground">
                   <thead>
                     <tr className="border-b-2 border-border">
                       <th className="px-2 py-1 text-left">
