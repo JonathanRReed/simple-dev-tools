@@ -128,3 +128,28 @@ test('diff options match their labels and expensive comparisons recover', async 
   await page.getByRole('button', { name: 'Sample', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Copy unified', exact: true })).toBeEnabled();
 });
+
+test('schema source can explicitly populate generation and rejects circular YAML', async ({ page }) => {
+  await page.goto('/studio/schema/');
+  await page.getByRole('radio', { name: 'JSON', exact: true }).check();
+  await page.getByRole('textbox', { name: 'Schema or OpenAPI source', exact: true }).fill('{"type":"object","properties":{"age":{"type":"integer","minimum":0}},"required":["age"],"additionalProperties":false}');
+  await page.getByRole('button', { name: 'Use source as JSON Schema', exact: true }).click();
+  await expect(page.getByRole('textbox', { name: 'JSON Schema', exact: true })).toHaveValue(/age/);
+  await page.getByRole('button', { name: 'Generate', exact: true }).click();
+  await expect(page.getByRole('textbox', { name: 'TypeScript output', exact: true })).toHaveValue(/age.*number/);
+  await page.getByRole('radio', { name: 'Zod schema', exact: true }).check();
+  await page.getByRole('button', { name: 'Generate', exact: true }).click();
+  await expect(page.getByRole('textbox', { name: 'Zod output', exact: true })).toHaveValue(/z\.number\(\)\.int\(\)\.min\(0\)/);
+  await expect(page.getByRole('textbox', { name: 'Zod output', exact: true })).toHaveValue(/\.strict\(\)/);
+  await page.getByRole('tab', { name: 'Validate', exact: true }).click();
+  await page.getByRole('textbox', { name: 'Data', exact: true }).fill('{"age":2}');
+  await expect(page.getByText('Valid. Data conforms to the schema.', { exact: true })).toBeVisible();
+  await page.getByRole('textbox', { name: 'Data', exact: true }).fill('{"age":-1}');
+  await expect(page.getByText('Valid. Data conforms to the schema.', { exact: true })).toHaveCount(0);
+  await expect(page.getByText('Invalid. Data does not conform to the schema.', { exact: true })).toBeVisible();
+  await page.getByRole('tab', { name: 'Source', exact: true }).click();
+  await page.getByRole('radio', { name: 'YAML', exact: true }).check();
+  await page.getByRole('textbox', { name: 'Schema or OpenAPI source', exact: true }).fill('a: &a\n  self: *a');
+  await expect(page.getByText(/Circular YAML aliases cannot be converted/)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Use source as JSON Schema', exact: true })).toHaveCount(0);
+});

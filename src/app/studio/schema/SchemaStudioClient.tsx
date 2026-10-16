@@ -6,6 +6,7 @@ import { AlignLeft, Download, RotateCcw, Sparkles, Wand2 } from "lucide-react";
 import OpenApiDocs from "@/components/tool/OpenApiDocs";
 import ToolShell from "@/components/tool/ToolShell";
 import { FileDrop } from "@/components/FileDrop";
+import { assertAcyclic } from "@/lib/acyclic";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { CopyButton } from "@/components/ui/copy-button";
@@ -46,6 +47,7 @@ function parseInput(source: string, format: "json" | "yaml") {
     } else {
       value = YAML.parse(source);
     }
+    assertAcyclic(value);
     // YAML/JSON can legitimately parse to null/undefined — that is not a useful spec.
     if (value === null || value === undefined) {
       return { value: null, error: null, isOpenAPI: false, empty: true };
@@ -142,6 +144,9 @@ export default function SchemaStudioClient() {
   const [validatorError, setValidatorError] = useState<string | null>(null);
   const [validateResult, setValidateResult] = useState<{ ok: boolean; errors: any[] | null } | null>(null);
   const [validating, setValidating] = useState(false);
+  const validationGeneration = useRef(0);
+  const [validatedKey, setValidatedKey] = useState("");
+  const validationKey = JSON.stringify([schemaText, dataText]);
 
   // URL hash share state takes precedence over initial state.
   useEffect(() => {
@@ -211,20 +216,24 @@ export default function SchemaStudioClient() {
     }
 
     let cancelled = false;
+    const generation = ++validationGeneration.current;
     setValidating(true);
     validateInputs(debouncedInputs.schema, debouncedInputs.data)
       .then((result) => {
-        if (cancelled) return;
+        if (cancelled || generation !== validationGeneration.current) return;
         setValidatorError(null);
         setValidateResult(result);
       })
       .catch((error: any) => {
-        if (cancelled) return;
+        if (cancelled || generation !== validationGeneration.current) return;
         setValidatorError(error?.message || "Failed to validate");
         setValidateResult(null);
       })
       .finally(() => {
-        if (!cancelled) setValidating(false);
+        if (!cancelled && generation === validationGeneration.current) {
+          setValidatedKey(JSON.stringify([debouncedInputs.schema, debouncedInputs.data]));
+          setValidating(false);
+        }
       });
 
     return () => {
@@ -235,6 +244,7 @@ export default function SchemaStudioClient() {
   const handleValidate = useCallback(
     async (event?: KeyboardEvent) => {
       event?.preventDefault();
+      const generation = ++validationGeneration.current;
       setTab("validate");
       if (!schemaText.trim() || !dataText.trim()) {
         setValidatorError(null);
@@ -247,13 +257,18 @@ export default function SchemaStudioClient() {
       setValidateResult(null);
       try {
         const result = await validateInputs(schemaText, dataText);
+        if (generation !== validationGeneration.current) return;
         setValidatorError(null);
         setValidateResult(result);
       } catch (error: any) {
+        if (generation !== validationGeneration.current) return;
         setValidatorError(error?.message || "Failed to validate");
         setValidateResult(null);
       } finally {
-        setValidating(false);
+        if (generation === validationGeneration.current) {
+          setValidatedKey(JSON.stringify([schemaText, dataText]));
+          setValidating(false);
+        }
       }
     },
     [schemaText, dataText, validateInputs]
@@ -499,17 +514,33 @@ export default function SchemaStudioClient() {
         return `z.union([${t.map((tt) => convertSchemaToZod({ ...schema, type: tt })).join(", ")}])`;
       }
       switch (t) {
-        case "string":
-          return "z.string()";
+        case "string": {
+          let code = "z.string()";
+          if (Number.isInteger(schema.minLength) && schema.minLength >= 0) code += `.min(${schema.minLength})`;
+          if (Number.isInteger(schema.maxLength) && schema.maxLength >= 0) code += `.max(${schema.maxLength})`;
+          if (typeof schema.pattern === "string") code += `.regex(new RegExp(${JSON.stringify(schema.pattern)}))`;
+          return code;
+        }
         case "number":
-        case "integer":
-          return "z.number()";
+        case "integer": {
+          let code = t === "integer" ? "z.number().int()" : "z.number()";
+          if (typeof schema.minimum === "number" && Number.isFinite(schema.minimum)) code += `.min(${schema.minimum})`;
+          if (typeof schema.maximum === "number" && Number.isFinite(schema.maximum)) code += `.max(${schema.maximum})`;
+          if (typeof schema.exclusiveMinimum === "number" && Number.isFinite(schema.exclusiveMinimum)) code += `.gt(${schema.exclusiveMinimum})`;
+          if (typeof schema.exclusiveMaximum === "number" && Number.isFinite(schema.exclusiveMaximum)) code += `.lt(${schema.exclusiveMaximum})`;
+          if (typeof schema.multipleOf === "number" && schema.multipleOf > 0 && Number.isFinite(schema.multipleOf)) code += `.multipleOf(${schema.multipleOf})`;
+          return code;
+        }
         case "boolean":
           return "z.boolean()";
         case "null":
           return "z.null()";
-        case "array":
-          return `z.array(${convertSchemaToZod(schema.items || {})})`;
+        case "array": {
+          let code = `z.array(${convertSchemaToZod(schema.items || {})})`;
+          if (Number.isInteger(schema.minItems) && schema.minItems >= 0) code += `.min(${schema.minItems})`;
+          if (Number.isInteger(schema.maxItems) && schema.maxItems >= 0) code += `.max(${schema.maxItems})`;
+          return code;
+        }
         case "object": {
           const props = schema.properties || {};
           const required: string[] = schema.required || [];
@@ -522,7 +553,7 @@ export default function SchemaStudioClient() {
             const ap = schema.additionalProperties === true ? "z.any()" : convertSchemaToZod(schema.additionalProperties);
             return `${obj}.catchall(${ap})`;
           }
-          return obj;
+          return schema.additionalProperties === false ? `${obj}.strict()` : `${obj}.passthrough()`;
         }
         default: {
           if (schema.anyOf) return `z.union([${(schema.anyOf as any[]).map(convertSchemaToZod).join(", ")}])`;
@@ -894,6 +925,14 @@ export default function SchemaStudioClient() {
                 </FileDrop>
               </Field>
 
+              {!parsed.error && !parsed.empty && !parsed.isOpenAPI && (typeof parsed.value === "object" || typeof parsed.value === "boolean") && (
+                <Button type="button" variant="secondary" onClick={() => {
+                  setSchemaText(JSON.stringify(parsed.value, null, 2));
+                  setTypesOutput("");
+                  setTab("types");
+                }}>Use source as JSON Schema</Button>
+              )}
+
               {parsed.error ? (
                 <Alert variant="error">Parse error: {parsed.error}</Alert>
               ) : parsed.empty ? (
@@ -964,7 +1003,9 @@ export default function SchemaStudioClient() {
                 />
               </Field>
               <ResultPanel title="Result">
-                {validatorError ? (
+                {schemaText.trim() && dataText.trim() && (validatedKey !== validationKey || validating) ? (
+                  <p className="text-sm text-muted-foreground">Validating…</p>
+                ) : validatorError ? (
                   <Alert variant="error">{validatorError}</Alert>
                 ) : !schemaText.trim() || !dataText.trim() ? (
                   <p className="text-sm text-muted-foreground">
@@ -1068,7 +1109,7 @@ export default function SchemaStudioClient() {
                 <Field
                   label="JSON Schema"
                   htmlFor={ids.typesSchema}
-                  hint="Shared with the Validate tab."
+                  hint="Shared with the Validate tab. To use the Source editor instead, choose Use source as JSON Schema there."
                   error={typesError ?? undefined}
                 >
                   <textarea
