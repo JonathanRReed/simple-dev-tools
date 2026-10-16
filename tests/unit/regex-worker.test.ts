@@ -46,3 +46,18 @@ test('bounded replacement preserves native substitution semantics', () => {
     ['(?:)', 'gu', '😀', '_'],
   ]) expect(evaluate(pattern, flags, input, replacement).replaced.value).toBe(input.replace(new RegExp(pattern, flags), replacement));
 });
+test('bounds serialized named-group keys and capture values, not just matched text', () => {
+  const result = evaluate(`(?<${'x'.repeat(9000)}>a)`, 'g', 'a'.repeat(5000));
+  expect(JSON.stringify(result).length).toBeLessThan(1100000);
+  expect(result.truncated).toBe(true);
+});
+test('dollar substitution inside a literal named-group placeholder stays native', () => {
+  const replacement = '$<label:$&>';
+  expect(evaluate('a', 'g', 'a', replacement).replaced.value).toBe('a'.replace(/a/g, replacement));
+});
+test('oversized individual capture records are flagged rather than reported as no matches', () => {
+  const result = evaluate('((((((((((((a+))))))))))))', 'g', 'a'.repeat(100000));
+  expect(result.list).toHaveLength(0);
+  expect(result.truncated).toBe(true);
+  expect(result.replaced.value.length).toBe(100000);
+});
