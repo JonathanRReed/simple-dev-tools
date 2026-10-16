@@ -238,6 +238,27 @@ test('unmatched long named captures stay bounded and the page remains usable',as
 });
 
 
+test('blank schemas cannot generate unrestricted types', async ({ page }) => {
+  await page.goto('/studio/schema/');
+  await page.getByRole('button', { name: 'Reset', exact: true }).click();
+  await page.getByRole('tab', { name: 'Types', exact: true }).click();
+  const schema = page.getByRole('textbox', { name: 'JSON Schema', exact: true });
+  for (const mode of ['TS types', 'Zod schema']) {
+    await page.getByRole('radio', { name: mode, exact: true }).check();
+    const output = page.getByRole('textbox', { name: mode === 'TS types' ? 'TypeScript output' : 'Zod output', exact: true });
+    await schema.fill('{}');
+    await page.getByRole('button', { name: 'Generate', exact: true }).click();
+    await expect(output).not.toHaveValue('');
+    for (const blank of ['', '   \n\t']) {
+      await schema.fill(blank);
+      await page.getByRole('button', { name: 'Generate', exact: true }).click();
+      await expect(page.getByText('Enter a JSON Schema before generating types.', { exact: true })).toBeVisible();
+      await expect(output).toHaveValue('');
+      await expect(page.getByRole('button', { name: 'Download', exact: true })).toBeDisabled();
+    }
+  }
+});
+
 test('boolean JSON schemas keep their meaning in generated types and validation', async ({ page }) => {
   await page.goto('/studio/schema/');
   await page.getByRole('radio', { name: 'JSON', exact: true }).check();
