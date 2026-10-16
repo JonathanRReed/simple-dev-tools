@@ -200,3 +200,19 @@ test('schema arrays preserve union element precedence', async ({ page }) => {
   await page.getByRole('button', { name: 'Generate', exact: true }).click();
   await expect(page.getByRole('textbox', { name: 'TypeScript output', exact: true })).toHaveValue('export type Root = (string | null)[];');
 });
+
+test('switching to a file during text debounce does not strand its digest', async ({ page }) => {
+  await page.addInitScript(() => {
+    const digest = crypto.subtle.digest.bind(crypto.subtle);
+    crypto.subtle.digest = async (...args) => {
+      await new Promise(resolve => setTimeout(resolve, 600));
+      return digest(...args);
+    };
+  });
+  await page.goto('/tools/hash/');
+  await page.getByRole('textbox', { name: 'Text', exact: true }).fill('pending text');
+  await page.getByRole('tab', { name: 'File', exact: true }).click();
+  await page.locator('input[type="file"]').setInputFiles({ name: 'example.txt', mimeType: 'text/plain', buffer: Buffer.from('abc') });
+  await expect(page.getByText('ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad', { exact: true })).toBeVisible();
+  await expect(page.getByText('All four digests are ready', { exact: true })).toBeAttached();
+});

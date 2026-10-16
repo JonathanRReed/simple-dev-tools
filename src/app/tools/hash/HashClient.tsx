@@ -112,20 +112,15 @@ export default function HashClient() {
   );
 
   useEffect(() => {
-    if (mode === "text") {
-      const data =
-        debouncedText === ""
-          ? null
-          : new TextEncoder().encode(debouncedText).buffer;
-      void runHash(data, debouncedText);
-    }
+    if (mode !== "text") return;
+    const data = debouncedText === "" ? null : new TextEncoder().encode(debouncedText).buffer;
+    void runHash(data, debouncedText);
     return invalidateHash;
   }, [mode, debouncedText, runHash, invalidateHash]);
 
   useEffect(() => {
-    if (mode === "file") {
-      void runHash(fileBuffer, fileBuffer);
-    }
+    if (mode !== "file") return;
+    void runHash(fileBuffer, fileBuffer);
     return invalidateHash;
   }, [mode, fileBuffer, runHash, invalidateHash]);
 

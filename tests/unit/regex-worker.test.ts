@@ -33,3 +33,16 @@ test('bounds large input and match lists', () => {
   expect(result.list).toHaveLength(5000);
   expect(result.truncated).toBe(true);
 });
+
+test('bounds expanded replacement output before sending it to the page', () => {
+  const result = evaluate('a', 'g', 'a'.repeat(1000), 'x'.repeat(2000));
+  expect(result.replaced.error).toContain('1,000,000');
+  expect(result.replaced.value).toBe('');
+});
+test('bounded replacement preserves native substitution semantics', () => {
+  for (const [pattern, flags, input, replacement] of [
+    ['(a)(b)', 'g', 'ab ab', '$$-$&-$`-$\'-${x}-$1-$2-$12-$99'],
+    ['(?<letter>a)(b)?', 'g', 'a ab', '$<letter>:$<missing>:$2'],
+    ['(?:)', 'gu', '😀', '_'],
+  ]) expect(evaluate(pattern, flags, input, replacement).replaced.value).toBe(input.replace(new RegExp(pattern, flags), replacement));
+});

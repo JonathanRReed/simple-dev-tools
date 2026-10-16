@@ -45,3 +45,7 @@ https://:version.dev-hellworldfirm-com.pages.dev/*
   ! Content-Security-Policy
   Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; connect-src 'self'; object-src 'none'; base-uri 'none'
   Cache-Control: no-cache
+
+/regex-worker.js
+  ! Cache-Control
+  Cache-Control: no-cache
