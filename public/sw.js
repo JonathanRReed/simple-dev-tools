@@ -1,6 +1,6 @@
 /* global caches, clients, fetch, self, Request, Response, URL */
 
-const CACHE_NAME = 'sdt-v3';
+const CACHE_NAME = 'sdt-v4';
 
 const PRECACHE_ASSETS = [
   '/',
@@ -76,7 +76,7 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (url.origin === self.location.origin) {
-    const versionSensitive = request.destination === 'script' || request.headers.get('RSC') === '1' || url.pathname.endsWith('.txt');
+    const versionSensitive = ['script', 'worker', 'sharedworker'].includes(request.destination) || request.headers.get('RSC') === '1' || url.pathname.endsWith('.txt');
     event.respondWith(versionSensitive ? handleFreshAsset(request) : handleStaticAsset(request));
   }
 });
@@ -177,6 +177,7 @@ async function fetchAndCache(request) {
 }
 
 async function putInCache(request, response) {
+  if (new URL(typeof request === 'string' ? request : request.url, self.location.origin).search) return;
   const cache = await caches.open(CACHE_NAME);
   await cache.put(request, response.clone());
 }

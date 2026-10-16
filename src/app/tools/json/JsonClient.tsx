@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { RotateCcw, Sparkles, AlignLeft, Minimize2, ArrowDownAZ } from "lucide-react";
 import YAML from "yaml";
+import { assertSafeJsonNumbers, parseJsonWithoutUnsafeIntegers } from "@/lib/json-precision";
 import { assertAcyclic } from "@/lib/acyclic";
 
 import ToolShell from "@/components/tool/ToolShell";
@@ -144,10 +145,11 @@ function formatBytes(n: number): string {
 /* ------------------------------------------------------------------ */
 
 function parseSource(text: string, format: Format): unknown {
-  if (format === "json") return JSON.parse(text);
+  if (format === "json") return parseJsonWithoutUnsafeIntegers(text);
   if (format === "yaml") {
     const value: unknown = YAML.parse(text);
     assertAcyclic(value);
+    assertSafeJsonNumbers(value);
     return value;
   }
   return parseCsv(text);

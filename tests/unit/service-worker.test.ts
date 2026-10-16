@@ -62,3 +62,23 @@ test('unhashed scripts and route payloads use the current deployment rather than
   const response = await runInNewContext(`${script}\nhandleFreshAsset(new Request('https://example.com/regex-worker.js'));`, context);
   expect(await response.text()).toBe('new version');
 });
+
+test('worker requests use the fresh path and query-bearing URLs are not cached', async () => {
+  const callbacks: Record<string, (event: any) => void> = {};
+  let writes = 0;
+  const context = {
+    self: { location: { origin: 'https://example.com' }, addEventListener: (name: string, fn: (event: any) => void) => { callbacks[name] = fn; } },
+    fetch: async () => new Response('new worker'),
+    caches: { match: async () => new Response('old worker'), open: async () => ({ put: async () => { writes++; } }) },
+    Request, Response, URL,
+  };
+  runInNewContext(script, context);
+  const request = new Request('https://example.com/regex-worker.js');
+  Object.defineProperty(request, 'destination', { value: 'worker' });
+  let response!: Promise<Response>;
+  callbacks.fetch({ request, respondWith: (result: Promise<Response>) => { response = result; } });
+  expect(await (await response).text()).toBe('new worker');
+  expect(writes).toBe(1);
+  await runInNewContext("putInCache(new Request('https://example.com/tools/regex/?t=private'), new Response('page'))", { ...context, putInCache: runInNewContext('putInCache', context) });
+  expect(writes).toBe(1);
+});

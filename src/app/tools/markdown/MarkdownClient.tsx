@@ -249,10 +249,17 @@ export default function MarkdownClient() {
       // FORBID_ATTR "style" keeps share-link payloads from injecting
       // position:fixed overlays or fake UI via inline style attributes.
       // Remote media can leak pasted URLs to outside hosts even without scripts.
-      const sanitized = DOMPurify.sanitize(raw, {
+      const purifier = DOMPurify(window);
+      purifier.addHook("uponSanitizeElement", (node, data) => {
+        if (data.tagName !== "input") return;
+        const input = node as HTMLInputElement;
+        if (input.getAttribute("type")?.toLowerCase() !== "checkbox") input.remove();
+        else input.setAttribute("disabled", "");
+      });
+      const sanitized = purifier.sanitize(raw, {
         USE_PROFILES: { html: true },
-        FORBID_TAGS: ["script", "style", "img", "video", "audio", "source", "track", "iframe", "object", "embed", "link"],
-        FORBID_ATTR: ["style"],
+        FORBID_TAGS: ["script", "style", "img", "video", "audio", "source", "track", "iframe", "object", "embed", "link", "form", "button", "select", "textarea"],
+        FORBID_ATTR: ["style", "src", "srcset", "background", "action", "formaction", "poster", "ping"],
         ALLOW_DATA_ATTR: false,
       });
       setRendered({ sanitizedHtml: sanitized, parseError: "" });

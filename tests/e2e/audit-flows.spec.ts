@@ -6,7 +6,7 @@ test('API snippets preserve JSON types and omit common credentials from sharing'
   await page.goto('/api-snippet/');
   await page.getByRole('button', { name: 'Sample', exact: true }).click();
   await page.getByRole('tab', { name: 'Python', exact: true }).click();
-  await expect(page.getByRole('tabpanel', { name: 'Python', exact: true })).toContainText('json.loads');
+  await expect(page.getByRole('tabpanel', { name: 'Python', exact: true })).toContainText('data=payload.encode');
   await page.getByRole('button', { name: 'Copy link', exact: true }).click();
   const link = await page.evaluate(() => navigator.clipboard.readText());
   const params = decodeShareState(new URL(link).hash.slice(3));
@@ -14,7 +14,7 @@ test('API snippets preserve JSON types and omit common credentials from sharing'
   expect(JSON.stringify(params)).not.toContain('sk_test_51H8xToken');
   expect(params?.body).toContain("O'Brien");
   await page.getByRole('combobox', { name: 'Method', exact: true }).selectOption('GET');
-  await expect(page.getByRole('tabpanel', { name: 'Python', exact: true })).not.toContainText('json=payload');
+  await expect(page.getByRole('tabpanel', { name: 'Python', exact: true })).not.toContainText('data=payload');
 });
 
 test('timestamp units handle ambiguous and fractional epochs and expose UTC', async ({ page }) => {
@@ -153,4 +153,41 @@ test('schema source can explicitly populate generation and rejects circular YAML
   await page.getByRole('textbox', { name: 'Schema or OpenAPI source', exact: true }).fill('a: &a\n  self: *a');
   await expect(page.getByText(/Circular YAML aliases cannot be converted/)).toBeVisible();
   await expect(page.getByRole('button', { name: 'Use source as JSON Schema', exact: true })).toHaveCount(0);
+});
+
+test('JSON tools never silently round large request identifiers', async ({ page }) => {
+  const body = '{"id":9007199254740993,"fraction":0.1234567890123456789}';
+  await page.goto('/tools/json/');
+  await page.getByRole('textbox', { name: 'Source', exact: true }).fill(body);
+  await expect(page.getByText(/number outside JavaScript’s safe integer range/)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Format', exact: true })).toBeDisabled();
+  await expect(page.getByRole('textbox', { name: 'Source', exact: true })).toHaveValue(body);
+  await page.goto('/api-snippet/');
+  await page.getByRole('button', { name: 'Sample', exact: true }).click();
+  await page.getByRole('textbox', { name: 'Request body (JSON)', exact: true }).fill(body);
+  await page.getByRole('tab', { name: 'JS fetch', exact: true }).click();
+  const code = await page.getByRole('tabpanel', { name: 'JS fetch', exact: true }).locator('pre').innerText();
+  const { runInNewContext } = await import('node:vm');
+  let transmitted = '';
+  await runInNewContext(code, { fetch: async (_url: string, init: { body: string }) => { transmitted = init.body; return { json: async () => ({}) }; }, console: { log() {} } });
+  expect(transmitted).toBe(body);
+  await page.getByRole('tab', { name: 'Python', exact: true }).click();
+  await expect(page.getByRole('tabpanel', { name: 'Python', exact: true })).toContainText('9007199254740993');
+  await expect(page.getByRole('tabpanel', { name: 'Python', exact: true })).toContainText('data=payload.encode');
+});
+
+test('legacy regex links remove query text after hydration', async ({ page }) => {
+  await page.goto('/tools/regex/?p=hello&t=hello-secret&r=world');
+  await expect(page.getByRole('textbox', { name: 'Test String', exact: true })).toHaveValue('hello-secret');
+  await expect(page).not.toHaveURL(/hello-secret/);
+});
+
+test('Markdown removes form and background media while keeping readonly task checkboxes', async ({ page }) => {
+  await page.goto('/tools/markdown/');
+  await page.getByRole('textbox').first().fill('- [x] Complete\n\n<input type="image" src="https://example.com/track">\n<table background="https://example.com/track"><tr><td>Safe table</td></tr></table>\n<form action="https://example.com/track"><button>Send</button></form>');
+  const preview = page.getByRole('region', { name: /Rendered markdown preview/i });
+  await expect(preview.getByText('Safe table')).toBeVisible();
+  await expect(preview.locator('input[type=image], form, button, [background], [src]')).toHaveCount(0);
+  await expect(preview.locator('input[type=checkbox]')).toBeChecked();
+  await expect(preview.locator('input[type=checkbox]')).toBeDisabled();
 });

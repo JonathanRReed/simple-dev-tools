@@ -140,6 +140,9 @@ function RegexLabInner() {
     }
     if (qt !== null && qt !== text) setText(qt);
     if (qr !== null && qr !== replacement) setReplacement(qr);
+    const legacy = new URL(window.location.href);
+    for (const name of ["p", "f", "t", "r"]) legacy.searchParams.delete(name);
+    if (legacy.search !== window.location.search) window.history.replaceState(window.history.state, "", legacy.pathname + legacy.search + legacy.hash);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

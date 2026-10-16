@@ -162,12 +162,11 @@ function generateSnippets(
   const effectiveUrl = buildEffectiveUrl(cleanUrl, params);
 
   const trimmedBody = body.trim();
-  let parsed: unknown = undefined;
   let hasBodyInput = false;
 
   if (trimmedBody) {
     try {
-      parsed = JSON.parse(trimmedBody);
+      JSON.parse(trimmedBody);
       hasBodyInput = true;
     } catch {
       return {
@@ -183,8 +182,8 @@ function generateSnippets(
   const includeBody = hasBodyInput && methodAllowsBody(method);
   const bodyOmitted = hasBodyInput && !includeBody;
 
-  // The single canonical payload all three targets encode.
-  const canonicalJson = includeBody ? JSON.stringify(parsed) : "";
+  // Preserve the original JSON bytes; parsing and re-stringifying rounds large numbers.
+  const canonicalJson = includeBody ? trimmedBody : "";
 
   const { entries: headerEntries, droppedRows: droppedHeaderRows } =
     buildHeaderEntries(headers, authToken, includeBody);
@@ -203,15 +202,15 @@ function generateSnippets(
   const curl = curlParts.join(" \\\n");
 
   // ---- python ----
-  const pyLines = ["import requests", "import json", "", `url = ${JSON.stringify(effectiveUrl)}`];
+  const pyLines = ["import requests", "", `url = ${JSON.stringify(effectiveUrl)}`];
   pyLines.push(`headers = ${indentPython(headerObj)}`);
   if (includeBody) {
     // JSON.stringify produces a double-quoted string literal whose escaping is
     // also valid Python, so this round-trips any content (incl. quotes/newlines)
     // without the delimiter-collision a raw triple-quoted string can hit.
-    pyLines.push(`payload = json.loads(${JSON.stringify(canonicalJson)})`);
+    pyLines.push(`payload = ${JSON.stringify(canonicalJson)}`);
     pyLines.push(
-      `response = requests.${methodLower}(url, json=payload, headers=headers)`
+      `response = requests.${methodLower}(url, data=payload.encode("utf-8"), headers=headers)`
     );
   } else {
     pyLines.push(`response = requests.${methodLower}(url, headers=headers)`);
@@ -227,7 +226,7 @@ function generateSnippets(
     jsLines.push(`  headers: ${jsObjectLiteral(headerEntries)},`);
   }
   if (includeBody) {
-    jsLines.push(`  body: JSON.stringify(${canonicalJson}),`);
+    jsLines.push(`  body: ${JSON.stringify(canonicalJson)},`);
   } else if (bodyOmitted) {
     jsLines.push(`  // body omitted: ${method} requests cannot carry a body`);
   }
