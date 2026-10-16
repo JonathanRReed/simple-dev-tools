@@ -90,3 +90,25 @@ test('every diagram template renders and system theme describes the displayed pa
     await expect(page.locator('html')).toHaveAttribute('data-theme', id);
   }
 });
+
+test('hash verification waits for the current input and ignores results after reset', async ({ page }) => {
+  await page.addInitScript(() => {
+    const digest = crypto.subtle.digest.bind(crypto.subtle);
+    crypto.subtle.digest = async (...args: Parameters<SubtleCrypto['digest']>) => {
+      await new Promise(resolve => setTimeout(resolve, 800));
+      return digest(...args);
+    };
+  });
+  await page.goto('/tools/hash/');
+  await page.getByRole('textbox', { name: 'Text', exact: true }).fill('abc');
+  await page.getByRole('textbox', { name: 'Expected digest', exact: true }).fill('BA7816BF8F01CFEA414140DE5DAE2223 B00361A396177A9CB410FF61F20015AD');
+  await expect(page.getByText('No match', { exact: true })).toHaveCount(0);
+  await expect(page.getByText('Match', { exact: true })).toBeVisible();
+  await page.getByRole('textbox', { name: 'Text', exact: true }).fill('changed');
+  await expect(page.getByText('Match', { exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Reset', exact: true }).click();
+  await expect(page.getByText('All four digests are ready', { exact: true })).toHaveCount(0);
+  await page.waitForTimeout(1200);
+  await expect(page.getByText('All four digests are ready', { exact: true })).toHaveCount(0);
+  await expect(page.getByRole('textbox', { name: 'Text', exact: true })).toHaveValue('');
+});
