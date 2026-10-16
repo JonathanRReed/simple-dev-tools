@@ -248,9 +248,18 @@ export default function MarkdownClient() {
       const raw = marked.parse(debouncedSource, { async: false }) as string;
       // FORBID_ATTR "style" keeps share-link payloads from injecting
       // position:fixed overlays or fake UI via inline style attributes.
-      const sanitized = DOMPurify.sanitize(raw, {
-        FORBID_TAGS: ["script", "style"],
-        FORBID_ATTR: ["style"],
+      // Remote media can leak pasted URLs to outside hosts even without scripts.
+      const purifier = DOMPurify(window);
+      purifier.addHook("uponSanitizeElement", (node, data) => {
+        if (data.tagName !== "input") return;
+        const input = node as HTMLInputElement;
+        if (input.getAttribute("type")?.toLowerCase() !== "checkbox") input.remove();
+        else input.setAttribute("disabled", "");
+      });
+      const sanitized = purifier.sanitize(raw, {
+        USE_PROFILES: { html: true },
+        FORBID_TAGS: ["script", "style", "img", "video", "audio", "source", "track", "iframe", "object", "embed", "link", "form", "button", "select", "textarea"],
+        FORBID_ATTR: ["style", "src", "srcset", "background", "action", "formaction", "poster", "ping"],
         ALLOW_DATA_ATTR: false,
       });
       setRendered({ sanitizedHtml: sanitized, parseError: "" });
@@ -405,7 +414,10 @@ export default function MarkdownClient() {
                   Start typing or paste Markdown to see the preview.
                 </p>
               ) : (
+                <>
+                <p className="mb-3 text-xs text-muted-foreground">External images and embedded media are not loaded. Your preview stays local.</p>
                 <div dangerouslySetInnerHTML={{ __html: sanitizedHtml }} />
+                </>
               )}
             </div>
           </ResultPanel>

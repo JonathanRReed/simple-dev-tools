@@ -19,6 +19,9 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      - name: Verify dependencies and source
+        run: bun run audit && bun run lint && bun run typecheck && bun run test
+
       - name: Cache Playwright browsers
         uses: actions/cache@v6
         with:

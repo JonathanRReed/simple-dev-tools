@@ -151,11 +151,18 @@ export default function CodeEditor({
   );
 
   const extensions = useMemo<Extension[]>(() => {
-    const list: Extension[] = [syntaxHighlighting(syntax), EditorView.lineWrapping];
+    const attributes: Record<string, string> = {};
+    if (id) attributes.id = id;
+    if (ariaLabel) attributes["aria-label"] = ariaLabel;
+    const list: Extension[] = [
+      syntaxHighlighting(syntax),
+      EditorView.lineWrapping,
+      EditorView.contentAttributes.of(attributes),
+    ];
     if (language === "sql") list.push(sql({ dialect: SQLite }));
     if (language === "mermaid") list.push(mermaidLanguage);
     return list;
-  }, [language]);
+  }, [language, id, ariaLabel]);
 
   return (
     <CodeMirror
@@ -181,10 +188,6 @@ export default function CodeEditor({
         // Mod-[ still indent and dedent.
         indentOnInput: true,
       }}
-      // CodeMirror renders its own editable div; hand the id to it so the
-      // tool's <Label htmlFor> keeps pointing at the right element.
-      id={id}
-      aria-label={ariaLabel}
       className="w-full"
     />
   );

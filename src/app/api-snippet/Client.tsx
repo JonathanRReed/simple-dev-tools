@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { CopyButton } from "@/components/ui/copy-button";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { shareRequest } from "@/lib/share-request";
 import { readShareParams } from "@/lib/share";
 import { downloadFile } from "@/lib/download";
 import { useHotkey } from "@/hooks/use-hotkey";
@@ -161,12 +162,11 @@ function generateSnippets(
   const effectiveUrl = buildEffectiveUrl(cleanUrl, params);
 
   const trimmedBody = body.trim();
-  let parsed: unknown = undefined;
   let hasBodyInput = false;
 
   if (trimmedBody) {
     try {
-      parsed = JSON.parse(trimmedBody);
+      JSON.parse(trimmedBody);
       hasBodyInput = true;
     } catch {
       return {
@@ -182,8 +182,8 @@ function generateSnippets(
   const includeBody = hasBodyInput && methodAllowsBody(method);
   const bodyOmitted = hasBodyInput && !includeBody;
 
-  // The single canonical payload all three targets encode.
-  const canonicalJson = includeBody ? JSON.stringify(parsed) : "";
+  // Preserve the original JSON bytes; parsing and re-stringifying rounds large numbers.
+  const canonicalJson = includeBody ? trimmedBody : "";
 
   const { entries: headerEntries, droppedRows: droppedHeaderRows } =
     buildHeaderEntries(headers, authToken, includeBody);
@@ -202,15 +202,15 @@ function generateSnippets(
   const curl = curlParts.join(" \\\n");
 
   // ---- python ----
-  const pyLines = ["import requests", "import json", "", `url = ${JSON.stringify(effectiveUrl)}`];
+  const pyLines = ["import requests", "", `url = ${JSON.stringify(effectiveUrl)}`];
   pyLines.push(`headers = ${indentPython(headerObj)}`);
   if (includeBody) {
     // JSON.stringify produces a double-quoted string literal whose escaping is
     // also valid Python, so this round-trips any content (incl. quotes/newlines)
     // without the delimiter-collision a raw triple-quoted string can hit.
-    pyLines.push(`payload = json.loads(${JSON.stringify(canonicalJson)})`);
+    pyLines.push(`payload = ${JSON.stringify(canonicalJson)}`);
     pyLines.push(
-      `response = requests.${methodLower}(url, json=payload, headers=headers)`
+      `response = requests.${methodLower}(url, data=payload.encode("utf-8"), headers=headers)`
     );
   } else {
     pyLines.push(`response = requests.${methodLower}(url, headers=headers)`);
@@ -226,7 +226,7 @@ function generateSnippets(
     jsLines.push(`  headers: ${jsObjectLiteral(headerEntries)},`);
   }
   if (includeBody) {
-    jsLines.push(`  body: JSON.stringify(${canonicalJson}),`);
+    jsLines.push(`  body: ${JSON.stringify(canonicalJson)},`);
   } else if (bodyOmitted) {
     jsLines.push(`  // body omitted: ${method} requests cannot carry a body`);
   }
@@ -413,22 +413,7 @@ export default function ApiSnippetClient() {
     setBody(text);
   };
 
-  const shareParams = useCallback(() => {
-    const cleanUrl = url.trim();
-    if (!cleanUrl) return null;
-    const out: Record<string, string> = { url: cleanUrl, method };
-    if (body.trim()) out.body = body;
-    if (authToken.trim()) out.auth = authToken.trim();
-    const headerEntries = headers
-      .filter((h) => h.key.trim() || h.value.trim())
-      .map((h) => ({ key: h.key, value: h.value }));
-    if (headerEntries.length) out.headers = JSON.stringify(headerEntries);
-    const paramEntries = params
-      .filter((p) => p.key.trim())
-      .map((p) => ({ key: p.key, value: p.value }));
-    if (paramEntries.length) out.params = JSON.stringify(paramEntries);
-    return out;
-  }, [url, method, body, authToken, headers, params]);
+  const shareParams = useCallback(() => shareRequest({ url, method, body, headers, params }), [url, method, body, headers, params]);
 
   const regenerateSnippets = useCallback(() => {
     setRegenToken((n) => n + 1);
@@ -470,6 +455,7 @@ export default function ApiSnippetClient() {
       shareParams={shareParams}
       shortcuts={shortcuts}
     >
+      <p className="mb-4 text-xs text-muted-foreground">Share links include request content. Common authentication fields are omitted; review the URL, headers and body before sharing.</p>
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Request definition */}
         <div className="flex flex-col gap-4">

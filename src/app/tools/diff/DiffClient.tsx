@@ -6,9 +6,9 @@ import {
   diffLines,
   createTwoFilesPatch,
   type ChangeObject,
-  type DiffWordsOptionsNonabortable,
-  type DiffLinesOptionsNonabortable,
-  type CreatePatchOptionsNonabortable,
+  type DiffWordsOptionsAbortable,
+  type DiffLinesOptionsAbortable,
+  type CreatePatchOptionsAbortable,
 } from 'diff';
 import {
   RotateCcw,
@@ -34,6 +34,8 @@ import { downloadFile } from '@/lib/download';
 import { readShareParams } from '@/lib/share';
 import { cn } from '@/lib/utils';
 import { countLines } from '@/lib/line-count';
+
+const EMPTY_CHANGES: ChangeObject<string>[] = [];
 
 type ViewMode = 'side' | 'unified';
 type DiffLevel = 'word' | 'line';
@@ -64,22 +66,22 @@ function splitLines(text: string): string[] {
 function buildWordOptions(
   ignoreWhitespace: boolean,
   ignoreCase: boolean
-): DiffWordsOptionsNonabortable {
-  return { ignoreWhitespace, ignoreCase } as unknown as DiffWordsOptionsNonabortable;
+): DiffWordsOptionsAbortable & { ignoreWhitespace: boolean } {
+  return { ignoreWhitespace, ignoreCase, timeout: 150, maxEditLength: 4000 };
 }
 
 function buildLineOptions(
   ignoreWhitespace: boolean,
   ignoreCase: boolean
-): DiffLinesOptionsNonabortable {
-  return { ignoreWhitespace, ignoreCase } as unknown as DiffLinesOptionsNonabortable;
+): DiffLinesOptionsAbortable & { ignoreCase: boolean } {
+  return { ignoreWhitespace, ignoreCase, timeout: 150, maxEditLength: 4000 };
 }
 
 function buildPatchOptions(
   ignoreWhitespace: boolean,
   ignoreCase: boolean
-): CreatePatchOptionsNonabortable {
-  return { ignoreWhitespace, ignoreCase } as unknown as CreatePatchOptionsNonabortable;
+): CreatePatchOptionsAbortable & { ignoreCase: boolean } {
+  return { ignoreWhitespace, ignoreCase, timeout: 150, maxEditLength: 4000 };
 }
 
 export default function DiffClient() {
@@ -89,6 +91,7 @@ export default function DiffClient() {
   const [level, setLevel] = useState<DiffLevel>('word');
   const [ignoreWhitespace, setIgnoreWhitespace] = useState(false);
   const [ignoreCase, setIgnoreCase] = useState(false);
+  const [patchError, setPatchError] = useState(false);
 
   // Debounce the inputs so large pastes don't re-diff on every keystroke.
   const debouncedOriginal = useDebounced(original, 300);
@@ -116,7 +119,7 @@ export default function DiffClient() {
 
   // Compute only the active granularity. The word diff is the expensive one;
   // line diffs are also needed for the stats line.
-  const lineChanges = useMemo<ChangeObject<string>[]>(() => {
+  const lineResult = useMemo<ChangeObject<string>[] | undefined>(() => {
     if (bothEmpty || tooLarge) return [];
     return diffLines(
       debouncedOriginal,
@@ -125,7 +128,7 @@ export default function DiffClient() {
     );
   }, [debouncedOriginal, debouncedChanged, ignoreWhitespace, ignoreCase, bothEmpty, tooLarge]);
 
-  const wordChanges = useMemo<ChangeObject<string>[]>(() => {
+  const wordResult = useMemo<ChangeObject<string>[] | undefined>(() => {
     if (level !== 'word' || bothEmpty || tooLarge) return [];
     return diffWords(
       debouncedOriginal,
@@ -134,6 +137,10 @@ export default function DiffClient() {
     );
   }, [level, debouncedOriginal, debouncedChanged, ignoreWhitespace, ignoreCase, bothEmpty, tooLarge]);
 
+  const lineChanges = lineResult ?? EMPTY_CHANGES;
+  const wordChanges = wordResult ?? EMPTY_CHANGES;
+  const computationLimited = lineResult === undefined || wordResult === undefined;
+  const inputPending = original !== debouncedOriginal || changed !== debouncedChanged;
   const changes = level === 'word' ? wordChanges : lineChanges;
 
   const stats = useMemo(() => {
@@ -153,11 +160,10 @@ export default function DiffClient() {
   // full line diff internally, and its only consumers are the copy and download
   // actions below, so computing it eagerly tripled the diff work for output
   // most sessions never ask for.
-  const canPatch = !bothEmpty && !tooLarge;
+  const canPatch = !bothEmpty && !tooLarge && !computationLimited && !inputPending;
   const buildPatch = useCallback((): string => {
     if (!canPatch) return '';
-    return (
-      createTwoFilesPatch(
+    const patch = createTwoFilesPatch(
         'original.txt',
         'changed.txt',
         debouncedOriginal,
@@ -165,8 +171,10 @@ export default function DiffClient() {
         undefined,
         undefined,
         buildPatchOptions(ignoreWhitespace, ignoreCase)
-      ) ?? ''
-    );
+      );
+    setPatchError(patch === undefined);
+    if (patch === undefined) throw new Error('Patch generation exceeded its processing limit.');
+    return patch;
   }, [canPatch, debouncedOriginal, debouncedChanged, ignoreWhitespace, ignoreCase]);
 
   const handleSample = () => {
@@ -179,6 +187,7 @@ export default function DiffClient() {
   };
 
   const handleReset = () => {
+    setPatchError(false);
     setOriginal('');
     setChanged('');
     setMode('unified');
@@ -188,9 +197,12 @@ export default function DiffClient() {
   };
 
   const handleDownload = (ext: 'diff' | 'patch') => {
-    const patch = buildPatch();
-    if (!patch) return;
-    downloadFile(patch, `changes.${ext}`, 'text/x-diff;charset=utf-8');
+    try {
+      const patch = buildPatch();
+      if (patch) downloadFile(patch, `changes.${ext}`, 'text/x-diff;charset=utf-8');
+    } catch {
+      setPatchError(true);
+    }
   };
 
   const shareParams = () => {
@@ -344,7 +356,7 @@ export default function DiffClient() {
                   onChange={(e) => setIgnoreWhitespace(e.target.checked)}
                   className="h-4 w-4 rounded-none border-2 border-input bg-background"
                 />
-                <Label htmlFor="diff-ignore-whitespace">Ignore whitespace</Label>
+                <Label htmlFor="diff-ignore-whitespace">{level === "line" ? "Ignore edge whitespace" : "Ignore whitespace"}</Label>
               </div>
               <div className="flex items-center gap-2">
                 <input
@@ -366,22 +378,27 @@ export default function DiffClient() {
           aria-atomic="true"
         >
           <Badge variant="outline">
-            {hasInput ? `${stats.added} added` : '—'}
+            {hasInput && !computationLimited && !inputPending ? `${stats.added} added` : '—'}
           </Badge>
           <Badge variant="outline">
-            {hasInput ? `${stats.removed} removed` : '—'}
+            {hasInput && !computationLimited && !inputPending ? `${stats.removed} removed` : '—'}
           </Badge>
           <Badge variant="outline">
-            {hasInput ? `${stats.unchanged} unchanged` : '—'}
+            {hasInput && !computationLimited && !inputPending ? `${stats.unchanged} unchanged` : '—'}
           </Badge>
           <span className="ml-auto">
             {level === 'word' ? 'Word-level' : 'Line-level'} · {mode === 'side' ? 'side by side' : 'unified'}
           </span>
         </div>
 
-        {tooLarge ? (
+        {patchError && <Alert variant="warning">Patch generation reached its processing limit. Try smaller sections.</Alert>}
+        {inputPending ? (
+          <Alert variant="info">Updating comparison…</Alert>
+        ) : computationLimited ? (
+          <Alert variant="warning">These texts are too different to compare within the processing limit. Compare smaller sections.</Alert>
+        ) : tooLarge ? (
           <Alert variant="warning">
-            Inputs over {Math.round(MAX_DIFF_LENGTH / 1000)} KB are too large for in-browser
+            Inputs over {MAX_DIFF_LENGTH.toLocaleString()} characters are too large for in-browser
             diffing. Trim the texts (or diff the relevant sections) and try again.
           </Alert>
         ) : bothEmpty ? (

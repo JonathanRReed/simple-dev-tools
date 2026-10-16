@@ -128,6 +128,7 @@ export function CommandMenuProvider({ children }: { children: React.ReactNode })
       {children}
       <CommandDialog open={open} onOpenChange={setOpen}>
         <CommandInput
+          aria-label="Search tools, pages, and themes"
           placeholder="Search tools, pages, themes…"
           value={query}
           onValueChange={setQuery}

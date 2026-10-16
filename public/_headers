@@ -40,3 +40,8 @@ https://dev-hellworldfirm-com.pages.dev/*
 
 https://:version.dev-hellworldfirm-com.pages.dev/*
   X-Robots-Tag: noindex
+
+/sqlite-worker.js
+  ! Content-Security-Policy
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; connect-src 'self'; object-src 'none'; base-uri 'none'
+  Cache-Control: no-cache

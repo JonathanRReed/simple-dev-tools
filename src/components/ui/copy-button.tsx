@@ -30,7 +30,15 @@ const CopyButton = React.forwardRef<HTMLButtonElement, CopyButtonProps>(
     }, []);
 
     const onCopy = React.useCallback(async () => {
-      const text = (typeof value === "function" ? value() : value) ?? "";
+      let text: string;
+      try {
+        text = (typeof value === "function" ? value() : value) ?? "";
+      } catch {
+        setState("error");
+        if (timer.current) clearTimeout(timer.current);
+        timer.current = setTimeout(() => setState("idle"), 1400);
+        return;
+      }
       let copied = false;
       try {
         if (navigator.clipboard?.writeText) {

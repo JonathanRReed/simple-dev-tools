@@ -44,3 +44,14 @@ export const appThemeIds = appThemes.map((theme) => theme.id);
 export function getAppTheme(themeId: string | undefined) {
   return appThemes.find((theme) => theme.id === themeId);
 }
+
+export const themeValues: Record<string, AppThemeId> = {
+  ...Object.fromEntries(appThemeIds.map(id => [id, id])),
+  dark: 'art-deco',
+  light: 'paper',
+};
+
+export function resolveAppThemeId(theme: string | undefined, resolvedTheme: string | undefined): AppThemeId {
+  const value = theme === 'system' ? resolvedTheme : theme ?? resolvedTheme;
+  return themeValues[value ?? 'art-deco'] ?? 'art-deco';
+}

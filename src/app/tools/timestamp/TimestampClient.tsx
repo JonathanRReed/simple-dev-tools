@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { ResultPanel } from "@/components/ui/result-panel";
 import { readShareParams } from "@/lib/share";
 import { useHotkey } from "@/hooks/use-hotkey";
+import { parseMoment, type TimestampUnit, type Detection } from "@/lib/timestamp";
 import { useStoredState } from "@/hooks/use-stored-state";
 
 /** localStorage key for the last input string. Settings/input only — never
@@ -24,54 +25,12 @@ const STORAGE_KEY = "sdt:timestamp:input";
 /** A fixed, unambiguous example used by the "Sample" button. */
 const SAMPLE_INPUT = "2024-03-14T15:09:26.535Z";
 
-/** Epochs at or below this magnitude are read as seconds, larger as ms.
- *  1e11 seconds ≈ year 5138, so any plausible second-epoch stays below it,
- *  while millisecond-epochs (13 digits, ~1.7e12 today) land above it. */
-const SECONDS_CEILING = 1e11;
-
-type Detection = "seconds" | "milliseconds" | "string";
-
-type ParseResult =
-  | { ok: true; date: Date; detected: Detection }
-  | { ok: false };
-
-
-/**
- * Parse the "moment" field. All-digit input (optionally signed) is treated as a
- * Unix epoch; everything else is handed to the Date constructor (ISO 8601,
- * RFC 2822, etc.). Returns ok:false for empty or unparseable input.
- */
 // Intl formatters are expensive to construct; build the relative-time one
 // once per page (lazily, so SSR and non-Intl runtimes never touch it).
 let cachedRelativeTimeFormatter: Intl.RelativeTimeFormat | null = null;
 function relativeTimeFormatter(): Intl.RelativeTimeFormat {
   cachedRelativeTimeFormatter ??= new Intl.RelativeTimeFormat(undefined, { numeric: "auto" });
   return cachedRelativeTimeFormatter;
-}
-
-function parseMoment(raw: string): ParseResult {
-  const trimmed = raw.trim();
-  if (trimmed.length === 0) return { ok: false };
-
-  // All digits (with an optional leading minus) => Unix epoch.
-  if (/^-?\d+$/.test(trimmed)) {
-    const n = Number(trimmed);
-    if (!Number.isFinite(n)) return { ok: false };
-    // Exactly 13 digits (ignoring a leading sign) is unambiguously a
-    // millisecond epoch — this catches pre-1973 ms epochs whose magnitude
-    // would otherwise fall under SECONDS_CEILING and be misread as seconds.
-    const digitCount = trimmed.replace(/^-/, "").length;
-    const isSeconds = digitCount === 13 ? false : Math.abs(n) <= SECONDS_CEILING;
-    const ms = isSeconds ? n * 1000 : n;
-    const date = new Date(ms);
-    if (Number.isNaN(date.getTime())) return { ok: false };
-    return { ok: true, date, detected: isSeconds ? "seconds" : "milliseconds" };
-  }
-
-  // Otherwise parse as a date string.
-  const date = new Date(trimmed);
-  if (Number.isNaN(date.getTime())) return { ok: false };
-  return { ok: true, date, detected: "string" };
 }
 
 /** Resolve the browser's IANA zone label, guarded for odd runtimes. */
@@ -159,7 +118,7 @@ function supportedZones(): string[] {
     ).supportedValuesOf;
     if (typeof fn === "function") {
       const zones = fn("timeZone");
-      if (Array.isArray(zones) && zones.length > 0) return zones;
+      if (Array.isArray(zones) && zones.length > 0) return ["UTC", ...zones.filter(zone => zone !== "UTC")];
     }
   } catch {
     /* fall through */
@@ -189,6 +148,8 @@ const DETECTION_LABEL: Record<Detection, string> = {
 
 export default function TimestampClient() {
   const [input, setInput, clearInput] = useStoredState(STORAGE_KEY, "");
+  const [storedUnit, setUnit, clearUnit] = useStoredState("sdt:timestamp:unit", "auto");
+  const unit: TimestampUnit = storedUnit === "seconds" || storedUnit === "milliseconds" ? storedUnit : "auto";
   // A monotonically-updated clock so relative time stays fresh while idle.
   const [now, setNow] = useState<number>(() => Date.now());
 
@@ -202,6 +163,7 @@ export default function TimestampClient() {
   useEffect(() => {
     const params = readShareParams();
     if (params) {
+      if (["auto", "seconds", "milliseconds"].includes(params.unit)) setUnit(params.unit);
       if (typeof params.v === "string") setInput(params.v);
       if (
         typeof params.tz === "string" &&
@@ -215,7 +177,7 @@ export default function TimestampClient() {
     }
     const lz = resolvedZone();
     if (lz && lz !== "local" && zones.includes(lz)) setZone(lz);
-  }, [setInput, zones]);
+  }, [setInput, setUnit, zones]);
 
   // The timezone list is ~420 entries from Intl.supportedValuesOf. Build the
   // <option> elements once: they are otherwise reconciled on every tick below.
@@ -235,17 +197,16 @@ export default function TimestampClient() {
     return () => window.clearInterval(id);
   }, [needsTick]);
 
-  const parsed = useMemo(() => parseMoment(input), [input]);
+  const parsed = useMemo(() => parseMoment(input, unit), [input, unit]);
   const hasInput = input.trim().length > 0;
   const showError = hasInput && !parsed.ok;
 
   const fields = useMemo(() => {
     if (!parsed.ok) return null;
     const ms = parsed.date.getTime();
-    const seconds = Math.floor(ms / 1000);
     return {
       detected: parsed.detected,
-      seconds: String(seconds),
+      seconds: String(ms / 1000),
       milliseconds: String(ms),
       iso: parsed.date.toISOString(),
       utc: parsed.date.toUTCString(),
@@ -256,15 +217,18 @@ export default function TimestampClient() {
   }, [parsed, now, zone]);
 
   const setNowMoment = () => {
+    setUnit("seconds");
     setInput(String(Math.floor(Date.now() / 1000)));
   };
 
   const loadSample = () => {
+    setUnit("auto");
     setInput(SAMPLE_INPUT);
   };
 
   const reset = () => {
     clearInput();
+    clearUnit();
   };
 
   const handleZoneChange = (next: string) => {
@@ -275,7 +239,7 @@ export default function TimestampClient() {
   const shareParams = () => {
     const value = input.trim();
     if (!value) return null;
-    const params: Record<string, string> = { v: value };
+    const params: Record<string, string> = { v: value, unit };
     if (zoneManuallyChanged) params.tz = zone;
     return params;
   };
@@ -321,6 +285,14 @@ export default function TimestampClient() {
       shortcuts={shortcuts}
     >
       <div className="flex flex-col gap-6">
+        <Field label="Input unit" htmlFor="timestamp-unit">
+          <select id="timestamp-unit" value={unit} onChange={event => setUnit(event.target.value)} className="h-10 w-full border-2 border-input bg-background px-3 text-sm">
+            <option value="auto">Auto-detect / date string</option>
+            <option value="seconds">Unix seconds</option>
+            <option value="milliseconds">Unix milliseconds</option>
+          </select>
+          <p className="mt-2 text-xs text-muted-foreground">Choose a unit for dates near 1970, where the numeric value is ambiguous.</p>
+        </Field>
         <Field
           label="Moment"
           htmlFor="timestamp-input"

@@ -121,3 +121,35 @@ test('mobile navigation reaches a tool without horizontal overflow', async ({ pa
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   expect(overflow).toBeLessThanOrEqual(1);
 });
+
+test('regex input stays out of network URLs and copied links use fragments', async ({ page }) => {
+  const sentinel = 'LOCAL_REGEX_9f63';
+  const transmitted: string[] = [];
+  page.on('request', request => transmitted.push(request.url() + (request.postData() ?? '')));
+  await page.goto('/tools/regex/');
+  await page.getByRole('textbox', { name: 'Test String', exact: true }).fill(sentinel);
+  await page.getByRole('textbox', { name: 'Pattern', exact: true }).fill('LOCAL');
+  await expect(page.getByText('1 match', { exact: true })).toBeVisible();
+  await expect(page).not.toHaveURL(/LOCAL_REGEX/);
+  expect(transmitted.some(request => request.includes(sentinel))).toBe(false);
+});
+
+test('markdown preview does not load remote media from pasted content', async ({ page }) => {
+  const outbound: string[] = [];
+  page.on('request', request => { if (request.url().includes('example.com/private-image')) outbound.push(request.url()); });
+  await page.goto('/tools/markdown/');
+  await page.getByRole('textbox').first().fill('# Safe heading\n\n![Private image](https://example.com/private-image.png)\n\n<video src="https://example.com/private-image.mp4"></video>');
+  const preview = page.getByRole('region', { name: /Rendered markdown preview/i });
+  await expect(preview.getByRole('heading', { name: 'Safe heading' })).toBeVisible();
+  await expect(preview.locator('img,video,audio,iframe,object,embed')).toHaveCount(0);
+  expect(outbound).toEqual([]);
+});
+
+test('a catastrophic regex times out without freezing the page', async ({ page }) => {
+  await page.goto('/tools/regex/');
+  await page.getByRole('textbox', { name: 'Pattern', exact: true }).fill('(a+)+$');
+  await page.getByRole('textbox', { name: 'Test String', exact: true }).fill('a'.repeat(40) + '!');
+  await expect(page.getByText('Pattern took too long. Simplify it or use a shorter test string.').first()).toBeVisible({ timeout: 10000 });
+  await page.getByRole('button', { name: 'Reset', exact: true }).click();
+  await expect(page.getByText('2 matches', { exact: true }).first()).toBeVisible();
+});

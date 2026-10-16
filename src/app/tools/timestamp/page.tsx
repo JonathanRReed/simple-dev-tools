@@ -21,7 +21,7 @@ export default function TimestampPage() {
         <p>
           Paste a Unix epoch or any parseable date string and read it back as seconds,
           milliseconds, ISO 8601, UTC, your local zone, and relative time. Seconds vs.
-          milliseconds is auto-detected.
+          milliseconds is auto-detected, or you can choose the unit.
         </p>
         <p>
           Everything is computed locally. Nothing leaves your browser, and your last input is
@@ -31,10 +31,11 @@ export default function TimestampPage() {
       <TimestampClientOnly />
       <ToolNotes title="How detection works">
         <p>
-          All-digit input is treated as a Unix epoch. Values at or below <code>1e11</code> are
-          read as seconds, larger values as milliseconds, so both <code>1700000000</code> and{" "}
-          <code>1700000000000</code> resolve to the same moment. Anything else is parsed as a
-          date string (ISO 8601, RFC 2822, and other formats your browser understands).
+          Signed numbers and decimal values are accepted as Unix epochs. Auto-detect reads
+          13-digit values or magnitudes above <code>1e11</code> as milliseconds; other
+          numbers are seconds. Choose a unit explicitly for ambiguous values near 1970.
+          Date strings are accepted in Auto-detect mode; include a time zone to avoid
+          differences between browsers and locations.
         </p>
       </ToolNotes>
     </ToolPage>

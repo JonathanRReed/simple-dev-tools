@@ -65,19 +65,26 @@ export default function HashClient() {
 
   const [file, setFile] = useState<File | null>(null);
   const [fileBuffer, setFileBuffer] = useState<ArrayBuffer | null>(null);
-  const [digests, setDigests] = useState<Record<Algorithm, string>>(EMPTY_DIGESTS);
-  const [pending, setPending] = useState(false);
+  const [rawDigests, setDigests] = useState<Record<Algorithm, string>>(EMPTY_DIGESTS);
+  const [resultSource, setResultSource] = useState<string | ArrayBuffer | null>(null);
+  const source = mode === "text" ? text : fileBuffer;
+  const pending = source !== null && source !== "" && resultSource !== source;
+  const digests = resultSource === source ? rawDigests : EMPTY_DIGESTS;
   const [error, setError] = useState<string | null>(null);
   const [upperCase, setUpperCase] = useState(false);
   const [expected, setExpected] = useState("");
 
   const genRef = useRef(0);
+  const fileReadRef = useRef(0);
+  const invalidateHash = useCallback(() => { genRef.current++; }, []);
   const isCryptoAvailable = typeof crypto !== "undefined" && crypto.subtle != null;
 
   const runHash = useCallback(
-    async (data: ArrayBuffer | null) => {
+    async (data: ArrayBuffer | null, identity: string | ArrayBuffer | null) => {
+      const token = ++genRef.current;
       if (!isCryptoAvailable) {
         setError("Web Crypto is not available in this context.");
+        setResultSource(identity);
         return;
       }
 
@@ -85,11 +92,10 @@ export default function HashClient() {
 
       if (data == null) {
         setDigests(EMPTY_DIGESTS);
+        setResultSource(identity);
         return;
       }
 
-      const token = ++genRef.current;
-      setPending(true);
       try {
         const next = await hashAll(data);
         if (token !== genRef.current) return;
@@ -99,7 +105,7 @@ export default function HashClient() {
         setError(e instanceof Error ? e.message : "Hash computation failed.");
         setDigests(EMPTY_DIGESTS);
       } finally {
-        if (token === genRef.current) setPending(false);
+        if (token === genRef.current) setResultSource(identity);
       }
     },
     [isCryptoAvailable]
@@ -111,25 +117,31 @@ export default function HashClient() {
         debouncedText === ""
           ? null
           : new TextEncoder().encode(debouncedText).buffer;
-      void runHash(data);
+      void runHash(data, debouncedText);
     }
-  }, [mode, debouncedText, runHash]);
+    return invalidateHash;
+  }, [mode, debouncedText, runHash, invalidateHash]);
 
   useEffect(() => {
     if (mode === "file") {
-      void runHash(fileBuffer);
+      void runHash(fileBuffer, fileBuffer);
     }
-  }, [mode, fileBuffer, runHash]);
+    return invalidateHash;
+  }, [mode, fileBuffer, runHash, invalidateHash]);
 
   const handleFile = useCallback(
     async (_text: string, file: File) => {
+      const token = ++fileReadRef.current;
       try {
+        setFileBuffer(null);
         setFile(file);
         const buffer = await file.arrayBuffer();
+        if (token !== fileReadRef.current) return;
         setFileBuffer(buffer);
         setMode("file");
         setError(null);
       } catch (e) {
+        if (token !== fileReadRef.current) return;
         setError(e instanceof Error ? e.message : "Could not read the file.");
         setFile(null);
         setFileBuffer(null);
@@ -144,6 +156,10 @@ export default function HashClient() {
   };
 
   const handleReset = () => {
+    genRef.current++;
+    fileReadRef.current++;
+    setDigests(EMPTY_DIGESTS);
+    setResultSource(null);
     setText("");
     setFile(null);
     setFileBuffer(null);
@@ -308,7 +324,7 @@ export default function HashClient() {
 
             {!hasAnyDigest ? (
               <span className="text-sm text-muted-foreground">
-                Enter text or drop a file to compute digests.
+                {pending ? "Computing digests…" : "Enter text or drop a file to compute digests."}
               </span>
             ) : null}
           </ResultPanel>
@@ -319,7 +335,7 @@ export default function HashClient() {
             hint="Spaces are ignored. Match is case-insensitive."
             action={
               <>
-                {verify.hasExpected ? (
+                {verify.hasExpected && hasAnyDigest && !pending ? (
                   verify.matched ? (
                     <Badge className="border-rp-foam bg-rp-foam/10 text-foreground">
                       Match
@@ -330,7 +346,9 @@ export default function HashClient() {
                 ) : null}
                 <span className="sr-only" role="status" aria-live="polite">
                   {verify.hasExpected
-                    ? verify.matched
+                    ? pending || !hasAnyDigest
+                      ? "Waiting for digests before verification."
+                      : verify.matched
                       ? "The expected digest matches a computed hash."
                       : "The expected digest does not match any computed hash."
                     : "No expected digest to verify."}
