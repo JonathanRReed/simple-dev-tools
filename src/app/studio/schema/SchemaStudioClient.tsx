@@ -357,7 +357,7 @@ export default function SchemaStudioClient() {
         case "null":
           return "null";
         case "array":
-          return `${convertSchemaToType(schema.items || {})}[]`;
+          return `(${convertSchemaToType(schema.items || {})})[]`;
         case "object": {
           const props = schema.properties || {};
           const required: string[] = schema.required || [];

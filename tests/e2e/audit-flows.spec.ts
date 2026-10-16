@@ -191,3 +191,12 @@ test('Markdown removes form and background media while keeping readonly task che
   await expect(preview.locator('input[type=checkbox]')).toBeChecked();
   await expect(preview.locator('input[type=checkbox]')).toBeDisabled();
 });
+
+test('schema arrays preserve union element precedence', async ({ page }) => {
+  await page.goto('/studio/schema/');
+  await page.getByRole('radio', { name: 'JSON', exact: true }).check();
+  await page.getByRole('textbox', { name: 'Schema or OpenAPI source', exact: true }).fill('{"type":"array","items":{"type":["string","null"]}}');
+  await page.getByRole('button', { name: 'Use source as JSON Schema', exact: true }).click();
+  await page.getByRole('button', { name: 'Generate', exact: true }).click();
+  await expect(page.getByRole('textbox', { name: 'TypeScript output', exact: true })).toHaveValue('export type Root = (string | null)[];');
+});
