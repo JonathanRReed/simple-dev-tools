@@ -645,7 +645,8 @@ export default function SchemaStudioClient() {
       }
       // Otherwise, JSON Schema route (shared schemaText source).
       const text = schemaText?.trim();
-      const schema: any = text ? JSON.parse(text) : {};
+      if (!text) throw new Error("Enter a JSON Schema before generating types.");
+      const schema: any = JSON.parse(text);
       if (!isLikelyJsonSchema(schema)) {
         throw new Error("Provided input is not a valid-looking JSON Schema");
       }
