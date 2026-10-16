@@ -3,10 +3,10 @@ import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 
 const script = readFileSync(new URL('../../public/regex-worker.js', import.meta.url), 'utf8');
-function evaluate(pattern: string, flags: string, text: string, replacement = '$&') {
+function evaluate(pattern: string, flags: string, text: string, replacement = '$&', json = JSON) {
   let result: any;
   const self = { onmessage: undefined, postMessage: (value: unknown) => { result = value; } };
-  runInNewContext(`${script}\nself.onmessage({ data });`, { self, data: { pattern, flags, text, replacement } }, { timeout: 1000 });
+  runInNewContext(`${script}\nself.onmessage({ data });`, { self, JSON: json, data: { pattern, flags, text, replacement } }, { timeout: 1000 });
   return result;
 }
 test('returns named groups, replacement and splitting in one worker result', () => {
@@ -60,4 +60,20 @@ test('oversized individual capture records are flagged rather than reported as n
   expect(result.list).toHaveLength(0);
   expect(result.truncated).toBe(true);
   expect(result.replaced.value.length).toBe(100000);
+});
+
+test('rejects amplified captures before allocating their serialized JSON', () => {
+  let attemptedOversize = false;
+  const guardedJson = { ...JSON, stringify(value: any) {
+    if (value?.groups?.reduce((size: number, group: string | undefined) => size + (group?.length ?? 0), 0) > 1000000) {
+      attemptedOversize = true;
+      throw new Error('Oversized serialization intercepted');
+    }
+    return JSON.stringify(value);
+  } } as JSON;
+  const result = evaluate('(?=(a+))'.repeat(13) + 'a+', '', 'a'.repeat(100000), '$&', guardedJson);
+  expect(attemptedOversize).toBe(false);
+  expect(result.list).toHaveLength(0);
+  expect(result.truncated).toBe(true);
+  expect(result.error).toBeNull();
 });

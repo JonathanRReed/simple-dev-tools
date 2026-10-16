@@ -1,5 +1,17 @@
 /* global self */
 const MAX_OUTPUT = 1000000;
+function captureSizeExceeds(match, limit) {
+  let size = 0;
+  for (const capture of match) {
+    size += capture?.length ?? 0;
+    if (size > limit) return true;
+  }
+  for (const [key, value] of Object.entries(match.groups ?? {})) {
+    size += key.length + (value?.length ?? 0);
+    if (size > limit) return true;
+  }
+  return false;
+}
 function boundedReplace(text, regex, replacement) {
   const chunks = [];
   let size = 0;
@@ -52,6 +64,8 @@ self.onmessage = ({ data }) => {
     const iterable = regex.global ? text.matchAll(regex) : [regex.exec(text)].filter(Boolean);
     for (const match of iterable) {
       if (list.length >= 5000) { truncated = true; break; }
+      // Bound raw captures before JSON escaping can allocate an amplified payload.
+      if (captureSizeExceeds(match, MAX_OUTPUT - matchOutputSize)) { truncated = true; break; }
       const entry = { match: match[0], index: match.index ?? 0, length: match[0].length, groups: Array.from(match).slice(1), named: { ...match.groups } };
       matchOutputSize += JSON.stringify(entry).length + 1;
       if (matchOutputSize > MAX_OUTPUT) { truncated = true; break; }
