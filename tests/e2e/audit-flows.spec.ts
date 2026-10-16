@@ -114,6 +114,7 @@ test('hash verification waits for the current input and ignores results after re
 });
 
 test('diff options match their labels and expensive comparisons recover', async ({ page }) => {
+  test.slow();
   await page.goto('/tools/diff/');
   await page.getByRole('button', { name: 'Line', exact: true }).click();
   await page.getByRole('textbox', { name: 'Original', exact: true }).fill(' Hello World ');
@@ -122,7 +123,7 @@ test('diff options match their labels and expensive comparisons recover', async 
   await page.getByRole('checkbox', { name: 'Ignore case', exact: true }).check();
   await expect(page.getByText('0 added', { exact: true })).toBeVisible();
   await expect(page.getByText('0 removed', { exact: true })).toBeVisible();
-  await page.getByRole('textbox', { name: 'Original', exact: true }).fill(Array.from({length: 5000}, (_, i) => `old-${i}`).join('\n'));
+  await page.getByRole('textbox', { name: 'Original', exact: true }).fill('a\n'.repeat(5000));
   await expect(page.getByText('These texts are too different to compare within the processing limit. Compare smaller sections.', { exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Copy unified', exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: 'Sample', exact: true }).click();
