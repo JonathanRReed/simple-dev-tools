@@ -216,3 +216,11 @@ test('switching to a file during text debounce does not strand its digest', asyn
   await expect(page.getByText('ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad', { exact: true })).toBeVisible();
   await expect(page.getByText('All four digests are ready', { exact: true })).toBeAttached();
 });
+test('large capture data is reported as omitted rather than no matches', async ({ page }) => {
+  await page.goto('/tools/regex/');
+  await page.getByRole('textbox', { name: 'Pattern', exact: true }).fill('((((((((((((a+))))))))))))');
+  await page.getByRole('textbox', { name: 'Test String', exact: true }).fill('a'.repeat(100000));
+  await page.getByRole('tab', { name: 'Matches', exact: true }).click();
+  await expect(page.getByText('Matches found, but their capture data exceeds the display limit. Use smaller input or fewer captures.', { exact: true })).toBeVisible();
+  await expect(page.getByText('No matches.', { exact: true })).toHaveCount(0);
+});

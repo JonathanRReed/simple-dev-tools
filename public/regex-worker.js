@@ -14,7 +14,8 @@ function boundedReplace(text, regex, replacement) {
     const index = match.index ?? 0;
     append(text.slice(cursor, index));
     let position = 0;
-    for (const token of replacement.matchAll(/\$(\$|&|`|'|[0-9]{1,2}|<[^>]*>)/g)) {
+    const substitutions = match.groups === undefined ? /\$(\$|&|`|'|[0-9]{1,2})/g : /\$(\$|&|`|'|[0-9]{1,2}|<[^>]*>)/g;
+    for (const token of replacement.matchAll(substitutions)) {
       append(replacement.slice(position, token.index));
       const key = token[1];
       let value = token[0];
@@ -51,9 +52,10 @@ self.onmessage = ({ data }) => {
     const iterable = regex.global ? text.matchAll(regex) : [regex.exec(text)].filter(Boolean);
     for (const match of iterable) {
       if (list.length >= 5000) { truncated = true; break; }
-      matchOutputSize += match.reduce((total, value) => total + (value?.length ?? 0) + 16, 0) * 2;
+      const entry = { match: match[0], index: match.index ?? 0, length: match[0].length, groups: Array.from(match).slice(1), named: { ...match.groups } };
+      matchOutputSize += JSON.stringify(entry).length + 1;
       if (matchOutputSize > MAX_OUTPUT) { truncated = true; break; }
-      list.push({ match: match[0], index: match.index ?? 0, length: match[0].length, groups: Array.from(match).slice(1), named: { ...match.groups } });
+      list.push(entry);
     }
     let replaced;
     try { replaced = { value: boundedReplace(text, new RegExp(pattern, flags), replacement), error: null }; }

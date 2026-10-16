@@ -28,8 +28,6 @@ type FlagsState = Record<(typeof FLAG_LIST)[number]["key"], boolean>;
 
 const DEFAULT_TEXT = `The quick brown fox jumps over the lazy dog.\nTHE QUICK BROWN FOX. fox-123.`;
 const DEFAULT_PATTERN = "fox";
-const MAX_MATCHES = 5000;
-const SPLIT_INPUT_CAP = 50000;
 
 const SAMPLES: { label: string; pattern: string; flags?: string; test: string; replace?: string }[] = [
   {
@@ -182,9 +180,9 @@ function RegexLabInner() {
   // How many replacements String.replace would perform: every match when the
   // g flag is set, otherwise the first match only (1 if anything matched).
   const replaceCount = useMemo<number>(() => {
-    if (!re || matches.length === 0) return 0;
-    return re.global ? matches.length : 1;
-  }, [re, matches.length]);
+    if (!re || (matches.length === 0 && !matchesResult.truncated)) return 0;
+    return re.global ? matches.length + (matchesResult.truncated ? 1 : 0) : 1;
+  }, [re, matches.length, matchesResult.truncated]);
 
   // Plain-text export of the matches list for copying.
   const matchesText = useMemo(() => {
@@ -214,7 +212,8 @@ function RegexLabInner() {
   };
 
   const resultUnavailable = Boolean(error) || evaluation.pending;
-  const matchCountLabel = error ? "Not evaluated" : evaluation.pending ? "Checking…" : `${matchesResult.truncated ? "At least " : ""}${matches.length} ${matches.length === 1 ? "match" : "matches"}`;
+  const displayedMatchCount = matches.length + (matchesResult.truncated ? 1 : 0);
+  const matchCountLabel = error ? "Not evaluated" : evaluation.pending ? "Checking…" : `${matchesResult.truncated ? "At least " : ""}${displayedMatchCount} ${displayedMatchCount === 1 ? "match" : "matches"}`;
 
   const toolbar = (
     <>
@@ -305,7 +304,7 @@ function RegexLabInner() {
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
           <span className="flex items-center gap-1.5">
             <span className="brutal-label">Matches</span>
-            <span className="font-mono text-sm text-foreground">{resultUnavailable ? "—" : `${matches.length}${matchesResult.truncated ? "+" : ""}`}</span>
+            <span className="font-mono text-sm text-foreground">{resultUnavailable ? "—" : `${displayedMatchCount}${matchesResult.truncated ? "+" : ""}`}</span>
           </span>
           <span className="flex items-center gap-1.5">
             <span className="brutal-label">Groups</span>
@@ -395,12 +394,12 @@ function RegexLabInner() {
             ) : evaluation.pending ? (
               <p role="status">Checking pattern…</p>
             ) : matches.length === 0 ? (
-              <p className="font-mono text-sm text-muted-foreground">No matches.</p>
+              <p className="font-mono text-sm text-muted-foreground">{matchesResult.truncated ? "Matches found, but their capture data exceeds the display limit. Use smaller input or fewer captures." : "No matches."}</p>
             ) : (
               <div className="flex flex-col gap-2">
               {matchesResult.truncated ? (
                 <Alert variant="warning">
-                  Showing first {MAX_MATCHES.toLocaleString()} matches; results truncated for responsiveness.
+                  Showing {matches.length.toLocaleString()} matches; additional matches were omitted to keep the result within display limits.
                 </Alert>
               ) : null}
               <table className="w-full font-mono text-sm text-foreground">
@@ -502,7 +501,7 @@ function RegexLabInner() {
               <div className="flex flex-col gap-2">
                 {split.truncated ? (
                   <Alert variant="warning">
-                    Input truncated to {SPLIT_INPUT_CAP.toLocaleString()} characters for splitting.
+                    Split output is limited to 5,000 parts from the first 50,000 input characters. Additional input or parts were omitted.
                   </Alert>
                 ) : null}
                 <table className="w-full font-mono text-sm text-foreground">
