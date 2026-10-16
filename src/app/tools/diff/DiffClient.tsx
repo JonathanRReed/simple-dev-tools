@@ -143,16 +143,24 @@ export default function DiffClient() {
   const inputPending = original !== debouncedOriginal || changed !== debouncedChanged;
   const changes = level === 'word' ? wordChanges : lineChanges;
 
+  // Performance optimization: Compute line statistics in a single pass over lineChanges
+  // with 0 intermediate array allocations instead of 3 .filter() array allocations
+  // and 3 .reduce() passes.
   const stats = useMemo(() => {
-    const added = lineChanges
-      .filter((c) => c.added)
-      .reduce((sum, c) => sum + c.count, 0);
-    const removed = lineChanges
-      .filter((c) => c.removed)
-      .reduce((sum, c) => sum + c.count, 0);
-    const unchanged = lineChanges
-      .filter((c) => !c.added && !c.removed)
-      .reduce((sum, c) => sum + c.count, 0);
+    let added = 0;
+    let removed = 0;
+    let unchanged = 0;
+    for (let i = 0; i < lineChanges.length; i++) {
+      const c = lineChanges[i];
+      const count = c.count ?? 0;
+      if (c.added) {
+        added += count;
+      } else if (c.removed) {
+        removed += count;
+      } else {
+        unchanged += count;
+      }
+    }
     return { added, removed, unchanged };
   }, [lineChanges]);
 
