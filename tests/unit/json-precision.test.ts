@@ -7,3 +7,19 @@ test('JSON transforms reject unsafe integers instead of silently rounding them',
   expect(parseJsonWithoutUnsafeIntegers('{"id":"9007199254740993","n":12.25,"ok":true}')).toEqual({ id: '9007199254740993', n: 12.25, ok: true });
   expect(() => assertSafeJsonNumbers({ nested: [Number.MAX_SAFE_INTEGER + 1] })).toThrow();
 });
+
+test('checks own enumerable values in nested JSON, sparse arrays, and null-prototype objects', () => {
+  const unsafe = Number.MAX_SAFE_INTEGER + 2;
+  expect(() => parseJsonWithoutUnsafeIntegers('{"a":[1,2,{"b":[3.5,{"c":-9007199254740991}]}],"d":{"e":null,"f":"9007199254740993"}}')).not.toThrow();
+  expect(() => parseJsonWithoutUnsafeIntegers('{"a":[1,{"b":[2,[3,9007199254740993]]}]}')).toThrow('safe integer range');
+  const sparse: unknown[] = [1];
+  sparse[2] = unsafe;
+  expect(() => assertSafeJsonNumbers(sparse)).toThrow('safe integer range');
+  expect(() => assertSafeJsonNumbers(Object.assign(Object.create(null), { n: unsafe }))).toThrow('safe integer range');
+});
+
+test('ignores inherited object properties, which JSON and YAML output omit', () => {
+  const value = Object.create({ inherited: Number.MAX_SAFE_INTEGER + 2 });
+  value.ok = 1;
+  expect(() => assertSafeJsonNumbers(value)).not.toThrow();
+});
