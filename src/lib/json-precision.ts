@@ -9,19 +9,7 @@ export function assertSafeJsonNumbers(value: unknown): void {
     }
     if (item && typeof item === 'object' && !seen.has(item)) {
       seen.add(item);
-      // Iterating arrays directly and using for..in + Object.hasOwn for objects avoids
-      // allocating an Object.values array for every node in the document (~2x faster).
-      if (Array.isArray(item)) {
-        for (let i = 0; i < item.length; i++) {
-          pending.push(item[i]);
-        }
-      } else {
-        for (const key in item) {
-          if (Object.hasOwn(item, key)) {
-            pending.push((item as Record<string, unknown>)[key]);
-          }
-        }
-      }
+      for (const child of Object.values(item)) pending.push(child);
     }
   }
 }

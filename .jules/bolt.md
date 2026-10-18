@@ -19,3 +19,7 @@
 ## 2026-10-09 - Reduced-Allocation Line Counting
 **Learning:** A character-by-character JavaScript loop avoids split arrays but can regress long-line and newline-free input. Native `indexOf` searches for LF and bare CR preserve the existing CRLF semantics without constructing an array of lines. Runtime, line density, and input size affect speed; allocation avoidance alone does not prove a typing-latency or garbage-collection improvement.
 **Action:** Compare dense, sparse, and newline-free text before choosing a line-count implementation. Test empty input, trailing delimiters, CRLF/bare CR/LF mixtures, and Unicode against the previous semantics. Keep timing benchmarks separate from deterministic correctness tests.
+
+## 2026-10-10 - Sparse Arrays and End-to-End Impact in JSON Traversal
+**Learning:** Replacing `Object.values(item)` with explicit indexed `for` loops on arrays iterates over every array slot from `0` to `length - 1`, including empty/missing slots in sparse arrays, which can increase memory usage and change property evaluation semantics. Furthermore, isolated micro-benchmarks on `assertSafeJsonNumbers` may not produce meaningful end-to-end user-visible improvements in complete JSON conversion pipelines.
+**Action:** Consider sparse array behavior when replacing `Object.values` and verify end-to-end impact across entire tool pipelines before proposing micro-optimizations.
