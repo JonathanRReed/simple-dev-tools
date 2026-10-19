@@ -10,8 +10,9 @@ if (output) process.stdout.write(output);
 
 // Keep ESLint's selected files, including public JS and all eight extensions.
 // The original Oxlint pass keeps its own rules and ignores unchanged.
+// Pin machine-readable output instead of selecting it from agent/CI variables.
 const next = spawnSync(fileURLToPath(new URL('../../node_modules/.bin/oxlint', import.meta.url)), [
-  '--threads=1', '--no-ignore', '--disable-nested-config',
+  '--threads=1', '--no-ignore', '--disable-nested-config', '--format=agent',
   '--config', fileURLToPath(new URL('../../.oxlintrc.next.json', import.meta.url)),
   ...results.map(result => result.filePath),
 ], { stdio: 'inherit' });

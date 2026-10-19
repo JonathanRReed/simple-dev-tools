@@ -76,25 +76,41 @@ test('all 20 migrated Next rules retain their exact upstream severities',()=>{
   }
 });
 
-test('the lint runner preserves public JS, all eight extensions, and ESLint output exclusions',()=>{
-  const project=mkdtempSync(join(tmpdir(),'devtools-lint-selection-'));
-  try {
-    symlinkSync(join(repo,'eslint.config.mjs'),join(project,'eslint.config.mjs'));
-    symlinkSync(join(repo,'node_modules'),join(project,'node_modules'),'dir');
-    const extensions=['js','jsx','mjs','cjs','ts','tsx','mts','cts'];
-    const ignored=['.next','out','dist','build','coverage','playwright-report','test-results','public/sqljs'];
-    for (const file of [...extensions.map(ext=>`public/check.${ext}`),...ignored.map(dir=>`${dir}/ignored.js`),'next-env.d.ts']) {
-      const path=join(project,file);mkdirSync(dirname(path),{recursive:true});writeFileSync(path,'const module = {};');
-    }
-    const result=spawnSync('node',[join(repo,'scripts/lint/lint.mjs')],{cwd:project,encoding:'utf8',timeout:20000});
-    expect(result.status).toBe(1);
-    for (const ext of extensions) expect(result.stdout).toContain(`public/check.${ext}`);
-    expect(result.stdout).not.toContain('Parsing error');
-    expect(result.stdout.split('\n').filter(line=>line.includes('error next(no-assign-module-variable):'))).toHaveLength(8);
-    expect(result.stdout).not.toContain('ignored.js');
-    expect(result.stdout).not.toContain('next-env.d.ts');
-  } finally { rmSync(project,{recursive:true,force:true}); }
-},30000);
+for (const [name,environment] of [
+  ['agent',{CODEX_THREAD_ID:'lint-regression',NO_COLOR:'1',FORCE_COLOR:undefined}],
+  ['GitHub Actions',{CODEX_THREAD_ID:undefined,CI:'true',GITHUB_ACTIONS:'true',NO_COLOR:'1',FORCE_COLOR:undefined}],
+  ['GitHub Actions with colour',{CODEX_THREAD_ID:undefined,CI:'true',GITHUB_ACTIONS:'true',NO_COLOR:undefined,FORCE_COLOR:'1'}],
+]) {
+  test(`the lint runner preserves file selection, rules and severity under ${name}`,()=>{
+    const project=mkdtempSync(join(tmpdir(),'devtools-lint-selection-'));
+    try {
+      symlinkSync(join(repo,'eslint.config.mjs'),join(project,'eslint.config.mjs'));
+      symlinkSync(join(repo,'node_modules'),join(project,'node_modules'),'dir');
+      const extensions=['js','jsx','mjs','cjs','ts','tsx','mts','cts'];
+      const ignored=['.next','out','dist','build','coverage','playwright-report','test-results','public/sqljs'];
+      for (const file of [...extensions.map(ext=>`public/check.${ext}`),...ignored.map(dir=>`${dir}/ignored.js`),'next-env.d.ts']) {
+        const path=join(project,file);mkdirSync(dirname(path),{recursive:true});writeFileSync(path,'const module = {};');
+      }
+      const env={...process.env};
+      for (const [key,value] of Object.entries(environment)) {
+        if (value === undefined) delete env[key];
+        else env[key]=value;
+      }
+      const result=spawnSync('node',[join(repo,'scripts/lint/lint.mjs')],{cwd:project,encoding:'utf8',timeout:20000,env});
+      expect(result.status).toBe(1);
+      for (const ext of extensions) expect(result.stdout).toContain(`public/check.${ext}`);
+      expect(result.stdout).not.toContain('Parsing error');
+      const diagnostics=[...result.stdout.matchAll(/^(.+):\d+:\d+: (error|warning) ([^:]+):/gm)]
+        .map(([,file,severity,rule])=>({file,severity,rule}))
+        .sort((a,b)=>a.file.localeCompare(b.file));
+      expect(diagnostics).toEqual(extensions.map(ext=>({
+        file:`public/check.${ext}`,severity:'error',rule:'next(no-assign-module-variable)',
+      })).sort((a,b)=>a.file.localeCompare(b.file)));
+      expect(result.stdout).not.toContain('ignored.js');
+      expect(result.stdout).not.toContain('next-env.d.ts');
+    } finally { rmSync(project,{recursive:true,force:true}); }
+  },30000);
+}
 
 for (const [href,count] of [['/tools/color/',1],['/studio/security/',1],['/mermaid/',1],['/tools/color/ColorClient',0],['/sw.js',0]]) {
   test(`checks DevTools src/app routes: ${href}`,async()=>{
