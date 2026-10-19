@@ -1,0 +1,907 @@
+{
+  "source": "DevTools ecb2d159, eslint-config-next/core-web-vitals 16.3.8",
+  "rules": {
+    "react/display-name": [
+      2
+    ],
+    "react/jsx-key": [
+      2
+    ],
+    "react/jsx-no-comment-textnodes": [
+      2
+    ],
+    "react/jsx-no-duplicate-props": [
+      2
+    ],
+    "react/jsx-no-target-blank": [
+      0
+    ],
+    "react/jsx-no-undef": [
+      2
+    ],
+    "react/jsx-uses-react": [
+      2
+    ],
+    "react/jsx-uses-vars": [
+      2
+    ],
+    "react/no-children-prop": [
+      2
+    ],
+    "react/no-danger-with-children": [
+      2
+    ],
+    "react/no-deprecated": [
+      2
+    ],
+    "react/no-direct-mutation-state": [
+      2
+    ],
+    "react/no-find-dom-node": [
+      2
+    ],
+    "react/no-is-mounted": [
+      2
+    ],
+    "react/no-render-return-value": [
+      2
+    ],
+    "react/no-string-refs": [
+      2
+    ],
+    "react/no-unescaped-entities": [
+      2
+    ],
+    "react/no-unknown-property": [
+      0
+    ],
+    "react/no-unsafe": [
+      0
+    ],
+    "react/prop-types": [
+      0
+    ],
+    "react/react-in-jsx-scope": [
+      0
+    ],
+    "react/require-render-return": [
+      2
+    ],
+    "react-hooks/rules-of-hooks": [
+      2
+    ],
+    "react-hooks/exhaustive-deps": [
+      1
+    ],
+    "react-hooks/static-components": [
+      2
+    ],
+    "react-hooks/use-memo": [
+      2
+    ],
+    "react-hooks/preserve-manual-memoization": [
+      2
+    ],
+    "react-hooks/incompatible-library": [
+      1
+    ],
+    "react-hooks/immutability": [
+      2
+    ],
+    "react-hooks/globals": [
+      2
+    ],
+    "react-hooks/refs": [
+      2
+    ],
+    "react-hooks/set-state-in-effect": [
+      0
+    ],
+    "react-hooks/error-boundaries": [
+      2
+    ],
+    "react-hooks/purity": [
+      2
+    ],
+    "react-hooks/set-state-in-render": [
+      2
+    ],
+    "react-hooks/unsupported-syntax": [
+      1
+    ],
+    "react-hooks/config": [
+      2
+    ],
+    "react-hooks/gating": [
+      2
+    ],
+    "@next/next/google-font-display": [
+      1
+    ],
+    "@next/next/google-font-preconnect": [
+      1
+    ],
+    "@next/next/next-script-for-ga": [
+      1
+    ],
+    "@next/next/no-async-client-component": [
+      1
+    ],
+    "@next/next/no-before-interactive-script-outside-document": [
+      1
+    ],
+    "@next/next/no-css-tags": [
+      1
+    ],
+    "@next/next/no-head-element": [
+      1
+    ],
+    "@next/next/no-html-link-for-pages": [
+      2
+    ],
+    "@next/next/no-img-element": [
+      1
+    ],
+    "@next/next/no-location-assign-relative-destination": [
+      1
+    ],
+    "@next/next/no-page-custom-font": [
+      1
+    ],
+    "@next/next/no-styled-jsx-in-document": [
+      1
+    ],
+    "@next/next/no-sync-scripts": [
+      2
+    ],
+    "@next/next/no-title-in-document-head": [
+      1
+    ],
+    "@next/next/no-typos": [
+      1
+    ],
+    "@next/next/no-unwanted-polyfillio": [
+      1
+    ],
+    "@next/next/inline-script-id": [
+      2
+    ],
+    "@next/next/no-assign-module-variable": [
+      2
+    ],
+    "@next/next/no-document-import-in-page": [
+      2
+    ],
+    "@next/next/no-duplicate-head": [
+      2
+    ],
+    "@next/next/no-head-import-in-document": [
+      2
+    ],
+    "@next/next/no-script-component-in-head": [
+      2
+    ],
+    "import/no-anonymous-default-export": [
+      1
+    ],
+    "jsx-a11y/alt-text": [
+      1,
+      {
+        "elements": [
+          "img"
+        ],
+        "img": [
+          "Image"
+        ]
+      }
+    ],
+    "jsx-a11y/aria-props": [
+      1
+    ],
+    "jsx-a11y/aria-proptypes": [
+      1
+    ],
+    "jsx-a11y/aria-unsupported-elements": [
+      1
+    ],
+    "jsx-a11y/role-has-required-aria-props": [
+      1
+    ],
+    "jsx-a11y/role-supports-aria-props": [
+      1
+    ]
+  },
+  "settings": {
+    "react": {
+      "version": "detect"
+    },
+    "import/parsers": {
+      "@typescript-eslint/parser": [
+        ".ts",
+        ".mts",
+        ".cts",
+        ".tsx",
+        ".d.ts"
+      ]
+    },
+    "import/resolver": {
+      "node": {
+        "extensions": [
+          ".js",
+          ".jsx",
+          ".ts",
+          ".tsx"
+        ]
+      },
+      "typescript": {
+        "alwaysTryTypes": true
+      }
+    }
+  },
+  "extensions": {
+    "js": "js",
+    "jsx": "js",
+    "mjs": "js",
+    "cjs": "cjs",
+    "ts": "ts",
+    "tsx": "ts",
+    "mts": "js",
+    "cts": "js"
+  },
+  "profiles": {
+    "js": {
+      "rules": {
+        "react/display-name": [
+          2
+        ],
+        "react/jsx-key": [
+          2
+        ],
+        "react/jsx-no-comment-textnodes": [
+          2
+        ],
+        "react/jsx-no-duplicate-props": [
+          2
+        ],
+        "react/jsx-no-target-blank": [
+          0
+        ],
+        "react/jsx-no-undef": [
+          2
+        ],
+        "react/jsx-uses-react": [
+          2
+        ],
+        "react/jsx-uses-vars": [
+          2
+        ],
+        "react/no-children-prop": [
+          2
+        ],
+        "react/no-danger-with-children": [
+          2
+        ],
+        "react/no-deprecated": [
+          2
+        ],
+        "react/no-direct-mutation-state": [
+          2
+        ],
+        "react/no-find-dom-node": [
+          2
+        ],
+        "react/no-is-mounted": [
+          2
+        ],
+        "react/no-render-return-value": [
+          2
+        ],
+        "react/no-string-refs": [
+          2
+        ],
+        "react/no-unescaped-entities": [
+          2
+        ],
+        "react/no-unknown-property": [
+          0
+        ],
+        "react/no-unsafe": [
+          0
+        ],
+        "react/prop-types": [
+          0
+        ],
+        "react/react-in-jsx-scope": [
+          0
+        ],
+        "react/require-render-return": [
+          2
+        ],
+        "react-hooks/rules-of-hooks": [
+          2
+        ],
+        "react-hooks/exhaustive-deps": [
+          1
+        ],
+        "react-hooks/static-components": [
+          2
+        ],
+        "react-hooks/use-memo": [
+          2
+        ],
+        "react-hooks/preserve-manual-memoization": [
+          2
+        ],
+        "react-hooks/incompatible-library": [
+          1
+        ],
+        "react-hooks/immutability": [
+          2
+        ],
+        "react-hooks/globals": [
+          2
+        ],
+        "react-hooks/refs": [
+          2
+        ],
+        "react-hooks/set-state-in-effect": [
+          0
+        ],
+        "react-hooks/error-boundaries": [
+          2
+        ],
+        "react-hooks/purity": [
+          2
+        ],
+        "react-hooks/set-state-in-render": [
+          2
+        ],
+        "react-hooks/unsupported-syntax": [
+          1
+        ],
+        "react-hooks/config": [
+          2
+        ],
+        "react-hooks/gating": [
+          2
+        ],
+        "@next/next/google-font-display": [
+          1
+        ],
+        "@next/next/google-font-preconnect": [
+          1
+        ],
+        "@next/next/next-script-for-ga": [
+          1
+        ],
+        "@next/next/no-async-client-component": [
+          1
+        ],
+        "@next/next/no-before-interactive-script-outside-document": [
+          1
+        ],
+        "@next/next/no-css-tags": [
+          1
+        ],
+        "@next/next/no-head-element": [
+          1
+        ],
+        "@next/next/no-html-link-for-pages": [
+          2
+        ],
+        "@next/next/no-img-element": [
+          1
+        ],
+        "@next/next/no-location-assign-relative-destination": [
+          1
+        ],
+        "@next/next/no-page-custom-font": [
+          1
+        ],
+        "@next/next/no-styled-jsx-in-document": [
+          1
+        ],
+        "@next/next/no-sync-scripts": [
+          2
+        ],
+        "@next/next/no-title-in-document-head": [
+          1
+        ],
+        "@next/next/no-typos": [
+          1
+        ],
+        "@next/next/no-unwanted-polyfillio": [
+          1
+        ],
+        "@next/next/inline-script-id": [
+          2
+        ],
+        "@next/next/no-assign-module-variable": [
+          2
+        ],
+        "@next/next/no-document-import-in-page": [
+          2
+        ],
+        "@next/next/no-duplicate-head": [
+          2
+        ],
+        "@next/next/no-head-import-in-document": [
+          2
+        ],
+        "@next/next/no-script-component-in-head": [
+          2
+        ],
+        "import/no-anonymous-default-export": [
+          1
+        ],
+        "jsx-a11y/alt-text": [
+          1,
+          {
+            "elements": [
+              "img"
+            ],
+            "img": [
+              "Image"
+            ]
+          }
+        ],
+        "jsx-a11y/aria-props": [
+          1
+        ],
+        "jsx-a11y/aria-proptypes": [
+          1
+        ],
+        "jsx-a11y/aria-unsupported-elements": [
+          1
+        ],
+        "jsx-a11y/role-has-required-aria-props": [
+          1
+        ],
+        "jsx-a11y/role-supports-aria-props": [
+          1
+        ]
+      },
+      "settings": {
+        "react": {
+          "version": "detect"
+        },
+        "import/parsers": {
+          "@typescript-eslint/parser": [
+            ".ts",
+            ".mts",
+            ".cts",
+            ".tsx",
+            ".d.ts"
+          ]
+        },
+        "import/resolver": {
+          "node": {
+            "extensions": [
+              ".js",
+              ".jsx",
+              ".ts",
+              ".tsx"
+            ]
+          },
+          "typescript": {
+            "alwaysTryTypes": true
+          }
+        }
+      },
+      "languageOptions": {
+        "parser": {
+          "name": "eslint-config-next/parser",
+          "version": "16.3.8"
+        },
+        "parserOptions": {
+          "requireConfigFile": false,
+          "sourceType": "module",
+          "allowImportExportEverywhere": true,
+          "babelOptions": {
+            "presets": [
+              "next/babel"
+            ],
+            "caller": {
+              "supportsTopLevelAwait": true
+            }
+          }
+        },
+        "sourceType": "module",
+        "ecmaVersion": 2026,
+        "globalsHash": "c0275bd61f6daf870017cf448f9ca8da5169b4d58ec54e4dcb832bd9fee7eadb"
+      }
+    },
+    "cjs": {
+      "rules": {
+        "@next/next/google-font-display": [
+          1
+        ],
+        "@next/next/google-font-preconnect": [
+          1
+        ],
+        "@next/next/next-script-for-ga": [
+          1
+        ],
+        "@next/next/no-async-client-component": [
+          1
+        ],
+        "@next/next/no-before-interactive-script-outside-document": [
+          1
+        ],
+        "@next/next/no-css-tags": [
+          1
+        ],
+        "@next/next/no-head-element": [
+          1
+        ],
+        "@next/next/no-html-link-for-pages": [
+          2
+        ],
+        "@next/next/no-img-element": [
+          1
+        ],
+        "@next/next/no-location-assign-relative-destination": [
+          1
+        ],
+        "@next/next/no-page-custom-font": [
+          1
+        ],
+        "@next/next/no-styled-jsx-in-document": [
+          1
+        ],
+        "@next/next/no-sync-scripts": [
+          2
+        ],
+        "@next/next/no-title-in-document-head": [
+          1
+        ],
+        "@next/next/no-typos": [
+          1
+        ],
+        "@next/next/no-unwanted-polyfillio": [
+          1
+        ],
+        "@next/next/inline-script-id": [
+          2
+        ],
+        "@next/next/no-assign-module-variable": [
+          2
+        ],
+        "@next/next/no-document-import-in-page": [
+          2
+        ],
+        "@next/next/no-duplicate-head": [
+          2
+        ],
+        "@next/next/no-head-import-in-document": [
+          2
+        ],
+        "@next/next/no-script-component-in-head": [
+          2
+        ],
+        "react-hooks/set-state-in-effect": [
+          0
+        ]
+      },
+      "languageOptions": {
+        "parserOptions": {
+          "sourceType": "commonjs"
+        },
+        "sourceType": "commonjs",
+        "ecmaVersion": 2026,
+        "globalsHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      }
+    },
+    "ts": {
+      "rules": {
+        "react/display-name": [
+          2
+        ],
+        "react/jsx-key": [
+          2
+        ],
+        "react/jsx-no-comment-textnodes": [
+          2
+        ],
+        "react/jsx-no-duplicate-props": [
+          2
+        ],
+        "react/jsx-no-target-blank": [
+          0
+        ],
+        "react/jsx-no-undef": [
+          2
+        ],
+        "react/jsx-uses-react": [
+          2
+        ],
+        "react/jsx-uses-vars": [
+          2
+        ],
+        "react/no-children-prop": [
+          2
+        ],
+        "react/no-danger-with-children": [
+          2
+        ],
+        "react/no-deprecated": [
+          2
+        ],
+        "react/no-direct-mutation-state": [
+          2
+        ],
+        "react/no-find-dom-node": [
+          2
+        ],
+        "react/no-is-mounted": [
+          2
+        ],
+        "react/no-render-return-value": [
+          2
+        ],
+        "react/no-string-refs": [
+          2
+        ],
+        "react/no-unescaped-entities": [
+          2
+        ],
+        "react/no-unknown-property": [
+          0
+        ],
+        "react/no-unsafe": [
+          0
+        ],
+        "react/prop-types": [
+          0
+        ],
+        "react/react-in-jsx-scope": [
+          0
+        ],
+        "react/require-render-return": [
+          2
+        ],
+        "react-hooks/rules-of-hooks": [
+          2
+        ],
+        "react-hooks/exhaustive-deps": [
+          1
+        ],
+        "react-hooks/static-components": [
+          2
+        ],
+        "react-hooks/use-memo": [
+          2
+        ],
+        "react-hooks/preserve-manual-memoization": [
+          2
+        ],
+        "react-hooks/incompatible-library": [
+          1
+        ],
+        "react-hooks/immutability": [
+          2
+        ],
+        "react-hooks/globals": [
+          2
+        ],
+        "react-hooks/refs": [
+          2
+        ],
+        "react-hooks/set-state-in-effect": [
+          0
+        ],
+        "react-hooks/error-boundaries": [
+          2
+        ],
+        "react-hooks/purity": [
+          2
+        ],
+        "react-hooks/set-state-in-render": [
+          2
+        ],
+        "react-hooks/unsupported-syntax": [
+          1
+        ],
+        "react-hooks/config": [
+          2
+        ],
+        "react-hooks/gating": [
+          2
+        ],
+        "@next/next/google-font-display": [
+          1
+        ],
+        "@next/next/google-font-preconnect": [
+          1
+        ],
+        "@next/next/next-script-for-ga": [
+          1
+        ],
+        "@next/next/no-async-client-component": [
+          1
+        ],
+        "@next/next/no-before-interactive-script-outside-document": [
+          1
+        ],
+        "@next/next/no-css-tags": [
+          1
+        ],
+        "@next/next/no-head-element": [
+          1
+        ],
+        "@next/next/no-html-link-for-pages": [
+          2
+        ],
+        "@next/next/no-img-element": [
+          1
+        ],
+        "@next/next/no-location-assign-relative-destination": [
+          1
+        ],
+        "@next/next/no-page-custom-font": [
+          1
+        ],
+        "@next/next/no-styled-jsx-in-document": [
+          1
+        ],
+        "@next/next/no-sync-scripts": [
+          2
+        ],
+        "@next/next/no-title-in-document-head": [
+          1
+        ],
+        "@next/next/no-typos": [
+          1
+        ],
+        "@next/next/no-unwanted-polyfillio": [
+          1
+        ],
+        "@next/next/inline-script-id": [
+          2
+        ],
+        "@next/next/no-assign-module-variable": [
+          2
+        ],
+        "@next/next/no-document-import-in-page": [
+          2
+        ],
+        "@next/next/no-duplicate-head": [
+          2
+        ],
+        "@next/next/no-head-import-in-document": [
+          2
+        ],
+        "@next/next/no-script-component-in-head": [
+          2
+        ],
+        "import/no-anonymous-default-export": [
+          1
+        ],
+        "jsx-a11y/alt-text": [
+          1,
+          {
+            "elements": [
+              "img"
+            ],
+            "img": [
+              "Image"
+            ]
+          }
+        ],
+        "jsx-a11y/aria-props": [
+          1
+        ],
+        "jsx-a11y/aria-proptypes": [
+          1
+        ],
+        "jsx-a11y/aria-unsupported-elements": [
+          1
+        ],
+        "jsx-a11y/role-has-required-aria-props": [
+          1
+        ],
+        "jsx-a11y/role-supports-aria-props": [
+          1
+        ]
+      },
+      "settings": {
+        "react": {
+          "version": "detect"
+        },
+        "import/parsers": {
+          "@typescript-eslint/parser": [
+            ".ts",
+            ".mts",
+            ".cts",
+            ".tsx",
+            ".d.ts"
+          ]
+        },
+        "import/resolver": {
+          "node": {
+            "extensions": [
+              ".js",
+              ".jsx",
+              ".ts",
+              ".tsx"
+            ]
+          },
+          "typescript": {
+            "alwaysTryTypes": true
+          }
+        }
+      },
+      "languageOptions": {
+        "parser": {
+          "name": "typescript-eslint/parser",
+          "version": "8.71.2"
+        },
+        "parserOptions": {
+          "requireConfigFile": false,
+          "sourceType": "module",
+          "allowImportExportEverywhere": true,
+          "babelOptions": {
+            "presets": [
+              "next/babel"
+            ],
+            "caller": {
+              "supportsTopLevelAwait": true
+            }
+          }
+        },
+        "sourceType": "module",
+        "ecmaVersion": 2026,
+        "globalsHash": "c0275bd61f6daf870017cf448f9ca8da5169b4d58ec54e4dcb832bd9fee7eadb"
+      }
+    }
+  },
+  "oxlint": {
+    "$schema": "./node_modules/oxlint/configuration_schema.json",
+    "plugins": [
+      "typescript",
+      "react",
+      "unicorn",
+      "oxc",
+      "nextjs",
+      "jsx-a11y"
+    ],
+    "categories": {
+      "correctness": "error",
+      "suspicious": "warn"
+    },
+    "env": {
+      "browser": true,
+      "es2024": true
+    },
+    "ignorePatterns": [
+      ".next",
+      "out",
+      "public",
+      "node_modules",
+      "test-results",
+      "playwright-report",
+      "next-env.d.ts"
+    ],
+    "rules": {
+      "no-unused-vars": [
+        "error",
+        {
+          "argsIgnorePattern": "^_",
+          "varsIgnorePattern": "^_"
+        }
+      ],
+      "no-shadow": "off",
+      "unicorn/consistent-function-scoping": "off",
+      "jsx-a11y/prefer-tag-over-role": "off",
+      "react/react-in-jsx-scope": "off",
+      "react/set-state-in-effect": "off",
+      "nextjs/no-html-link-for-pages": "off",
+      "no-underscore-dangle": "off",
+      "unicorn/no-array-sort": "off",
+      "unicorn/prefer-add-event-listener": "off",
+      "react/exhaustive-effect-dependencies": "off",
+      "react/incompatible-library": "off",
+      "jsx-a11y/no-noninteractive-tabindex": "off"
+    }
+  }
+}
