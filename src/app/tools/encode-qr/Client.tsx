@@ -634,7 +634,7 @@ export default function EncodeQR() {
             <ResultPanel title="Preview" bodyClassName="p-0">
               <div className="flex min-h-[260px] flex-col items-center justify-center gap-3 bg-background/60 p-4">
                 {qrFormat === "png" && qrPngDataUrl && (
-                  // eslint-disable-next-line @next/next/no-img-element
+                  // oxlint-disable-next-line nextjs/no-img-element
                   <img src={qrPngDataUrl} alt="Generated QR code" className="max-w-full" />
                 )}
                 {qrFormat === "svg" && qrSvg && (
