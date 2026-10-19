@@ -25,13 +25,25 @@ exemptions. The QR preview's image exemption moves from an ESLint directive
 to the corresponding Oxlint directive. Product behavior is unchanged.
 The route rule discovers actual page endpoints under `src/app`, `app`,
 `src/pages`, or `pages`, rather than treating helper files or assets as routes.
-It handles route groups, parallel routes, and dynamic segments. Future glob
-roots fail visibly; DevTools uses one explicit root and standard page extensions.
+It handles route groups, parallel routes, and dynamic segments. Existing literal
+root directories, including checkout names with brackets, are accepted. Unsupported
+glob roots fail visibly; DevTools uses one explicit root and standard page extensions.
+Pages Router underscore directories and ordinary underscore pages remain routes;
+only `_app`, `_document`, and `_error` files are reserved. App Router underscore
+directories remain private.
+
+Route discovery stays uncached across linted files. Regression tests reuse one
+ESLint instance while adding, renaming, and deleting nested App and Pages endpoints
+inside existing directories. Any future cache must preserve that freshness;
+route-root timestamps alone do not track every nested change.
 
 The implementation and differential fixtures are adapted from
 [Prompt Info PR 14](https://github.com/JonathanRReed/prompt-info/pull/14),
 commit `6393b926ad8da69a8ff20de35bc7fccc62f50ec7`. Full original MIT attribution
 is in `scripts/lint/THIRD_PARTY_NOTICES.md`.
+The literal-root and Pages underscore corrections and freshness regressions are
+adapted from [Prompt Info PR 15](https://github.com/JonathanRReed/prompt-info/pull/15),
+commit `20035864a6ac1a61cb4f23a2f5122287e160aff6`.
 
 `bun test tests/lint/lint-coverage.test.mjs` checks 70 recorded upstream
 examples, all non-Next rules/options/settings/parser options/globals across
