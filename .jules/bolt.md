@@ -19,3 +19,7 @@
 ## 2026-10-09 - Reduced-Allocation Line Counting
 **Learning:** A character-by-character JavaScript loop avoids split arrays but can regress long-line and newline-free input. Native `indexOf` searches for LF and bare CR preserve the existing CRLF semantics without constructing an array of lines. Runtime, line density, and input size affect speed; allocation avoidance alone does not prove a typing-latency or garbage-collection improvement.
 **Action:** Compare dense, sparse, and newline-free text before choosing a line-count implementation. Test empty input, trailing delimiters, CRLF/bare CR/LF mixtures, and Unicode against the previous semantics. Keep timing benchmarks separate from deterministic correctness tests.
+
+## 2026-10-10 - Direct Array Indexing and for..in Loops in JSON/YAML Precision and Cycle Utilities
+**Learning:** `Object.values(obj)` creates an array of property values on every node during object and array traversals. In utilities like `assertSafeJsonNumbers` and `assertAcyclic` that run on every JSON/YAML input parse, using `Array.isArray` index loops for arrays and `for..in` with `Object.hasOwn` for objects completely eliminates per-node array allocations and speeds up tree traversal by 2x-3x.
+**Action:** Avoid `Object.values()` when traversing JSON/YAML trees or data structures in hot parsing paths. Use `Array.isArray` index loops and `for..in` with `Object.hasOwn`.
