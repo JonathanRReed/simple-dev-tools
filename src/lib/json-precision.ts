@@ -4,7 +4,12 @@ export function assertSafeJsonNumber(item: unknown): void {
     throw new Error('This document contains a number outside JavaScript’s safe integer range. To avoid changing it, formatting and conversion are disabled. Keep large identifiers as quoted strings or use a lossless JSON tool.');
   }
 }
-/** Reject transformations that would silently round identifier-sized integers. */
+/**
+ * Reject transformations that would silently round identifier-sized integers.
+ * Performance optimization: Iterates arrays with a direct loop and objects with
+ * `for..in` + `Object.hasOwn` instead of allocating an array via `Object.values(item)`
+ * for every single node in the JSON tree.
+ */
 export function assertSafeJsonNumbers(value: unknown): void {
   const pending = [value];
   const seen = new WeakSet<object>();
@@ -13,7 +18,19 @@ export function assertSafeJsonNumbers(value: unknown): void {
     assertSafeJsonNumber(item);
     if (item && typeof item === 'object' && !seen.has(item)) {
       seen.add(item);
-      for (const child of Object.values(item)) pending.push(child);
+      if (Array.isArray(item)) {
+        for (let i = 0; i < item.length; i++) {
+          if (Object.hasOwn(item, i)) {
+            pending.push(item[i]);
+          }
+        }
+      } else {
+        for (const key in item) {
+          if (Object.hasOwn(item, key)) {
+            pending.push((item as Record<string, unknown>)[key]);
+          }
+        }
+      }
     }
   }
 }
