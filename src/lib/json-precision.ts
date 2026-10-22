@@ -7,7 +7,7 @@ export function assertSafeJsonNumber(item: unknown): void {
 /**
  * Reject transformations that would silently round identifier-sized integers.
  * Performance: uses direct index iteration for arrays and for..in with Object.hasOwn for objects
- * to avoid allocating intermediate Object.values arrays for every container node during traversal (~2.3x speedup).
+ * to avoid allocating intermediate Object.values arrays for every container node during traversal.
  */
 export function assertSafeJsonNumbers(value: unknown): void {
   const pending = [value];
