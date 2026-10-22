@@ -23,3 +23,17 @@ test('ignores inherited object properties, which JSON and YAML output omit', () 
   value.ok = 1;
   expect(() => assertSafeJsonNumbers(value)).not.toThrow();
 });
+
+test('array checks follow JSON serialization of indexes, not expando metadata', () => {
+  const unsafe = Number.MAX_SAFE_INTEGER + 2;
+  const hidden = [1];
+  Object.defineProperty(hidden, '0', { value: unsafe, enumerable: false });
+  expect(() => assertSafeJsonNumbers(hidden)).toThrow('safe integer range');
+  const inherited: unknown[] = [];
+  inherited.length = 1;
+  Object.setPrototypeOf(inherited, Object.assign(Object.create(Array.prototype), { 0: unsafe }));
+  expect(() => assertSafeJsonNumbers(inherited)).toThrow('safe integer range');
+  const metadata = Object.assign([1], { ignoredByJson: unsafe });
+  expect(JSON.stringify(metadata)).toBe('[1]');
+  expect(() => assertSafeJsonNumbers(metadata)).not.toThrow();
+});
