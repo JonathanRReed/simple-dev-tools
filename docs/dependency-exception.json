@@ -1,6 +1,6 @@
 {
   "advisory": "GHSA-vfj7-8cjw-p6xm",
-  "expiresAt": "2026-10-20T05:00:00.000Z",
+  "expiresAt": "2026-11-20T05:00:00.000Z",
   "consumerGraph": {
     "nodes": [
       [

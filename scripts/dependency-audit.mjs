@@ -4,7 +4,7 @@ import { pathToFileURL } from 'node:url';
 import { spawnSync } from 'node:child_process';
 
 const ADVISORY = 'https://github.com/advisories/GHSA-vfj7-8cjw-p6xm';
-export const EXPIRES_AT = '2026-10-20T05:00:00.000Z';
+export const EXPIRES_AT = '2026-11-20T05:00:00.000Z';
 const FIELDS = ['dependencies', 'devDependencies', 'optionalDependencies', 'peerDependencies'];
 const isRecord = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const fail = message => { throw new Error(`Dependency audit blocked: ${message}`); };
