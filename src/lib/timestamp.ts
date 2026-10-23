@@ -7,7 +7,12 @@ export function parseMoment(raw: string, unit: TimestampUnit = 'auto'): ParseRes
   if (/^[+-]?\d+(?:\.\d+)?$/.test(value)) {
     const number = Number(value);
     if (!Number.isFinite(number)) return { ok: false };
-    const digits = value.replace(/^[+-]/, '').split('.')[0].length;
+    // Performance optimization: Count integer digits using char code check and indexOf('.')
+    // instead of allocating temporary strings via .replace() and arrays via .split().
+    const code = value.charCodeAt(0);
+    const startIdx = code === 43 || code === 45 ? 1 : 0;
+    const dotIdx = value.indexOf('.');
+    const digits = dotIdx === -1 ? value.length - startIdx : dotIdx - startIdx;
     const detected = unit === 'auto' ? (digits === 13 || Math.abs(number) > 1e11 ? 'milliseconds' : 'seconds') : unit;
     const date = new Date(detected === 'seconds' ? number * 1000 : number);
     return Number.isNaN(date.getTime()) ? { ok: false } : { ok: true, date, detected };
