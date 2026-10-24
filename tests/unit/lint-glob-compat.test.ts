@@ -45,7 +45,8 @@ test.each(cases)('Next root selection: $label', ({ setting, expected }) => {
 
 test('the alias is the official replacement, with only the reviewed consumer', () => {
   expect(require('fast-glob/package.json')).toMatchObject({ name: 'tinyglobby', version: '0.2.17' });
-  const lock = Bun.JSONC.parse(readFileSync('bun.lock', 'utf8')) as {
+  const lockText = readFileSync('bun.lock', 'utf8').replace(/,\s*([\]}])/g, '$1');
+  const lock = JSON.parse(lockText) as {
     packages: Record<string, [string, string, { dependencies?: Record<string, string> }]>;
   };
   expect(Object.values(lock.packages).some(entry => /^(braces|micromatch|fast-glob)@/.test(entry[0]))).toBe(false);
