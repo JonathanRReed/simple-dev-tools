@@ -20,3 +20,51 @@ test('invalid and out-of-range inputs do not become numeric output', () => {
   expect(iso('2026-10-15T12:00:00Z', 'seconds')).toBeNull();
   expect(iso('2026-10-15T12:00:00Z')).toBe('2026-10-15T12:00:00.000Z');
 });
+
+test('numeric digit bounds preserve signs, fractions, leading zeroes, and thresholds', () => {
+  const cases = [
+    ['+1700000000.5', 'seconds', 1700000000500],
+    ['-1700000000.5', 'seconds', -1700000000500],
+    ['  +0000000000001.5  ', 'milliseconds', 1],
+    ['-0000000000001.5', 'milliseconds', -1],
+    ['000000000001', 'seconds', 1000],
+    ['0000000000001', 'milliseconds', 1],
+    ['00000000000001', 'seconds', 1000],
+    ['100000000000', 'seconds', 100000000000000],
+    ['100000000001', 'milliseconds', 100000000001],
+    ['-100000000000', 'seconds', -100000000000000],
+    ['-100000000001', 'milliseconds', -100000000001],
+  ] as const;
+  for (const [raw, detected, time] of cases) {
+    const result = parseMoment(raw);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.detected).toBe(detected);
+      expect(result.date.getTime()).toBe(time);
+    }
+  }
+});
+
+test('numeric parsing matches the prior digit-count semantics across explicit units', () => {
+  const values = ['0', '0.5', '000000000001', '0000000000001', '00000000000001',
+    '100000000000', '100000000001', '999999999999', '1000000000000', '1700000000000.5'];
+  for (const value of values) for (const sign of ['', '+', '-']) {
+    const raw = sign + value;
+    const number = Number(raw);
+    const digits = raw.replace(/^[+-]/, '').split('.')[0].length;
+    for (const unit of ['auto', 'seconds', 'milliseconds'] as const) {
+      const detected = unit === 'auto' ? (digits === 13 || Math.abs(number) > 1e11 ? 'milliseconds' : 'seconds') : unit;
+      const result = parseMoment(` ${raw} `, unit);
+      expect(result).toEqual({ ok: true, detected, date: new Date(detected === 'seconds' ? number * 1000 : number) });
+    }
+  }
+});
+
+test('non-numeric input keeps string fallback only in auto mode', () => {
+  for (const raw of ['+', '-', '--1', '+-1', '1.2.3', '1e3', 'Infinity', 'NaN', '.5', '1.', '2026-10-15T12:00:00Z']) {
+    expect(parseMoment(raw, 'seconds')).toEqual({ ok: false });
+    expect(parseMoment(raw, 'milliseconds')).toEqual({ ok: false });
+    const date = new Date(raw);
+    expect(parseMoment(raw)).toEqual(Number.isNaN(date.getTime()) ? { ok: false } : { ok: true, date, detected: 'string' });
+  }
+});

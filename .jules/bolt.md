@@ -19,3 +19,7 @@
 ## 2026-10-09 - Reduced-Allocation Line Counting
 **Learning:** A character-by-character JavaScript loop avoids split arrays but can regress long-line and newline-free input. Native `indexOf` searches for LF and bare CR preserve the existing CRLF semantics without constructing an array of lines. Runtime, line density, and input size affect speed; allocation avoidance alone does not prove a typing-latency or garbage-collection improvement.
 **Action:** Compare dense, sparse, and newline-free text before choosing a line-count implementation. Test empty input, trailing delimiters, CRLF/bare CR/LF mixtures, and Unicode against the previous semantics. Keep timing benchmarks separate from deterministic correctness tests.
+
+## 2026-10-23 - Reduced-Allocation Digit Counting in Timestamp Parsing
+**Learning:** For numeric strings accepted by `parseMoment`'s existing grammar, `charCodeAt(0)` and `indexOf('.')` preserve integer digit counts without the temporary strings/array from `replace` and `split`. This does not eliminate the parser's other allocations. The previously reported ~2x microbenchmark speedup lacks a reproducible benchmark artifact and is not an established runtime or user-visible latency improvement.
+**Action:** Keep sign, fractional, leading-zero, 13-digit boundary, explicit-unit, and invalid-input equivalence tests. Measure representative inputs and runtimes before making performance claims.

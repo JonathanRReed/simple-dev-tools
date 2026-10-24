@@ -38,3 +38,23 @@ Build/test tools are pinned to Bun 1.4.4 and Node 22.23.4, with Next 16.4.2 and
 Undici 7.30.1. The deployed product remains a static export; these Node selectors
 do not describe a production Node server. The historical expired exception tests
 remain to ensure a reintroduced finding cannot silently regain an exemption.
+
+## URI resolver security maintenance, October 24, 2026
+
+The `fast-uri` override now resolves to the official `3.1.9` patch release,
+without changing Ajv's major version or the existing lint compatibility patches.
+The [upstream release](https://github.com/fastify/fast-uri/releases/tag/v3.1.9)
+addresses GHSA-w74x-v6f9-j3xg (encoded schemes), GHSA-wjr9-j795-jxcr
+(ambiguous domain hosts), GHSA-xhq7-xmqj-769h (relative references), and
+GHSA-333x-w4r6-6crp (suffix-reference colons).
+
+Schema Studio dynamically imports Ajv for user-provided schemas. The regression
+suite exercises Ajv's actual URI resolver with short, inert identifiers, plus
+local/relative schema references, validation errors, formats, fresh-instance
+recompilation, and missing-reference failures for all three supported dialects.
+It does not fetch remote schemas, exercise executable URLs, or run stress inputs.
+The suffix-option regression covers the dependency fix; it does not imply that
+Schema Studio uses that non-default option. These tests are not a claim that
+Ajv is a sanitizer for arbitrary URLs or that every upstream issue is exploitable
+in the application. Raw full/production audits and the existing fail-closed audit
+gate remain required; no advisory exception or severity threshold was changed.

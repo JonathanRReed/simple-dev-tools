@@ -7,7 +7,12 @@ export function parseMoment(raw: string, unit: TimestampUnit = 'auto'): ParseRes
   if (/^[+-]?\d+(?:\.\d+)?$/.test(value)) {
     const number = Number(value);
     if (!Number.isFinite(number)) return { ok: false };
-    const digits = value.replace(/^[+-]/, '').split('.')[0].length;
+    // The numeric grammar above guarantees at most one sign and decimal point.
+    // Count integer digits without replace/split temporary strings or arrays.
+    const code = value.charCodeAt(0);
+    const startIdx = code === 43 || code === 45 ? 1 : 0;
+    const dotIdx = value.indexOf('.');
+    const digits = dotIdx === -1 ? value.length - startIdx : dotIdx - startIdx;
     const detected = unit === 'auto' ? (digits === 13 || Math.abs(number) > 1e11 ? 'milliseconds' : 'seconds') : unit;
     const date = new Date(detected === 'seconds' ? number * 1000 : number);
     return Number.isNaN(date.getTime()) ? { ok: false } : { ok: true, date, detected };
