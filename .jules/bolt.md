@@ -19,3 +19,7 @@
 ## 2026-10-09 - Reduced-Allocation Line Counting
 **Learning:** A character-by-character JavaScript loop avoids split arrays but can regress long-line and newline-free input. Native `indexOf` searches for LF and bare CR preserve the existing CRLF semantics without constructing an array of lines. Runtime, line density, and input size affect speed; allocation avoidance alone does not prove a typing-latency or garbage-collection improvement.
 **Action:** Compare dense, sparse, and newline-free text before choosing a line-count implementation. Test empty input, trailing delimiters, CRLF/bare CR/LF mixtures, and Unicode against the previous semantics. Keep timing benchmarks separate from deterministic correctness tests.
+
+## 2026-10-10 - Preserving Object.values Enumeration Semantics in Cycle Traversal
+**Learning:** Replacing `Object.values()` with `for..in` or manual array indexing alters object property enumeration semantics (e.g., handling of inherited properties, hidden/non-enumerable keys, expando array properties, and dynamic property mutability during getter invocation).
+**Action:** Retain `Object.values()` when strict own-enumerable property semantics are required for tree traversal algorithms unless edge cases like expandos and getters are explicitly tested or preserved.
