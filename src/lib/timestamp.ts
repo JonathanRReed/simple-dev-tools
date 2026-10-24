@@ -7,8 +7,8 @@ export function parseMoment(raw: string, unit: TimestampUnit = 'auto'): ParseRes
   if (/^[+-]?\d+(?:\.\d+)?$/.test(value)) {
     const number = Number(value);
     if (!Number.isFinite(number)) return { ok: false };
-    // Performance optimization: Count integer digits using char code check and indexOf('.')
-    // instead of allocating temporary strings via .replace() and arrays via .split().
+    // The numeric grammar above guarantees at most one sign and decimal point.
+    // Count integer digits without replace/split temporary strings or arrays.
     const code = value.charCodeAt(0);
     const startIdx = code === 43 || code === 45 ? 1 : 0;
     const dotIdx = value.indexOf('.');
