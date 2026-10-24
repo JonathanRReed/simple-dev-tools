@@ -12,6 +12,7 @@ export function assertAcyclic(value: unknown): void {
     if (complete.has(object)) continue;
     active.add(object);
     stack.push({ value: object, exit: true });
+    // Arrays can have extra own enumerable properties; ignore inherited and hidden keys.
     for (const child of Object.values(object)) stack.push({ value: child, exit: false });
   }
 }
