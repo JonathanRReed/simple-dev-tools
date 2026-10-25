@@ -41,7 +41,7 @@ export function assertAcyclic(value: unknown): void {
           if (Number.isInteger(num) && num >= 0 && num < len && String(num) === key) {
             continue;
           }
-          stack.push({ value: (object as Record<string, unknown>)[key], exit: false });
+          stack.push({ value: (object as unknown as Record<string, unknown>)[key], exit: false });
         }
       }
     } else {
