@@ -1,6 +1,17 @@
 "use client";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import YAML from "yaml";
+import {
+  ExactNumber,
+  exactValidationStatus,
+  findInexactJsonNumbers,
+  formatJsonExact,
+  formatYamlExact,
+  parseJsonExact,
+  parseYamlExact,
+  supportsExactJson,
+  toAjvInput,
+  yamlToJsonExact,
+} from "@/lib/exact-number";
 import { AlignLeft, Download, RotateCcw, Sparkles, Wand2 } from "lucide-react";
 
 import OpenApiDocs from "@/components/tool/OpenApiDocs";
@@ -43,9 +54,9 @@ function parseInput(source: string, format: "json" | "yaml") {
   try {
     let value: any;
     if (format === "json") {
-      value = JSON.parse(source);
+      value = parseJsonExact(source);
     } else {
-      value = YAML.parse(source);
+      value = parseYamlExact(source);
     }
     assertAcyclic(value);
     // YAML/JSON can legitimately parse to null/undefined — that is not a useful spec.
@@ -121,6 +132,33 @@ async function createAjv(dialect: "2020" | "2019" | "draft07"): Promise<AjvInsta
   return instance;
 }
 
+
+/** Emit a TypeScript literal type, widening ExactNumber / non-finite / -0. */
+function tsLiteralType(v: unknown): string {
+  if (typeof v === "string") return JSON.stringify(v);
+  if (typeof v === "boolean" || v === null) return String(v);
+  if (v instanceof ExactNumber) return `number /* exact: ${v.literal} */`;
+  if (typeof v === "number") {
+    if (!Number.isFinite(v) || Object.is(v, -0)) return `number /* exact: ${Object.is(v, -0) ? "-0" : String(v)} */`;
+    return String(v);
+  }
+  return "unknown";
+}
+
+/** Emit a Zod literal expression, widening ExactNumber / non-finite / -0. */
+function zodLiteralExpr(v: unknown): string {
+  if (typeof v === "string") return `z.literal(${JSON.stringify(v)})`;
+  if (typeof v === "boolean" || v === null) return `z.literal(${String(v)})`;
+  if (v instanceof ExactNumber) return `z.number() /* exact: ${v.literal} */`;
+  if (typeof v === "number") {
+    if (!Number.isFinite(v) || Object.is(v, -0)) {
+      return `z.number() /* exact: ${Object.is(v, -0) ? "-0" : String(v)} */`;
+    }
+    return `z.literal(${v})`;
+  }
+  return "z.unknown()";
+}
+
 export default function SchemaStudioClient() {
   const [tab, setTab] = useState<"source" | "docs" | "validate" | "types">("source");
   const [format, setFormat] = useState<"json" | "yaml">("yaml");
@@ -142,7 +180,7 @@ export default function SchemaStudioClient() {
   const [schemaText, setSchemaText] = useState<string>(SAMPLE_SCHEMA);
   const [dataText, setDataText] = useState<string>(SAMPLE_DATA);
   const [validatorError, setValidatorError] = useState<string | null>(null);
-  const [validateResult, setValidateResult] = useState<{ ok: boolean; errors: any[] | null } | null>(null);
+  const [validateResult, setValidateResult] = useState<{ ok: boolean; errors: any[] | null; undecidable?: string | null } | null>(null);
   const [validating, setValidating] = useState(false);
   const validationGeneration = useRef(0);
   const [validatedKey, setValidatedKey] = useState("");
@@ -167,26 +205,35 @@ export default function SchemaStudioClient() {
   const debouncedInputs = useDebounced(validationInputs, 300);
 
   const validateInputs = useCallback(
-    async (schemaStr: string, dataStr: string): Promise<{ ok: boolean; errors: any[] | null }> => {
+    async (
+      schemaStr: string,
+      dataStr: string
+    ): Promise<{ ok: boolean; errors: any[] | null; undecidable?: string | null }> => {
       let schema: any;
       try {
-        schema = JSON.parse(schemaStr);
+        schema = parseJsonExact(schemaStr);
       } catch (error: any) {
         throw new Error(`Schema is not valid JSON: ${error?.message || "parse error"}`, { cause: error });
       }
       let data: any;
       try {
-        data = JSON.parse(dataStr);
+        data = parseJsonExact(dataStr);
       } catch (error: any) {
         throw new Error(`Data is not valid JSON: ${error?.message || "parse error"}`, { cause: error });
       }
       try {
+        const status = exactValidationStatus(schema, data);
+        if (!status.exact) {
+          return { ok: false, errors: null, undecidable: status.reason };
+        }
+        const schemaForAjv = toAjvInput(schema).value;
+        const dataForAjv = toAjvInput(data).value;
         // Pick an Ajv class that matches the schema's declared dialect, and use a
         // fresh instance per run so recompiling an $id-bearing schema never throws.
-        const validator = await createAjv(detectDialect(schema));
-        const compiled = validator.compile(schema);
-        const valid = compiled(data);
-        return { ok: !!valid, errors: compiled.errors || null };
+        const validator = await createAjv(detectDialect(schemaForAjv));
+        const compiled = validator.compile(schemaForAjv as object);
+        const valid = compiled(dataForAjv);
+        return { ok: !!valid, errors: compiled.errors || null, undecidable: null };
       } catch (error: any) {
         throw new Error(error?.message || "Failed to compile schema.", { cause: error });
       }
@@ -344,7 +391,7 @@ export default function SchemaStudioClient() {
         return refName(schema.$ref);
       }
       if (schema.enum && Array.isArray(schema.enum)) {
-        return schema.enum.map((v: any) => (typeof v === "string" ? JSON.stringify(v) : String(v))).join(" | ");
+        return schema.enum.map((v: any) => tsLiteralType(v)).join(" | ");
       }
       const t = schema.type;
       if (Array.isArray(t)) {
@@ -513,7 +560,7 @@ export default function SchemaStudioClient() {
       if (schema.enum && Array.isArray(schema.enum)) {
         const allStrings = schema.enum.every((v: any) => typeof v === "string");
         if (allStrings) return `z.enum([${schema.enum.map((v: any) => JSON.stringify(v)).join(", ")}])`;
-        return `z.union([${schema.enum.map((v: any) => `z.literal(${JSON.stringify(v)})`).join(", ")}])`;
+        return `z.union([${schema.enum.map((v: any) => zodLiteralExpr(v)).join(", ")}])`;
       }
       const t = schema.type;
       if (Array.isArray(t)) {
@@ -530,11 +577,31 @@ export default function SchemaStudioClient() {
         case "number":
         case "integer": {
           let code = t === "integer" ? "z.number().int()" : "z.number()";
-          if (typeof schema.minimum === "number" && Number.isFinite(schema.minimum)) code += `.min(${schema.minimum})`;
-          if (typeof schema.maximum === "number" && Number.isFinite(schema.maximum)) code += `.max(${schema.maximum})`;
-          if (typeof schema.exclusiveMinimum === "number" && Number.isFinite(schema.exclusiveMinimum)) code += `.gt(${schema.exclusiveMinimum})`;
-          if (typeof schema.exclusiveMaximum === "number" && Number.isFinite(schema.exclusiveMaximum)) code += `.lt(${schema.exclusiveMaximum})`;
-          if (typeof schema.multipleOf === "number" && schema.multipleOf > 0 && Number.isFinite(schema.multipleOf)) code += `.multipleOf(${schema.multipleOf})`;
+          const warnings: string[] = [];
+          const applyBound = (
+            value: unknown,
+            method: "min" | "max" | "gt" | "lt" | "multipleOf",
+            label: string
+          ) => {
+            if (value instanceof ExactNumber) {
+              warnings.push(`// warning: ${label} ${value.literal} exceeds double precision`);
+              return;
+            }
+            if (typeof value === "number") {
+              if (!Number.isFinite(value)) {
+                warnings.push(`// warning: ${label} ${String(value)} exceeds double precision`);
+                return;
+              }
+              if (method === "multipleOf" && !(value > 0)) return;
+              code += `.${method}(${value})`;
+            }
+          };
+          applyBound(schema.minimum, "min", "minimum");
+          applyBound(schema.maximum, "max", "maximum");
+          applyBound(schema.exclusiveMinimum, "gt", "exclusiveMinimum");
+          applyBound(schema.exclusiveMaximum, "lt", "exclusiveMaximum");
+          applyBound(schema.multipleOf, "multipleOf", "multipleOf");
+          if (warnings.length) return `${warnings.join("\n")}\n${code}`;
           return code;
         }
         case "boolean":
@@ -646,7 +713,7 @@ export default function SchemaStudioClient() {
       // Otherwise, JSON Schema route (shared schemaText source).
       const text = schemaText?.trim();
       if (!text) throw new Error("Enter a JSON Schema before generating types.");
-      const schema: any = JSON.parse(text);
+      const schema: any = parseJsonExact(text);
       if (!isLikelyJsonSchema(schema)) {
         throw new Error("Provided input is not a valid-looking JSON Schema");
       }
@@ -738,21 +805,32 @@ export default function SchemaStudioClient() {
   }, [source, format]);
 
   // Pretty-print the Source editor in-place. JSON via JSON.parse/stringify,
-  // YAML via YAML round-trip. On failure we leave the text untouched and let the
+  // YAML via formatYamlExact. On failure we leave the text untouched and let the
   // existing parsed.error Alert (driven by parseInput) surface the problem.
   const handleFormatSource = useCallback(() => {
     const text = source;
     if (!text.trim()) return;
     try {
-      const formatted =
-        format === "json"
-          ? JSON.stringify(JSON.parse(text), null, 2)
-          : YAML.stringify(YAML.parse(text));
-      setSource(formatted);
-    } catch {
+      if (format === "json") {
+        if (!supportsExactJson) {
+          const risky = findInexactJsonNumbers(text);
+          if (risky.length) {
+            throw new Error(
+              `Cannot format exactly: ${risky.join(", ")} exceed JavaScript precision and this browser lacks JSON.rawJSON.`
+            );
+          }
+          setSource(JSON.stringify(JSON.parse(text), null, 2));
+        } else {
+          setSource(formatJsonExact(text));
+        }
+      } else {
+        setSource(formatYamlExact(text));
+      }
+    } catch (e: any) {
       // Re-set the (invalid) source so the parsed.error Alert reflects current
-      // input even if nothing else changed; the existing Alert renders the message.
+      // input; surface the exactness/fallback message when present.
       setSource(text);
+      if (e?.message) setImportError(e.message);
     }
   }, [source, format]);
 
@@ -762,8 +840,17 @@ export default function SchemaStudioClient() {
     const text = schemaText;
     if (!text.trim()) return;
     try {
-      const formatted = JSON.stringify(JSON.parse(text), null, 2);
-      setSchemaText(formatted);
+      if (!supportsExactJson) {
+        const risky = findInexactJsonNumbers(text);
+        if (risky.length) {
+          throw new Error(
+            `Cannot format exactly: ${risky.join(", ")} exceed JavaScript precision and this browser lacks JSON.rawJSON.`
+          );
+        }
+        setSchemaText(JSON.stringify(JSON.parse(text), null, 2));
+      } else {
+        setSchemaText(formatJsonExact(text));
+      }
       setValidatorError(null);
     } catch (e: any) {
       setValidatorError(e?.message || "Invalid JSON. Cannot format.");
@@ -934,9 +1021,26 @@ export default function SchemaStudioClient() {
 
               {!parsed.error && !parsed.empty && !parsed.isOpenAPI && (typeof parsed.value === "object" || typeof parsed.value === "boolean") && (
                 <Button type="button" variant="secondary" onClick={() => {
-                  setSchemaText(JSON.stringify(parsed.value, null, 2));
-                  setTypesOutput("");
-                  setTab("types");
+                  try {
+                    if (format === "yaml") {
+                      setSchemaText(yamlToJsonExact(source));
+                    } else if (!supportsExactJson) {
+                      const risky = findInexactJsonNumbers(source);
+                      if (risky.length) {
+                        throw new Error(
+                          `Cannot convert exactly: ${risky.join(", ")} exceed JavaScript precision and this browser lacks JSON.rawJSON.`
+                        );
+                      }
+                      setSchemaText(JSON.stringify(JSON.parse(source), null, 2));
+                    } else {
+                      setSchemaText(formatJsonExact(source));
+                    }
+                    setImportError(null);
+                    setTypesOutput("");
+                    setTab("types");
+                  } catch (e: any) {
+                    setImportError(e?.message || "Failed to convert source to JSON Schema");
+                  }
                 }}>Use source as JSON Schema</Button>
               )}
 
@@ -1020,6 +1124,8 @@ export default function SchemaStudioClient() {
                   </p>
                 ) : validating || !validateResult ? (
                   <p className="text-sm text-muted-foreground">Validating…</p>
+                ) : validateResult.undecidable ? (
+                  <Alert variant="warning">Cannot validate exactly: {validateResult.undecidable}</Alert>
                 ) : validateResult.ok ? (
                   <Alert variant="success">Valid. Data conforms to the schema.</Alert>
                 ) : (
