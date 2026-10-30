@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { ExactNumber } from "@/lib/exact-number";
 
 /**
  * Renders an OpenAPI 3.x or Swagger 2.0 document as readable documentation.
@@ -65,7 +66,9 @@ function schemaLabel(schema: unknown, depth = 0): string {
   }
   const enumValues = s.enum;
   if (Array.isArray(enumValues)) {
-    return enumValues.map((v) => JSON.stringify(v)).join(" | ");
+    return enumValues
+      .map((v) => (v instanceof ExactNumber ? v.literal : JSON.stringify(v)))
+      .join(" | ");
   }
   const type = asString(s.type);
   if (type === "array") return `${schemaLabel(s.items, depth + 1)}[]`;
