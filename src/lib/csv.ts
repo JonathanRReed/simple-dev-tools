@@ -104,11 +104,17 @@ const QUOTE_RE = /"/g;
 export function coerceCsvValue(raw: string): unknown {
   if (raw === "") return "";
   const len = raw.length;
-  if (len === 4 || len === 5) {
-    const lower = raw.toLowerCase();
-    if (lower === "true") return true;
-    if (lower === "false") return false;
-    if (lower === "null") return null;
+
+  // Performance optimization: Fast first-character checks ('t'/'T', 'n'/'N', 'f'/'F')
+  // before calling .toLowerCase(), avoiding temporary string allocations for non-matching
+  // 4- and 5-character CSV cells (e.g. "2024", "NAME", "DATA", "CODE") during CSV parsing.
+  if (len === 4) {
+    const c0 = raw.charCodeAt(0);
+    if ((c0 === 116 || c0 === 84) && raw.toLowerCase() === "true") return true;
+    if ((c0 === 110 || c0 === 78) && raw.toLowerCase() === "null") return null;
+  } else if (len === 5) {
+    const c0 = raw.charCodeAt(0);
+    if ((c0 === 102 || c0 === 70) && raw.toLowerCase() === "false") return false;
   }
 
   // Fast first-character check before regex: JSON numbers start with '0'..'9' or '-'
