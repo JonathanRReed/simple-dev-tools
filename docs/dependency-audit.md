@@ -58,3 +58,39 @@ Schema Studio uses that non-default option. These tests are not a claim that
 Ajv is a sanitizer for arbitrary URLs or that every upstream issue is exploitable
 in the application. Raw full/production audits and the existing fail-closed audit
 gate remain required; no advisory exception or severity threshold was changed.
+
+## Dependency refresh, November 18, 2026
+
+`bun audit` had three new moderate findings against the October lockfile, so the
+fail-closed gate (`bun run audit`) was blocking. All three are resolved by
+upgrading, with no exception record and no change to the gate:
+
+- `next` 16.4.2 → 16.4.6, for GHSA-mfr8-8qww-v76h and GHSA-vc7v-qv4w-wrv8
+  (cache leaks across root params; affects `>=16.2.0 <=16.4.4`). This site is a
+  static export and does not use `'use cache'`, but the fixed release is taken
+  rather than argued around.
+- `eslint-config-next` 16.4.6 pulls `typescript-eslint` 8.73, whose
+  `minimatch` is `^11.0.1`, for GHSA-g3hv-75wg-m249.
+
+The `@next/eslint-plugin-next` patch is version-keyed, so it was renamed to
+`@next%2Feslint-plugin-next@16.4.6.patch` with identical content; the patched
+file is unchanged upstream between the two releases and the patch applies
+cleanly. `fdir@6.5.0` and the `tinyglobby@0.2.17` alias are untouched. `undici`
+moves 7.30.1 → 7.30.2 and Node 22.23.4 → 22.23.5 within their pinned lines.
+
+Other packages moved to current releases, including two majors (`mermaid` 12,
+exercised by the template e2e test, and `sql.js` 1.16 with its asset test).
+Three are held back on purpose:
+
+- `eslint` stays on 9.x: `eslint-plugin-react` 7.37.5 still declares
+  `^9.7` as its newest supported peer.
+- `typescript` stays on 6.0.x: `typescript-eslint` 8.73 requires `<6.1.0`.
+- `@types/node` stays on 22.x to match the pinned Node 22 toolchain.
+
+`tests/unit/lint-glob-compat.test.ts` must keep covering the replacement glob.
+On the macOS machine used for this refresh its symlink cases (`symlink`,
+`globstar`, and the ESM symlink entry) fail, and the remaining cases need a
+timeout far above the default because the temp directory is walked through
+`/private/var`. The ESM symlink case fails identically on the untouched
+October lockfile on the same machine, so this is local to that environment and
+not introduced here. CI on Linux remains the authority for that suite.

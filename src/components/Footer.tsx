@@ -8,6 +8,9 @@ const featuredTools = featuredToolHrefs
   .map((href) => getToolPage(href))
   .filter((tool): tool is NonNullable<typeof tool> => tool != null);
 
+// Static export: the year is fixed when the site is built.
+const BUILD_YEAR = new Date().getFullYear();
+
 const siteLinks = [{ title: 'Home', href: '/' }, ...trustPages] as const;
 
 const elsewhereLinks = [
@@ -74,7 +77,7 @@ export default function Footer() {
 
         <div className="mt-10 flex flex-col gap-2 border-t-2 border-border pt-5 font-mono text-[0.7rem] uppercase tracking-wider text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
           <span>
-            © {new Date().getFullYear()} {siteConfig.author.name} · {siteConfig.provider.name}
+            © {BUILD_YEAR} {siteConfig.author.name} · {siteConfig.provider.name}
           </span>
           <span>v{packageJson.version} · Functional Source License</span>
         </div>
