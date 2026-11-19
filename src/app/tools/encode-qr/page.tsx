@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import ToolPage from "@/components/layout/ToolPage";
 import ToolNotes from "@/components/tool/ToolNotes";
+import FamilyTools from "@/components/tool/FamilyTools";
 import ToolPageHeader from "@/components/tool/ToolPageHeader";
 import EncodeQrClientOnly from "./ClientOnly";
 
@@ -22,7 +23,7 @@ export default function EncodeQrPage() {
           Encode and decode URLs and Base64, then generate QR codes as PNG or SVG. No server
           required.
         </p>
-        <p className="text-sm">
+        <p>
           Use URL encoding for query values and path segments, Base64 when a text-safe
           representation is required, and QR output when the same value needs to move to a phone,
           label, document, or test device.
@@ -43,6 +44,7 @@ export default function EncodeQrPage() {
           browser.
         </p>
       </ToolNotes>
+      <FamilyTools href="/tools/encode-qr/" />
     </ToolPage>
   );
 }

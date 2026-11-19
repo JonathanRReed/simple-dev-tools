@@ -3,7 +3,7 @@
 import * as React from "react";
 import { usePathname } from "next/navigation";
 
-import { normalizeHref, toolPages } from "@/lib/site";
+import { getToolPage, normalizeHref, toolPages, type ToolMeta } from "@/lib/site";
 
 const RECENT_KEY = "sdt:recent-tools";
 const PINNED_KEY = "sdt:pinned-tools";
@@ -111,4 +111,25 @@ export function useRecentTools(): RecentToolsValue {
     };
   }
   return ctx;
+}
+
+const isTool = (tool: ToolMeta | undefined): tool is ToolMeta => tool != null;
+
+/**
+ * Pinned and recent tools as catalog entries, with pinned tools left out of
+ * the recent list so nothing is shown twice. Memoized, so typing in a search
+ * box or navigating does not rebuild the lists.
+ */
+export function useQuickTools(): { pinnedTools: ToolMeta[]; recentTools: ToolMeta[] } {
+  const { pinned, recent } = useRecentTools();
+  return React.useMemo(() => {
+    const pinnedSet = new Set(pinned);
+    return {
+      pinnedTools: pinned.map((href) => getToolPage(href)).filter(isTool),
+      recentTools: recent
+        .filter((href) => !pinnedSet.has(href))
+        .map((href) => getToolPage(href))
+        .filter(isTool),
+    };
+  }, [pinned, recent]);
 }

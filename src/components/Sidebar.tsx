@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
-import { Clock, Home, Pin, PinOff } from 'lucide-react';
+import { ArrowUpRight, Clock, LayoutGrid, Pin, PinOff } from 'lucide-react';
 
 import {
   Sidebar as PrimitiveSidebar,
@@ -22,25 +22,10 @@ import {
 } from '@/components/ui/sidebar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import BrandMark from '@/components/BrandMark';
-import { getToolIcon } from '@/components/ToolIcon';
-import { useRecentTools } from '@/hooks/use-recent-tools';
-import { getToolPage, normalizeHref, siteConfig, toolGroups, type ToolPageInfo } from '@/lib/site';
+import { getToolIcon, hueTextClass } from '@/components/ToolIcon';
+import { useQuickTools, useRecentTools } from '@/hooks/use-recent-tools';
+import { getToolPage, normalizeHref, siteConfig, toolGroups, type ToolMeta } from '@/lib/site';
 import { cn } from '@/lib/utils';
-
-const navSections = [
-  {
-    label: 'Overview',
-    items: [{ title: 'Home', href: '/', icon: Home }],
-  },
-  ...toolGroups.map((group) => ({
-    label: group.title,
-    items: group.tools.map((tool) => ({
-      title: tool.title,
-      href: tool.href,
-      icon: getToolIcon(tool.icon),
-    })),
-  })),
-] as const;
 
 export function AppSidebarProvider({ children }: { children: React.ReactNode }) {
   return (
@@ -51,16 +36,29 @@ export function AppSidebarProvider({ children }: { children: React.ReactNode }) 
   );
 }
 
-const activeRowClass = cn(
-  'min-h-9 rounded-none font-mono text-xs uppercase tracking-wide transition-colors',
+const rowClass = cn(
+  'h-9 rounded-md text-sm font-medium text-sidebar-foreground/75 transition-colors',
   'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
-  'data-[active=true]:bg-primary data-[active=true]:font-semibold data-[active=true]:text-primary-foreground'
+  'data-[active=true]:bg-sidebar-accent data-[active=true]:font-semibold data-[active=true]:text-sidebar-accent-foreground'
 );
+
+const groupLabelClass = 'ui-label h-7 px-2 text-xs';
+
+/** The lit bar that marks the current page, like an indicator beside a switch. */
+function ActiveBar() {
+  return (
+    <span
+      aria-hidden="true"
+      className="pointer-events-none absolute left-0 top-1/2 h-4 w-[3px] -translate-y-1/2 rounded-full bg-primary group-data-[collapsible=icon]:hidden"
+    />
+  );
+}
 
 export default function AppSidebar() {
   const pathname = usePathname();
   const { isMobile, setOpenMobile } = useSidebar();
-  const { recent, pinned, togglePin, isPinned } = useRecentTools();
+  const { togglePin, isPinned } = useRecentTools();
+  const { pinnedTools, recentTools } = useQuickTools();
 
   // Close the offcanvas sidebar after navigating on mobile so the destination
   // page isn't left hidden under the overlay.
@@ -76,135 +74,133 @@ export default function AppSidebar() {
     return p === h || p.startsWith(`${h}/`);
   };
 
-  // Performance optimization: Memoize pinned and recent tool derivations to prevent
-  // recreating Sets and arrays on sidebar re-renders (e.g. navigation or layout state changes).
-  const { pinnedTools, recentTools } = useMemo(() => {
-    const pinnedSet = new Set(pinned);
-    const pinnedToolsList = pinned
-      .map((h) => getToolPage(h))
-      .filter((t): t is ToolPageInfo => t != null);
-    const recentToolsList = recent
-      .filter((h) => !pinnedSet.has(h))
-      .map((h) => getToolPage(h))
-      .filter((t): t is ToolPageInfo => t != null);
-    return { pinnedTools: pinnedToolsList, recentTools: recentToolsList };
-  }, [pinned, recent]);
-
-  const renderQuickRow = (tool: ToolPageInfo) => {
+  const renderRow = (tool: ToolMeta, { pinnable }: { pinnable: boolean }) => {
     const Icon = getToolIcon(tool.icon);
+    const active = isActive(tool.href);
+    const pinnedNow = isPinned(tool.href);
     return (
       <SidebarMenuItem key={tool.href}>
-        <SidebarMenuButton asChild isActive={isActive(tool.href)} tooltip={tool.title} className={activeRowClass}>
-          <a href={tool.href} aria-current={isActive(tool.href) ? 'page' : undefined} className="flex items-center gap-3">
-            <Icon className="h-4 w-4" />
+        {active ? <ActiveBar /> : null}
+        <SidebarMenuButton asChild isActive={active} tooltip={tool.title} className={rowClass}>
+          <a
+            href={tool.href}
+            aria-current={active ? 'page' : undefined}
+            className="flex items-center gap-2.5 group-data-[collapsible=icon]:size-full group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0"
+          >
+            <Icon className={cn('size-4', active && hueTextClass(tool.hue))} />
             <span className="group-data-[collapsible=icon]:sr-only">{tool.title}</span>
           </a>
         </SidebarMenuButton>
+        {pinnable ? (
+          <SidebarMenuAction
+            onClick={() => togglePin(tool.href)}
+            aria-label={pinnedNow ? `Unpin ${tool.title}` : `Pin ${tool.title}`}
+            title={pinnedNow ? 'Unpin' : 'Pin'}
+            className={cn(
+              'top-1.5 text-sidebar-foreground/60 group-data-[collapsible=icon]:hidden',
+              !pinnedNow &&
+                'opacity-0 focus-visible:opacity-100 group-hover/menu-item:opacity-100 max-md:opacity-100'
+            )}
+          >
+            {pinnedNow ? <PinOff className="size-3.5" /> : <Pin className="size-3.5" />}
+          </SidebarMenuAction>
+        ) : null}
       </SidebarMenuItem>
     );
   };
 
+  const homeActive = isActive('/');
+
   return (
-    <PrimitiveSidebar collapsible="icon" className="border-r-2 border-sidebar-border bg-sidebar text-sidebar-foreground">
-      <SidebarHeader className="border-b-2 border-sidebar-border px-3 py-4 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:py-3">
+    <PrimitiveSidebar collapsible="icon" className="border-sidebar-border bg-sidebar text-sidebar-foreground">
+      <SidebarHeader className="h-14 justify-center border-b border-sidebar-border px-3 py-0 group-data-[collapsible=icon]:px-0">
         {/* A full document load reapplies the route-specific CSP. */}
         {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
         <a
           href="/"
-          className="flex min-w-0 items-center gap-2.5 group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:gap-0"
+          className="flex min-w-0 items-center gap-2.5 rounded-md group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:gap-0"
         >
-          <BrandMark className="size-9 shrink-0 group-data-[collapsible=icon]:size-8" />
-          <div className="flex min-w-0 flex-col text-left group-data-[collapsible=icon]:hidden">
-            <span className="truncate font-display text-base font-bold tracking-tight">
-              {siteConfig.shortName}
-            </span>
-            <span className="brutal-label truncate">{siteConfig.provider.name}</span>
-          </div>
+          <BrandMark className="size-7" />
+          <span className="truncate font-display text-[0.95rem] group-data-[collapsible=icon]:hidden">
+            {siteConfig.shortName}
+          </span>
         </a>
       </SidebarHeader>
 
       <SidebarContent className="px-2 group-data-[collapsible=icon]:px-1">
-        <ScrollArea className="h-full min-h-0 flex-1 pr-2 group-data-[collapsible=icon]:pr-0">
+        <ScrollArea className="h-full min-h-0 flex-1 pr-1 group-data-[collapsible=icon]:pr-0">
+          <SidebarGroup className="pb-0 pt-3">
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  {homeActive ? <ActiveBar /> : null}
+                  <SidebarMenuButton asChild isActive={homeActive} tooltip="All tools" className={rowClass}>
+                    {/* A full document load reapplies the route-specific CSP. */}
+                    {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+                    <a
+                      href="/"
+                      aria-current={homeActive ? 'page' : undefined}
+                      className="flex items-center gap-2.5 group-data-[collapsible=icon]:size-full group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0"
+                    >
+                      <LayoutGrid className="size-4" />
+                      <span className="group-data-[collapsible=icon]:sr-only">All tools</span>
+                    </a>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+
           {pinnedTools.length > 0 ? (
-            <SidebarGroup className="pb-1 group-data-[collapsible=icon]:hidden">
-              <SidebarGroupLabel className="brutal-label">
-                <Pin className="mr-1.5 h-3 w-3" /> Pinned
+            <SidebarGroup className="pb-0 group-data-[collapsible=icon]:hidden">
+              <SidebarGroupLabel className={groupLabelClass}>
+                <Pin className="mr-1.5 !size-3" aria-hidden="true" /> Pinned
               </SidebarGroupLabel>
               <SidebarGroupContent>
-                <SidebarMenu>{pinnedTools.map(renderQuickRow)}</SidebarMenu>
+                <SidebarMenu>{pinnedTools.map((tool) => renderRow(tool, { pinnable: false }))}</SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
           ) : null}
 
           {recentTools.length > 0 ? (
-            <SidebarGroup className="pb-1 group-data-[collapsible=icon]:hidden">
-              <SidebarGroupLabel className="brutal-label">
-                <Clock className="mr-1.5 h-3 w-3" /> Recent
+            <SidebarGroup className="pb-0 group-data-[collapsible=icon]:hidden">
+              <SidebarGroupLabel className={groupLabelClass}>
+                <Clock className="mr-1.5 !size-3" aria-hidden="true" /> Recent
               </SidebarGroupLabel>
               <SidebarGroupContent>
-                <SidebarMenu>{recentTools.map(renderQuickRow)}</SidebarMenu>
+                <SidebarMenu>{recentTools.map((tool) => renderRow(tool, { pinnable: false }))}</SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
           ) : null}
 
-          {navSections.map((section) => (
-            <SidebarGroup key={section.label} className="pb-1">
-              <SidebarGroupLabel className="brutal-label">{section.label}</SidebarGroupLabel>
+          {toolGroups.map((group) => (
+            <SidebarGroup key={group.title} className="pb-0 group-data-[collapsible=icon]:py-1">
+              <SidebarGroupLabel className={groupLabelClass}>{group.title}</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {section.items.map((item) => {
-                    const active = isActive(item.href);
-                    const pinnable = getToolPage(item.href) != null;
-                    const pinnedNow = isPinned(item.href);
-                    return (
-                      <SidebarMenuItem key={item.href}>
-                        <SidebarMenuButton
-                          asChild
-                          isActive={active}
-                          tooltip={item.title}
-                          className={activeRowClass}
-                        >
-                          <a
-                            href={item.href}
-                            aria-current={active ? 'page' : undefined}
-                            className="flex items-center gap-3 group-data-[collapsible=icon]:size-full group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0"
-                          >
-                            <item.icon className="h-4 w-4" />
-                            <span className="group-data-[collapsible=icon]:sr-only">{item.title}</span>
-                          </a>
-                        </SidebarMenuButton>
-                        {pinnable ? (
-                          <SidebarMenuAction
-                            onClick={() => togglePin(item.href)}
-                            aria-label={pinnedNow ? `Unpin ${item.title}` : `Pin ${item.title}`}
-                            title={pinnedNow ? 'Unpin' : 'Pin'}
-                            className="rounded-none group-data-[collapsible=icon]:hidden"
-                          >
-                            {pinnedNow ? <PinOff className="h-3.5 w-3.5" /> : <Pin className="h-3.5 w-3.5" />}
-                          </SidebarMenuAction>
-                        ) : null}
-                      </SidebarMenuItem>
-                    );
+                  {group.tools.map((entry) => {
+                    const tool = getToolPage(entry.href);
+                    return tool ? renderRow(tool, { pinnable: true }) : null;
                   })}
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
           ))}
+          <div className="h-3" />
         </ScrollArea>
       </SidebarContent>
 
-      <SidebarFooter className="border-t-2 border-sidebar-border px-3 py-4 group-data-[collapsible=icon]:hidden">
+      <SidebarFooter className="border-t border-sidebar-border px-4 py-3 group-data-[collapsible=icon]:hidden">
         <a
           href={siteConfig.provider.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-2.5 border-2 border-sidebar-border bg-sidebar-accent/40 p-2.5 transition-colors hover:border-primary"
+          className="group/by inline-flex items-center gap-1 rounded-sm text-xs text-sidebar-foreground/70 transition-colors hover:text-sidebar-foreground"
         >
-          <BrandMark className="size-8 shrink-0" />
-          <div className="flex min-w-0 flex-col">
-            <span className="truncate text-sm font-semibold">{siteConfig.provider.name}</span>
-            <span className="brutal-label truncate">helloworldfirm.com</span>
-          </div>
+          <span>
+            Built by <span className="font-semibold">{siteConfig.provider.name}</span>
+          </span>
+          <ArrowUpRight className="size-3.5" aria-hidden="true" />
         </a>
       </SidebarFooter>
     </PrimitiveSidebar>

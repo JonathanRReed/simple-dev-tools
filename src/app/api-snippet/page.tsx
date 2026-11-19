@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import ToolPage from "@/components/layout/ToolPage";
 import ToolNotes from "@/components/tool/ToolNotes";
+import FamilyTools from "@/components/tool/FamilyTools";
 import ToolPageHeader from "@/components/tool/ToolPageHeader";
 import ApiSnippetClientOnly from "./ClientOnly";
 
@@ -22,7 +23,7 @@ export default function ApiSnippetPage() {
           Generate copy-paste-ready cURL, Python requests, and fetch snippets from a single
           endpoint definition. Works client-side, no API keys required.
         </p>
-        <p className="text-sm">
+        <p>
           Use it when you need quick request examples for documentation, QA notes, API handoffs,
           or local debugging. Enter the method, URL, headers, body, and authentication shape
           once, then compare generated snippets without pasting private credentials into a
@@ -43,6 +44,7 @@ export default function ApiSnippetPage() {
           committed to a production code path.
         </p>
       </ToolNotes>
+      <FamilyTools href="/api-snippet/" />
     </ToolPage>
   );
 }

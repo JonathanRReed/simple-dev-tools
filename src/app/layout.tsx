@@ -20,29 +20,37 @@ import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration';
 import { SidebarInset } from '@/components/ui/sidebar';
 import { siteConfig, toolPages } from '@/lib/site';
 
-// Self-hosted (vendored) variable fonts — no build-time network fetch, so the
-// static export builds reliably in any CI sandbox (e.g. Cloudflare Pages) and
-// the fonts are served same-origin (satisfies the strict font-src 'self' CSP).
-// globals.css maps these variables onto Tailwind's --font-sans/display/mono.
-const fontInter = localFont({
-  src: './fonts/inter-latin-variable.woff2',
-  variable: '--font-inter',
+// Self-hosted (vendored) fonts — no build-time network fetch, so the static
+// export builds reliably in any CI sandbox (e.g. Cloudflare Pages) and the
+// fonts are served same-origin (satisfies the strict font-src 'self' CSP).
+// globals.css maps these variables onto --font-sans, --font-mono and the
+// `font-display` utility. See src/app/fonts/README.md for where each came from.
+const fontArchivo = localFont({
+  src: './fonts/archivo-latin-variable.woff2',
+  variable: '--font-archivo',
   display: 'swap',
   weight: '100 900',
 });
 
-const fontSpaceGrotesk = localFont({
-  src: './fonts/space-grotesk-latin-variable.woff2',
-  variable: '--font-space-grotesk',
+// Headings use one static cut (expanded width, weight 800) rather than the
+// two-axis variable file, which is six times the size.
+const fontArchivoDisplay = localFont({
+  src: './fonts/archivo-display-latin-800.woff2',
+  variable: '--font-archivo-display',
   display: 'swap',
-  weight: '300 700',
+  weight: '800',
 });
 
-const fontJetBrainsMono = localFont({
-  src: './fonts/jetbrains-mono-latin-variable.woff2',
-  variable: '--font-jetbrains-mono',
+// The default metric-adjusted fallback is a proportional face, which would
+// reflow every digest and table when the real font arrives. Fall back to the
+// system monospace instead, so only the letterforms change.
+const fontAtkinsonMono = localFont({
+  src: './fonts/atkinson-hyperlegible-mono-latin-variable.woff2',
+  variable: '--font-atkinson-mono',
   display: 'swap',
-  weight: '100 800',
+  weight: '200 800',
+  adjustFontFallback: false,
+  fallback: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Consolas', 'monospace'],
 });
 
 export const metadata: Metadata = {
@@ -67,7 +75,7 @@ export const metadata: Metadata = {
     description: siteConfig.description,
     images: [
       {
-        url: '/og-image.avif',
+        url: '/og-image.png',
         width: 1200,
         height: 630,
         alt: `${siteConfig.name} by ${siteConfig.author.name}`,
@@ -85,11 +93,12 @@ export const metadata: Metadata = {
     title: `${siteConfig.name} | Developer tools by ${siteConfig.author.name}`,
     description: siteConfig.description,
     creator: siteConfig.author.handle,
-    images: ['/og-image.avif'],
+    images: ['/og-image.png'],
   },
   icons: {
     icon: [
       { url: '/simple_dev_tools_logo_assets/favicon.ico', sizes: 'any' },
+      { url: '/simple_dev_tools_logo_assets/icon.svg', type: 'image/svg+xml' },
       { url: '/simple_dev_tools_logo_assets/favicon-32x32.png', type: 'image/png', sizes: '32x32' },
       { url: '/simple_dev_tools_logo_assets/favicon-16x16.png', type: 'image/png', sizes: '16x16' },
     ],
@@ -102,7 +111,12 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  themeColor: '#0a0d12',
+  // Matches the default dark and light benches (Art Deco and Paper).
+  themeColor: [
+    { media: '(prefers-color-scheme: dark)', color: '#020508' },
+    { media: '(prefers-color-scheme: light)', color: '#f7f3ea' },
+  ],
+  colorScheme: 'dark light',
 };
 
 // Structured data, typed against schema.org via schema-dts so a renamed
@@ -155,15 +169,35 @@ const jsonLd: WithContext<WebSite> = {
 // Escape "<" so the JSON can never close the <script> element early.
 const jsonLdHtml = JSON.stringify(jsonLd).replace(/</g, '\\u003c');
 
+// Navigation is by full page loads, so let the browser fetch a page's HTML
+// while the pointer is still on its link. Prefetch only, never prerender: a
+// prerendered tool would run and record itself as "recently opened" without
+// ever being seen. Browsers that do not know speculation rules ignore this.
+const speculationRules = JSON.stringify({
+  prefetch: [
+    {
+      where: {
+        and: [
+          { href_matches: '/*' },
+          { not: { href_matches: '/sqljs/*' } },
+          { not: { href_matches: '/*.*' } },
+        ],
+      },
+      eagerness: 'moderate',
+    },
+  ],
+});
+
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${fontInter.variable} ${fontSpaceGrotesk.variable} ${fontJetBrainsMono.variable}`}
+      className={`${fontArchivo.variable} ${fontArchivoDisplay.variable} ${fontAtkinsonMono.variable}`}
     >
       <head>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdHtml }} />
+        <script type="speculationrules" dangerouslySetInnerHTML={{ __html: speculationRules }} />
       </head>
       <body className="bg-background text-foreground font-sans antialiased">
         <ServiceWorkerRegistration />
@@ -175,16 +209,16 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                 <CommandMenuProvider>
                   <a
                     href="#main-content"
-                    className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:border-2 focus:border-border focus:bg-background focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-foreground"
+                    className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:border focus:border-input focus:bg-popover focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-foreground focus:shadow-pop"
                   >
                     Skip to content
                   </a>
-                  <div className="flex w-full min-w-0 bg-background">
+                  <div className="bench flex w-full min-w-0">
                     <AppSidebar />
-                    <SidebarInset id="main-content" tabIndex={-1} className="flex min-w-0 flex-1 flex-col">
+                    <SidebarInset id="main-content" tabIndex={-1} className="flex min-w-0 flex-1 flex-col bg-transparent">
                       <AppHeader />
                       <div className="flex min-w-0 flex-1 flex-col overflow-x-hidden">
-                        <div className="flex-1 px-4 py-5 sm:px-6">{children}</div>
+                        <div className="flex-1 px-4 py-5 sm:px-6 lg:px-8">{children}</div>
                         <Footer />
                       </div>
                       <RouteFocus />

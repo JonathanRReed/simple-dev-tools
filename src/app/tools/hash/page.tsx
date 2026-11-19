@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import ToolPage from "@/components/layout/ToolPage";
 import ToolNotes from "@/components/tool/ToolNotes";
+import FamilyTools from "@/components/tool/FamilyTools";
 import ToolPageHeader from "@/components/tool/ToolPageHeader";
 import HashClientOnly from "./ClientOnly";
 
@@ -41,6 +42,7 @@ export default function HashPage() {
           <li>SHA-1 is provided for compatibility; prefer SHA-256 or higher for new work.</li>
         </ul>
       </ToolNotes>
+      <FamilyTools href="/tools/hash/" />
     </ToolPage>
   );
 }

@@ -14,7 +14,7 @@ const TabsList = React.forwardRef<
   <TabsPrimitive.List
     ref={ref}
     className={cn(
-      "inline-flex flex-wrap items-stretch gap-0 border-2 border-border bg-card",
+      "well inline-flex flex-wrap items-stretch gap-1 p-1",
       className
     )}
     {...props}
@@ -29,11 +29,13 @@ const TabsTrigger = React.forwardRef<
   <TabsPrimitive.Trigger
     ref={ref}
     className={cn(
-      "inline-flex items-center justify-center gap-2 whitespace-nowrap border-r-2 border-border px-4 py-2 font-mono text-xs font-semibold uppercase tracking-wider text-muted-foreground transition-colors last:border-r-0",
-      "hover:bg-accent hover:text-accent-foreground",
-      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
+      // A segmented switch: the track is a well, the selected segment is a
+      // raised cap with a lit bar under its label.
+      "relative inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md px-3.5 py-1.5 text-sm font-semibold text-muted-foreground transition-colors",
+      "hover:text-foreground",
       "disabled:pointer-events-none disabled:opacity-50",
-      "data-[state=active]:bg-primary data-[state=active]:text-primary-foreground",
+      "data-[state=active]:bg-secondary data-[state=active]:text-secondary-foreground data-[state=active]:shadow-[inset_0_1px_0_var(--glint),0_1px_2px_var(--shade-soft)]",
+      "after:absolute after:inset-x-3 after:bottom-0.5 after:h-0.5 after:rounded-full after:bg-primary after:opacity-0 data-[state=active]:after:opacity-100",
       className
     )}
     {...props}
@@ -48,7 +50,7 @@ const TabsContent = React.forwardRef<
   <TabsPrimitive.Content
     ref={ref}
     className={cn(
-      "mt-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+      "mt-4 rounded-lg",
       className
     )}
     {...props}

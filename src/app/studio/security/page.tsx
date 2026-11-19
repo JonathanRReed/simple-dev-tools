@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import ToolPage from "@/components/layout/ToolPage";
 import ToolNotes from "@/components/tool/ToolNotes";
+import FamilyTools from "@/components/tool/FamilyTools";
 import ToolPageHeader from "@/components/tool/ToolPageHeader";
 import SecurityTokensClientOnly from "./ClientOnly";
 
@@ -37,6 +38,7 @@ export default function SecurityTokensPage() {
           <li>Prefer pasting test keys here; keep production secrets in your secret manager.</li>
         </ul>
       </ToolNotes>
+      <FamilyTools href="/studio/security/" />
     </ToolPage>
   );
 }

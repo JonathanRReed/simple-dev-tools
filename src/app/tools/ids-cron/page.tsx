@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import ToolPage from "@/components/layout/ToolPage";
 import ToolNotes from "@/components/tool/ToolNotes";
+import FamilyTools from "@/components/tool/FamilyTools";
 import ToolPageHeader from "@/components/tool/ToolPageHeader";
 import IdsCronClientOnly from "./ClientOnly";
 
@@ -22,7 +23,7 @@ export default function IdsCronPage() {
           Generate UUIDv4 and ULID identifiers, inspect their parts, and humanize cron expressions
           with quick presets.
         </p>
-        <p className="text-sm">
+        <p>
           Use the ID tools to create opaque random identifiers or sortable ULIDs, then inspect a
           ULID timestamp before it enters a fixture, migration, or test record. The cron helper
           translates schedules into plain language so timing mistakes are easier to catch before
@@ -44,6 +45,7 @@ export default function IdsCronPage() {
           browser.
         </p>
       </ToolNotes>
+      <FamilyTools href="/tools/ids-cron/" />
     </ToolPage>
   );
 }

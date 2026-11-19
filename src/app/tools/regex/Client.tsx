@@ -226,7 +226,7 @@ function RegexLabInner() {
           // Reset so the same sample can be re-selected.
           setSampleValue("");
         }}
-        className="h-8 rounded-none border-2 border-input bg-background px-2 font-mono text-xs text-foreground focus-visible:border-ring focus-visible:outline-none"
+        className="h-8 border border-input bg-background px-2 font-mono text-xs text-foreground focus-visible:border-ring focus-visible:outline-none rounded-lg"
       >
         <option value="" disabled>
           Load sample…
@@ -246,7 +246,7 @@ function RegexLabInner() {
   );
 
   return (
-    <ToolShell eyebrow="Regex Lab" toolbar={toolbar} contentClassName="flex flex-col gap-6">
+    <ToolShell toolbar={toolbar} contentClassName="flex flex-col gap-6">
       {/* Pattern + flags */}
       <div className="flex flex-col gap-3">
         <Field
@@ -257,7 +257,7 @@ function RegexLabInner() {
               {FLAG_LIST.map(({ key, label }) => (
                 <label
                   key={key}
-                  className="flex cursor-pointer items-center gap-1 border-2 border-border px-1.5 py-0.5 font-mono text-xs text-muted-foreground has-[:checked]:border-primary has-[:checked]:text-foreground"
+                  className="flex cursor-pointer items-center gap-1 border border-border px-1.5 py-0.5 font-mono text-xs text-muted-foreground has-[:checked]:border-primary has-[:checked]:text-foreground rounded-sm"
                 >
                   <input
                     type="checkbox"
@@ -284,8 +284,8 @@ function RegexLabInner() {
         </Field>
 
         <div className="flex flex-wrap items-center gap-2">
-          <span className="brutal-label">Effective</span>
-          <code className="border-2 border-border bg-background px-2 py-0.5 font-mono text-sm text-foreground">
+          <span className="ui-label">Effective</span>
+          <code className="well px-2 py-0.5 font-mono text-sm text-foreground">
             {regexLiteral}
           </code>
           {flagsStr ? (
@@ -303,15 +303,15 @@ function RegexLabInner() {
         {/* Live count summary: matches, capture groups, projected replacements. */}
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
           <span className="flex items-center gap-1.5">
-            <span className="brutal-label">Matches</span>
+            <span className="ui-label">Matches</span>
             <span className="font-mono text-sm text-foreground">{resultUnavailable ? "—" : `${displayedMatchCount}${matchesResult.truncated ? "+" : ""}`}</span>
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="brutal-label">Groups</span>
+            <span className="ui-label">Groups</span>
             <span className="font-mono text-sm text-foreground">{resultUnavailable ? "—" : captureGroups}</span>
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="brutal-label">Replacements</span>
+            <span className="ui-label">Replacements</span>
             <span className="font-mono text-sm text-foreground">{resultUnavailable ? "—" : `${replaceCount}${matchesResult.truncated ? "+" : ""}`}</span>
           </span>
         </div>
@@ -325,7 +325,7 @@ function RegexLabInner() {
         <Field label="Test String" htmlFor="regex-test">
           <textarea
             id="regex-test"
-            className="flex min-h-[160px] w-full rounded-none border-2 border-input bg-background px-3 py-2 font-mono text-sm transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:outline-none"
+            className="flex min-h-[160px] w-full border border-input bg-background px-3 py-2 font-mono text-sm transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:outline-none rounded-lg"
             value={text}
             onChange={(e) => setText(e.target.value)}
             spellCheck={false}
@@ -370,7 +370,7 @@ function RegexLabInner() {
                   seg.matched ? (
                     <span
                       key={i}
-                      className="rounded-none bg-rp-gold/30 text-foreground ring-1 ring-rp-gold/60"
+                      className="bg-rp-gold/30 text-foreground ring-1 ring-rp-gold/60"
                     >
                       {seg.text}
                     </span>
@@ -404,7 +404,7 @@ function RegexLabInner() {
               ) : null}
               <table className="w-full table-fixed font-mono text-sm text-foreground">
                 <thead>
-                  <tr className="border-b-2 border-border">
+                  <tr className="border-b border-border">
                     <th className="w-20 px-2 py-1 text-left">
                       <Label>Index</Label>
                     </th>
@@ -463,7 +463,7 @@ function RegexLabInner() {
           <ResultPanel
             title="Replace Preview"
             actions={
-              <span className="brutal-label hidden sm:inline">{regexLiteral}</span>
+              <span className="ui-label hidden sm:inline">{regexLiteral}</span>
             }
             copyValue={replaced.value ?? ""}
             scroll
@@ -488,7 +488,7 @@ function RegexLabInner() {
                 : "Split"
             }
             actions={
-              <span className="brutal-label hidden sm:inline">{regexLiteral}</span>
+              <span className="ui-label hidden sm:inline">{regexLiteral}</span>
             }
             copyValue={splitJson}
             scroll
@@ -506,7 +506,7 @@ function RegexLabInner() {
                 ) : null}
                 <table className="w-full table-fixed font-mono text-sm text-foreground">
                   <thead>
-                    <tr className="border-b-2 border-border">
+                    <tr className="border-b border-border">
                       <th className="px-2 py-1 text-left">
                         <Label>#</Label>
                       </th>
@@ -539,14 +539,14 @@ function RegexLabInner() {
       </Tabs>
 
       {/* Cheat sheet */}
-      <div className="border-2 border-border bg-card p-4">
+      <div className="well p-4">
         <details>
-          <summary className="cursor-pointer font-mono text-xs font-semibold uppercase tracking-wider text-foreground">
+          <summary className="cursor-pointer text-xs font-semibold text-foreground">
             Regex Cheat Sheet
           </summary>
           <div className="mt-3 grid grid-cols-1 gap-3 text-sm text-foreground md:grid-cols-2">
             <div>
-              <div className="brutal-label mb-1">Basics</div>
+              <div className="ui-label mb-1">Basics</div>
               <ul className="list-disc space-y-0.5 pl-5">
                 <li><code>.</code> any char (except newline unless <code>s</code>)</li>
                 <li><code>^</code> start, <code>$</code> end</li>
@@ -555,14 +555,14 @@ function RegexLabInner() {
               </ul>
             </div>
             <div>
-              <div className="brutal-label mb-1">Quantifiers</div>
+              <div className="ui-label mb-1">Quantifiers</div>
               <ul className="list-disc space-y-0.5 pl-5">
                 <li><code>*</code> 0+, <code>+</code> 1+, <code>?</code> 0/1, <code>{`{n}`}</code>, <code>{`{n,}`}</code>, <code>{`{n,m}`}</code></li>
                 <li>Lazy: append <code>?</code> e.g. <code>.*?</code></li>
               </ul>
             </div>
             <div>
-              <div className="brutal-label mb-1">Groups &amp; Alternation</div>
+              <div className="ui-label mb-1">Groups &amp; Alternation</div>
               <ul className="list-disc space-y-0.5 pl-5">
                 <li><code>(...)</code> capture, <code>(?:...)</code> non-capture</li>
                 <li><code>(?&lt;name&gt;...)</code> named capture, backref <code>\k&lt;name&gt;</code></li>
@@ -570,7 +570,7 @@ function RegexLabInner() {
               </ul>
             </div>
             <div>
-              <div className="brutal-label mb-1">Flags</div>
+              <div className="ui-label mb-1">Flags</div>
               <ul className="list-disc space-y-0.5 pl-5">
                 <li><code>g</code> global, <code>i</code> ignoreCase, <code>m</code> multiline</li>
                 <li><code>s</code> dotAll, <code>u</code> unicode, <code>y</code> sticky</li>

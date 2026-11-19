@@ -370,7 +370,6 @@ export default function JsonClient() {
 
   return (
     <ToolShell
-      eyebrow="JSON · YAML · CSV"
       toolbar={toolbar}
       shareParams={shareParams}
       shortcuts={shortcuts}
@@ -408,7 +407,7 @@ export default function JsonClient() {
                 onChange={(e) => setSource(e.target.value)}
                 spellCheck={false}
                 placeholder={`Paste ${sourceFormat.toUpperCase()} here…`}
-                className="min-h-[280px] w-full resize-y rounded-none border-2 border-input bg-background px-3 py-2 font-mono text-sm text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:outline-none"
+                className="min-h-[280px] w-full resize-y border border-input bg-background px-3 py-2 font-mono text-sm text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:outline-none rounded-lg"
               />
             </FileDrop>
           </Field>
@@ -440,9 +439,9 @@ export default function JsonClient() {
           </div>
 
           {/* Stats line */}
-          <div className="flex flex-wrap items-center gap-2 border-2 border-border bg-card px-3 py-2 font-mono text-xs text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-2 well px-3 py-2 font-mono text-xs text-muted-foreground">
             <Badge variant={isValid ? "default" : isEmpty ? "outline" : "destructive"}>
-              {isEmpty ? "empty" : isValid ? "valid" : "invalid"}
+              {isEmpty ? "Empty" : isValid ? "Valid" : "Invalid"}
             </Badge>
             {isValid ? (
               <>
@@ -479,7 +478,7 @@ export default function JsonClient() {
           </div>
 
           <ResultPanel
-            title={`Output · ${targetFormat.toUpperCase()}`}
+            title={`${targetFormat.toUpperCase()} output`}
             scroll
             actions={
               <>

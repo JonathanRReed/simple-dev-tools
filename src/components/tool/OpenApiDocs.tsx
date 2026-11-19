@@ -111,7 +111,7 @@ function readParams(raw: unknown): ParamRow[] {
 function Section({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="flex flex-col gap-2">
-      <p className="brutal-label">{label}</p>
+      <p className="ui-label">{label}</p>
       {children}
     </div>
   );
@@ -122,11 +122,11 @@ function ParamTable({ rows }: { rows: ParamRow[] }) {
     <div className="overflow-x-auto">
       <table className="w-full border-collapse text-sm">
         <thead>
-          <tr className="border-b-2 border-border text-left">
-            <th scope="col" className="brutal-label py-1.5 pr-3 font-semibold">Name</th>
-            <th scope="col" className="brutal-label py-1.5 pr-3 font-semibold">In</th>
-            <th scope="col" className="brutal-label py-1.5 pr-3 font-semibold">Type</th>
-            <th scope="col" className="brutal-label py-1.5 font-semibold">Description</th>
+          <tr className="border-b border-border text-left">
+            <th scope="col" className="ui-label py-1.5 pr-3 font-semibold">Name</th>
+            <th scope="col" className="ui-label py-1.5 pr-3 font-semibold">In</th>
+            <th scope="col" className="ui-label py-1.5 pr-3 font-semibold">Type</th>
+            <th scope="col" className="ui-label py-1.5 font-semibold">Description</th>
           </tr>
         </thead>
         <tbody>
@@ -166,10 +166,10 @@ function Operation({ method, path, operation }: { method: Method; path: string; 
     : [];
 
   return (
-    <details className="group border-b-2 border-border last:border-b-0">
-      <summary className="flex cursor-pointer list-none flex-wrap items-center gap-3 px-3 py-2.5 transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset">
+    <details className="group border-b border-border last:border-b-0">
+      <summary className="flex cursor-pointer list-none flex-wrap items-center gap-3 px-3 py-2.5 transition-colors hover:bg-secondary hover:text-secondary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset">
         <Badge variant="outline" className={cn("shrink-0", METHOD_CLASS[method])}>
-          {method}
+          {method.toUpperCase()}
         </Badge>
         <code className="min-w-0 flex-1 break-all font-mono text-sm text-foreground">{path}</code>
         {deprecated ? <Badge variant="destructive">deprecated</Badge> : null}
@@ -190,7 +190,7 @@ function Operation({ method, path, operation }: { method: Method; path: string; 
         </span>
       </summary>
 
-      <div className="flex flex-col gap-4 border-t-2 border-border bg-background/40 px-3 py-4">
+      <div className="flex flex-col gap-4 border-t border-border bg-background/40 px-3 py-4">
         {summary ? <p className="text-sm font-semibold text-foreground">{summary}</p> : null}
         {description ? (
           <p className="whitespace-pre-wrap text-sm leading-6 text-muted-foreground">{description}</p>
@@ -301,9 +301,9 @@ export default function OpenApiDocs({ spec }: { spec: unknown }) {
 
   return (
     <div className="flex flex-col">
-      <header className="flex flex-col gap-2 border-b-2 border-border px-3 py-4">
+      <header className="flex flex-col gap-2 border-b border-border px-3 py-4">
         <div className="flex flex-wrap items-center gap-2">
-          <h3 className="font-display text-xl font-bold tracking-tight text-foreground">{title}</h3>
+          <h3 className="font-display text-xl text-foreground">{title}</h3>
           {apiVersion ? <Badge variant="secondary">v{apiVersion}</Badge> : null}
           {version ? <Badge variant="outline">OAS {version}</Badge> : null}
         </div>
@@ -312,7 +312,7 @@ export default function OpenApiDocs({ spec }: { spec: unknown }) {
         ) : null}
         {servers.length > 0 ? (
           <div className="flex flex-wrap items-center gap-2">
-            <span className="brutal-label">Servers</span>
+            <span className="ui-label">Servers</span>
             {servers.map((url) => (
               <code key={url} className="break-all font-mono text-xs text-muted-foreground">{url}</code>
             ))}
@@ -326,7 +326,7 @@ export default function OpenApiDocs({ spec }: { spec: unknown }) {
         </p>
       ) : (
         <>
-          <p className="border-b-2 border-border px-3 py-2 font-mono text-xs uppercase tracking-wider text-muted-foreground">
+          <p className="border-b border-border px-3 py-2 text-xs text-muted-foreground">
             {operations.length} operation{operations.length === 1 ? "" : "s"}
           </p>
           <div>

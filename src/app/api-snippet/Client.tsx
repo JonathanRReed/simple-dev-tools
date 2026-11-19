@@ -450,7 +450,6 @@ export default function ApiSnippetClient() {
 
   return (
     <ToolShell
-      eyebrow="Request → snippets"
       toolbar={toolbar}
       shareParams={shareParams}
       shortcuts={shortcuts}
@@ -647,7 +646,7 @@ export default function ApiSnippetClient() {
         {/* Output */}
         <div className="flex flex-col gap-4">
           {!hasUrl && !parseError ? (
-            <div className="flex min-h-[200px] flex-col items-center justify-center gap-2 border-2 border-dashed border-border bg-background p-6 text-center">
+            <div className="flex min-h-[200px] flex-col items-center justify-center gap-2 well border-dashed p-6 text-center">
               <p className="font-mono text-sm text-muted-foreground">
                 Enter an endpoint URL to generate snippets.
               </p>
@@ -665,9 +664,9 @@ export default function ApiSnippetClient() {
 
               {(["curl", "python", "js"] as const).map((lang) => (
                 <TabsContent key={lang} value={lang}>
-                  <div className="border-2 border-border bg-card">
-                    <div className="flex items-center justify-between gap-2 border-b-2 border-border px-3 py-2">
-                      <span className="brutal-label">
+                  <div className="well">
+                    <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-2">
+                      <span className="ui-label">
                         {lang === "curl"
                           ? "cURL"
                           : lang === "python"

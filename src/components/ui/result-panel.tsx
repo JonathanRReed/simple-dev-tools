@@ -21,9 +21,8 @@ export interface ResultPanelProps
 }
 
 /**
- * The shared output surface: square, 2px border, solid bg, no blur/shadow,
- * with an optional header (label + actions + copy). Replaces the per-tool
- * `rounded-3xl/backdrop-blur` output wrappers.
+ * The shared readout: a well cut into the tool panel, with an optional header
+ * (label + actions + copy).
  */
 const ResultPanel = React.forwardRef<HTMLDivElement, ResultPanelProps>(
   (
@@ -37,13 +36,13 @@ const ResultPanel = React.forwardRef<HTMLDivElement, ResultPanelProps>(
     return (
       <div
         ref={ref}
-        className={cn("border-2 border-border bg-card", className)}
+        className={cn("well overflow-hidden", className)}
         {...props}
       >
         {hasHeader ? (
-          <div className="flex items-center justify-between gap-2 border-b-2 border-border px-3 py-2">
-            <span className="brutal-label truncate">{title}</span>
-            <div className="flex shrink-0 items-center gap-1">
+          <div className="flex min-h-11 items-center justify-between gap-2 border-b border-border px-3 py-1.5">
+            <span className="ui-label truncate">{title}</span>
+            <div className="flex shrink-0 items-center gap-1.5 pb-0.5">
               {actions}
               {copyValue != null ? (
                 <CopyButton value={copyValue} disabled={empty} />

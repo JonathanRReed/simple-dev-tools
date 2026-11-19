@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import ToolPage from "@/components/layout/ToolPage";
 import ToolNotes from "@/components/tool/ToolNotes";
+import FamilyTools from "@/components/tool/FamilyTools";
 import ToolPageHeader from "@/components/tool/ToolPageHeader";
 import MarkdownClientOnly from "./ClientOnly";
 
@@ -33,11 +34,12 @@ export default function MarkdownPage() {
           </li>
           <li>The preview updates after a 200 ms debounce and is rendered client-side only.</li>
           <li>
-            Use <kbd className="border border-border px-1 font-mono">⌘ ↵</kbd> while editing to
+            Use <kbd>⌘ ↵</kbd> or <kbd>Ctrl ↵</kbd> while editing to
             copy the sanitized HTML.
           </li>
         </ul>
       </ToolNotes>
+      <FamilyTools href="/tools/markdown/" />
     </ToolPage>
   );
 }

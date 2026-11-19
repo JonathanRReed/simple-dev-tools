@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import ToolPage from "@/components/layout/ToolPage";
 import ToolNotes from "@/components/tool/ToolNotes";
+import FamilyTools from "@/components/tool/FamilyTools";
 import ToolPageHeader from "@/components/tool/ToolPageHeader";
 import SQLiteClientOnly from "./ClientOnly";
 
@@ -37,6 +38,7 @@ export default function SQLitePage() {
           <li>Statements run in order; a failing statement stops the batch and reports its error.</li>
         </ul>
       </ToolNotes>
+      <FamilyTools href="/sqlite/" />
     </ToolPage>
   );
 }

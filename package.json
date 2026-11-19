@@ -1,11 +1,12 @@
 {
   "name": "simple-dev-tools",
-  "version": "1.1.0",
+  "version": "2.0.0",
   "license": "SEE LICENSE IN LICENSE",
   "private": true,
   "packageManager": "bun@1.4.4",
   "scripts": {
     "assets:prepare": "node scripts/prepare-sqljs.mjs",
+    "assets:brand": "bun scripts/brand-assets.mjs",
     "dev": "bun run assets:prepare && next dev",
     "build": "bun run assets:prepare && next build",
     "preview": "wrangler pages dev out --compatibility-date=2026-08-04",

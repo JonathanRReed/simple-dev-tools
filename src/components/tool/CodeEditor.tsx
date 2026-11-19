@@ -7,7 +7,7 @@ import { sql, SQLite } from "@codemirror/lang-sql";
 import { tags as t } from "@lezer/highlight";
 import { useTheme } from "next-themes";
 
-import { getAppTheme } from "@/lib/themes";
+import { isLightTheme } from "@/lib/themes";
 
 /**
  * The shared code editor.
@@ -18,9 +18,8 @@ import { getAppTheme } from "@/lib/themes";
  * lost externally-set content, and a `dangerouslySetInnerHTML` highlight layer
  * that was an HTML injection sink when its highlighter had not loaded yet.
  *
- * Colours come from the same contrast-checked --code-* variables the old Prism
- * ruleset used, so highlighting still follows all six themes and stays covered
- * by theme-contrast.test.ts.
+ * Colours come from the contrast-checked --code-* variables, so highlighting
+ * follows every theme and stays covered by theme-contrast.test.ts.
  */
 
 const syntax = HighlightStyle.define([
@@ -64,9 +63,6 @@ const mermaidLanguage = StreamLanguage.define<{ inString: boolean }>({
 
 export type CodeLanguage = "sql" | "mermaid" | "plain";
 
-/** Themes whose --rp-base is light; CodeMirror needs this for its own defaults. */
-const LIGHT_THEMES = new Set(["dawn", "paper"]);
-
 export interface CodeEditorProps {
   value: string;
   onChange: (value: string) => void;
@@ -91,7 +87,8 @@ export default function CodeEditor({
 }: CodeEditorProps) {
   const { theme, resolvedTheme } = useTheme();
   const active = (theme === "system" ? resolvedTheme : theme) ?? resolvedTheme ?? "art-deco";
-  const isLight = LIGHT_THEMES.has(getAppTheme(active)?.id ?? active);
+  // CodeMirror needs to know whether the surface is light for its own defaults.
+  const isLight = isLightTheme(active);
 
   // Passed as the `theme` prop, not an extension: @uiw/react-codemirror applies
   // its own light theme by default, and an extension does not displace it —
@@ -110,6 +107,7 @@ export default function CodeEditor({
           "&.cm-focused": { outline: "none" },
           ".cm-content": {
             fontFamily: "var(--font-mono)",
+            letterSpacing: "-0.012em",
             caretColor: "var(--rp-iris)",
             padding: "12px 0",
           },
@@ -117,7 +115,7 @@ export default function CodeEditor({
             backgroundColor: "transparent",
             color: "var(--code-comment)",
             border: "none",
-            borderRight: "2px solid hsl(var(--border))",
+            borderRight: "1px solid var(--line)",
             fontFamily: "var(--font-mono)",
           },
           ".cm-activeLine": { backgroundColor: "hsl(var(--foreground) / 0.055)" },
@@ -139,7 +137,7 @@ export default function CodeEditor({
           ".cm-panels": {
             backgroundColor: "hsl(var(--card))",
             color: "hsl(var(--foreground))",
-            border: "2px solid hsl(var(--border))",
+            border: "1px solid var(--line)",
           },
           ".cm-searchMatch": { backgroundColor: "var(--code-number)", color: "hsl(var(--background))" },
           ".cm-searchMatch.cm-searchMatch-selected": { backgroundColor: "var(--code-operator)" },

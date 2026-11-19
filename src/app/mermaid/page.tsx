@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import ToolPage from "@/components/layout/ToolPage";
 import ToolNotes from "@/components/tool/ToolNotes";
+import FamilyTools from "@/components/tool/FamilyTools";
 import ToolPageHeader from "@/components/tool/ToolPageHeader";
 import MermaidClientOnly from "./ClientOnly";
 
@@ -22,7 +23,7 @@ export default function MermaidPage() {
           Edit Mermaid syntax, preview diagrams instantly, and export to SVG or PNG in your
           browser with zero setup.
         </p>
-        <p className="text-sm">
+        <p>
           The editor is intended for architecture sketches, sequence diagrams, onboarding notes,
           and quick planning artifacts. Start from a template, adjust the Mermaid source,
           validate the rendered diagram, then export a shareable asset for docs, tickets, or
@@ -47,6 +48,7 @@ export default function MermaidPage() {
           documents where clarity matters more than decoration.
         </p>
       </ToolNotes>
+      <FamilyTools href="/mermaid/" />
     </ToolPage>
   );
 }

@@ -19,9 +19,8 @@ export interface FieldProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 /**
- * A labeled control wrapper. Standardizes the 18+ ad-hoc `<label> + control`
- * pairs across the tools so every field has a real, square, monospace label
- * and consistent hint/error slots.
+ * A labeled control wrapper, so every field has a real label and consistent
+ * hint and error slots.
  */
 const Field = React.forwardRef<HTMLDivElement, FieldProps>(
   ({ label, htmlFor, hint, error, action, className, children, ...props }, ref) => (

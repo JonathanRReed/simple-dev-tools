@@ -270,13 +270,13 @@ function readableText(bg: Rgba): string {
 
 function PassBadge({ ok, children }: { ok: boolean; children: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-between gap-3 border-2 border-border bg-background px-3 py-2">
-      <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+    <div className="flex items-center justify-between gap-3 well px-3 py-2">
+      <span className="text-xs text-muted-foreground">
         {children}
       </span>
       <span
         className={
-          "font-mono text-xs font-bold uppercase tracking-wider " +
+          "text-xs font-bold " +
           (ok ? "text-rp-foam" : "text-destructive")
         }
       >
@@ -311,12 +311,12 @@ function Swatch({ hex, label }: { hex: string; label: string }) {
       type="button"
       onClick={onClick}
       aria-label={`Copy ${hex}`}
-      title={`${label} · ${hex}`}
-      className="flex flex-col items-stretch border-2 border-border bg-card text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      title={`${label}: ${hex}`}
+      className="flex flex-col items-stretch well text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
       <span
         aria-hidden="true"
-        className="h-12 w-full border-b-2 border-border"
+        className="h-12 w-full border-b border-border"
         style={{ backgroundColor: hex }}
       />
       <span className="px-1 py-1 font-mono text-[0.65rem] leading-tight text-foreground">
@@ -481,7 +481,6 @@ export default function ColorClient() {
 
   return (
     <ToolShell
-      eyebrow="Color · Local"
       toolbar={toolbar}
       shareParams={shareParams}
       shortcuts={shortcuts}
@@ -503,7 +502,7 @@ export default function ColorClient() {
                   onChange={(e) => {
                     setText(e.target.value);
                   }}
-                  className="h-9 w-14 shrink-0 border-2 border-border p-0"
+                  className="h-9 w-14 shrink-0 border border-border p-0 rounded-lg"
                 />
                 <Input
                   id="color-input"
@@ -533,7 +532,7 @@ export default function ColorClient() {
           <div className="flex flex-col gap-1.5">
             <Label>Preview</Label>
             <div
-              className="flex h-[7.5rem] items-end justify-between border-2 border-border p-3"
+              className="flex h-[7.5rem] items-end justify-between border border-border p-3 rounded-lg"
               style={{
                 backgroundColor: parsed ? toRgbString(parsed) : "transparent",
                 color: parsed ? readableText(parsed) : "var(--foreground)",
@@ -583,7 +582,7 @@ export default function ColorClient() {
         ) : null}
 
         {/* ---- WCAG contrast checker ---- */}
-        <div className="space-y-4 border-t-2 border-border pt-6">
+        <div className="space-y-4 border-t border-border pt-6">
           <div className="space-y-1">
             <Label>WCAG contrast checker</Label>
             <p className="text-xs text-muted-foreground">
@@ -605,7 +604,7 @@ export default function ColorClient() {
                     aria-label="Foreground picker"
                     value={fgPickerHex}
                     onChange={(e) => setFgText(e.target.value)}
-                    className="h-9 w-14 shrink-0 border-2 border-border p-0"
+                    className="h-9 w-14 shrink-0 border border-border p-0 rounded-lg"
                   />
                   <Input
                     id="fg-input"
@@ -629,7 +628,7 @@ export default function ColorClient() {
                     aria-label="Background picker"
                     value={bgPickerHex}
                     onChange={(e) => setBgText(e.target.value)}
-                    className="h-9 w-14 shrink-0 border-2 border-border p-0"
+                    className="h-9 w-14 shrink-0 border border-border p-0 rounded-lg"
                   />
                   <Input
                     id="bg-input"
@@ -647,7 +646,7 @@ export default function ColorClient() {
                 <Label>Preview</Label>
                 <div
                   aria-hidden="true"
-                  className="space-y-1 border-2 border-border p-4"
+                  className="space-y-1 border border-border p-4 rounded-lg"
                   style={{
                     backgroundColor: bg ? toRgbString(bg) : "var(--background)",
                     color: fg ? toRgbString(fg) : "var(--foreground)",
@@ -668,7 +667,7 @@ export default function ColorClient() {
                 actions={
                   contrast ? (
                     <Badge variant="outline">
-                      {contrast.aaNormal ? "AA OK" : contrast.aaLarge ? "AA Large" : "Low"}
+                      {contrast.aaNormal ? "Passes AA" : contrast.aaLarge ? "AA, large text only" : "Fails AA"}
                     </Badge>
                   ) : null
                 }
@@ -681,10 +680,10 @@ export default function ColorClient() {
 
               {contrast ? (
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                  <PassBadge ok={contrast.aaNormal}>AA · normal (≥ 4.5)</PassBadge>
-                  <PassBadge ok={contrast.aaLarge}>AA · large (≥ 3)</PassBadge>
-                  <PassBadge ok={contrast.aaaNormal}>AAA · normal (≥ 7)</PassBadge>
-                  <PassBadge ok={contrast.aaaLarge}>AAA · large (≥ 4.5)</PassBadge>
+                  <PassBadge ok={contrast.aaNormal}>AA, normal text (≥ 4.5)</PassBadge>
+                  <PassBadge ok={contrast.aaLarge}>AA, large text (≥ 3)</PassBadge>
+                  <PassBadge ok={contrast.aaaNormal}>AAA, normal text (≥ 7)</PassBadge>
+                  <PassBadge ok={contrast.aaaLarge}>AAA, large text (≥ 4.5)</PassBadge>
                 </div>
               ) : (
                 <Alert variant="info">

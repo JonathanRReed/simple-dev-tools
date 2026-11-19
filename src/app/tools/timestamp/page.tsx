@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import ToolPage from "@/components/layout/ToolPage";
 import ToolNotes from "@/components/tool/ToolNotes";
+import FamilyTools from "@/components/tool/FamilyTools";
 import ToolPageHeader from "@/components/tool/ToolPageHeader";
 import TimestampClientOnly from "./ClientOnly";
 
@@ -38,6 +39,7 @@ export default function TimestampPage() {
           differences between browsers and locations.
         </p>
       </ToolNotes>
+      <FamilyTools href="/tools/timestamp/" />
     </ToolPage>
   );
 }

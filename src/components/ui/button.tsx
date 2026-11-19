@@ -5,24 +5,24 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-none text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex select-none items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-semibold disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        default:
-          "bg-primary text-primary-foreground hover:bg-primary/90",
-        destructive:
-          "bg-destructive text-destructive-foreground hover:bg-destructive/90",
-        outline:
-          "border-2 border-input bg-background hover:border-primary hover:bg-accent hover:text-accent-foreground",
-        secondary:
-          "border-2 border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
+        // Every filled variant is a keycap (see `key` in globals.css): it
+        // sits on a lip and travels down when pressed. The primary action is
+        // the one colored cap on a panel; everything else is a neutral cap.
+        default: "key key-primary text-primary-foreground",
+        destructive: "key key-danger text-destructive-foreground",
+        outline: "key text-secondary-foreground",
+        secondary: "key text-secondary-foreground",
+        ghost:
+          "text-foreground transition-colors hover:bg-secondary hover:text-secondary-foreground",
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
-        // Bumped from h-9/h-8/h-9 toward the 44px touch-target guideline
-        // while keeping the compact brutalist look on desktop via sm:.
+        // Taller on touch screens, toward the 44px target guideline; compact
+        // on desktop via sm:.
         default: "h-10 px-4 py-2 sm:h-9",
         sm: "h-9 px-3 text-xs sm:h-8",
         lg: "h-11 px-8",

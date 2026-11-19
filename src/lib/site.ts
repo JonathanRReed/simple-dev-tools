@@ -45,6 +45,9 @@ export type ToolIcon =
   | "table"
   | "workflow";
 
+/** The six tool families. Each owns one hue, defined per theme in globals.css. */
+export type ToolHue = "web" | "data" | "text" | "time" | "security" | "visual";
+
 export type ToolPageInfo = {
   title: string;
   href: string;
@@ -55,8 +58,9 @@ export type ToolPageInfo = {
 
 export const toolGroups = [
   {
-    title: "Tools",
-    description: "Fast local utilities for everyday implementation work.",
+    title: "Web",
+    hue: "web",
+    description: "Requests, URLs, and encodings.",
     tools: [
       {
         title: "API Snippet Generator",
@@ -66,11 +70,32 @@ export const toolGroups = [
         tags: ["REST", "Swagger", "Docs"],
       },
       {
-        title: "Mermaid Editor",
-        href: "/mermaid/",
-        description: "Sketch flows, sequence diagrams, and architecture notes with export tools.",
-        icon: "workflow",
-        tags: ["Diagrams", "Planning"],
+        title: "Querystring Editor",
+        href: "/tools/query/",
+        description: "Parse, edit, and re-encode URL query strings and form bodies as a table.",
+        icon: "table",
+        tags: ["URL", "Encoding"],
+      },
+      {
+        title: "Encoders & QR",
+        href: "/tools/encode-qr/",
+        description: "Encode payloads, decode Base64 and URLs, and export QR assets.",
+        icon: "qr",
+        tags: ["Encoding", "Utilities"],
+      },
+    ],
+  },
+  {
+    title: "Data",
+    hue: "data",
+    description: "Documents, tables, and schemas.",
+    tools: [
+      {
+        title: "JSON Workbench",
+        href: "/tools/json/",
+        description: "Format, validate, and convert between JSON, YAML, and CSV, then query by path.",
+        icon: "json",
+        tags: ["JSON", "Convert"],
       },
       {
         title: "SQLite Playground",
@@ -80,46 +105,25 @@ export const toolGroups = [
         tags: ["SQL", "Data"],
       },
       {
+        title: "Schema & Types Studio",
+        href: "/studio/schema/",
+        description: "Parse JSON, YAML, and OpenAPI, validate data, and generate TypeScript or Zod.",
+        icon: "braces",
+        tags: ["Types", "Validation"],
+      },
+    ],
+  },
+  {
+    title: "Text",
+    hue: "text",
+    description: "Patterns, comparisons, and prose.",
+    tools: [
+      {
         title: "Regex Lab",
         href: "/tools/regex/",
         description: "Iterate on patterns with live matches, replacements, samples, and links.",
         icon: "searchCode",
         tags: ["Regex", "Testing"],
-      },
-      {
-        title: "IDs & Scheduling",
-        href: "/tools/ids-cron/",
-        description: "Generate UUIDs and ULIDs, inspect ULID time, and explain cron schedules.",
-        icon: "calendarClock",
-        tags: ["Scheduling", "Automation"],
-      },
-      {
-        title: "Encoders & QR",
-        href: "/tools/encode-qr/",
-        description: "Encode payloads, decode Base64 and URLs, and export QR assets.",
-        icon: "qr",
-        tags: ["Encoding", "Utilities"],
-      },
-      {
-        title: "Timestamp Converter",
-        href: "/tools/timestamp/",
-        description: "Convert Unix epochs, ISO 8601, and time zones, with relative time.",
-        icon: "clock",
-        tags: ["Time", "Dates"],
-      },
-      {
-        title: "JSON Workbench",
-        href: "/tools/json/",
-        description: "Format, validate, and convert between JSON, YAML, and CSV, then query by path.",
-        icon: "json",
-        tags: ["JSON", "Convert"],
-      },
-      {
-        title: "Color & Contrast",
-        href: "/tools/color/",
-        description: "Convert HEX, RGB, HSL, and OKLCH, and check WCAG contrast ratios.",
-        icon: "color",
-        tags: ["Color", "A11y"],
       },
       {
         title: "Text Diff",
@@ -129,39 +133,40 @@ export const toolGroups = [
         tags: ["Diff", "Text"],
       },
       {
-        title: "File Hash Checker",
-        href: "/tools/hash/",
-        description: "Hash text or files with SHA-256/384/512 and verify against an expected digest.",
-        icon: "hash",
-        tags: ["Hashing", "Verification"],
-      },
-      {
         title: "Markdown Preview",
         href: "/tools/markdown/",
         description: "Preview markdown with a sanitized live render, then copy or download HTML.",
         icon: "markdown",
         tags: ["Markdown", "Writing"],
       },
+    ],
+  },
+  {
+    title: "Time & IDs",
+    hue: "time",
+    description: "Clocks, schedules, and identifiers.",
+    tools: [
       {
-        title: "Querystring Editor",
-        href: "/tools/query/",
-        description: "Parse, edit, and re-encode URL query strings and form bodies as a table.",
-        icon: "table",
-        tags: ["URL", "Encoding"],
+        title: "Timestamp Converter",
+        href: "/tools/timestamp/",
+        description: "Convert Unix epochs, ISO 8601, and time zones, with relative time.",
+        icon: "clock",
+        tags: ["Time", "Dates"],
+      },
+      {
+        title: "IDs & Scheduling",
+        href: "/tools/ids-cron/",
+        description: "Generate UUIDs and ULIDs, inspect ULID time, and explain cron schedules.",
+        icon: "calendarClock",
+        tags: ["Scheduling", "Automation"],
       },
     ],
   },
   {
-    title: "Studios",
-    description: "Deeper workspaces for schema and security tasks.",
+    title: "Security",
+    hue: "security",
+    description: "Tokens, digests, and signatures.",
     tools: [
-      {
-        title: "Schema & Types Studio",
-        href: "/studio/schema/",
-        description: "Parse JSON, YAML, and OpenAPI, validate data, and generate TypeScript or Zod.",
-        icon: "braces",
-        tags: ["Types", "Validation"],
-      },
       {
         title: "Security & Tokens",
         href: "/studio/security/",
@@ -169,24 +174,86 @@ export const toolGroups = [
         icon: "shield",
         tags: ["Security", "Identity", "JWT"],
       },
+      {
+        title: "File Hash Checker",
+        href: "/tools/hash/",
+        description: "Hash text or files with SHA-256/384/512 and verify against an expected digest.",
+        icon: "hash",
+        tags: ["Hashing", "Verification"],
+      },
+    ],
+  },
+  {
+    title: "Visual",
+    hue: "visual",
+    description: "Diagrams and color.",
+    tools: [
+      {
+        title: "Mermaid Editor",
+        href: "/mermaid/",
+        description: "Sketch flows, sequence diagrams, and architecture notes with export tools.",
+        icon: "workflow",
+        tags: ["Diagrams", "Planning"],
+      },
+      {
+        title: "Color & Contrast",
+        href: "/tools/color/",
+        description: "Convert HEX, RGB, HSL, and OKLCH, and check WCAG contrast ratios.",
+        icon: "color",
+        tags: ["Color", "A11y"],
+      },
     ],
   },
 ] as const satisfies readonly {
   title: string;
+  hue: ToolHue;
   description: string;
   tools: readonly ToolPageInfo[];
 }[];
 
 export const toolPages: ToolPageInfo[] = toolGroups.flatMap((group) => [...group.tools]);
 
+/**
+ * The home rack lays the tools out as the left-hand block of a keyboard, so
+ * each tool's shortcut is the key sitting in the same position.
+ */
+// prettier-ignore
+const KEY_LEGENDS: readonly string[] = [
+  "1", "2", "3", "4", "5",
+  "Q", "W", "E", "R", "T",
+  "A", "S", "D", "F", "G",
+];
+
+export type ToolMeta = ToolPageInfo & {
+  /** Hue of the family this tool belongs to. */
+  hue: ToolHue;
+  /** Family name, e.g. "Data". */
+  family: string;
+  /** Keyboard legend on the home rack, e.g. "E". */
+  legend: string | null;
+};
+
+export const toolCatalog: ToolMeta[] = toolGroups
+  .flatMap((group) => group.tools.map((tool) => ({ ...tool, hue: group.hue, family: group.title })))
+  .map((tool, index) => ({ ...tool, legend: KEY_LEGENDS[index] ?? null }));
+
 /** Canonical route key: strips the export trailing slash ("/tools/json/" → "/tools/json"). */
 export const normalizeHref = (href: string) => (href === "/" ? "/" : href.replace(/\/$/, ""));
 
-const toolByHref = new Map(toolPages.map((tool) => [normalizeHref(tool.href), tool] as const));
+const toolByHref = new Map(toolCatalog.map((tool) => [normalizeHref(tool.href), tool] as const));
 
 /** Look up a catalog entry by route (trailing slash optional). */
-export function getToolPage(href: string): ToolPageInfo | undefined {
+export function getToolPage(href: string): ToolMeta | undefined {
   return toolByHref.get(normalizeHref(href));
+}
+
+const toolByLegend = new Map(
+  toolCatalog.flatMap((tool) => (tool.legend ? [[tool.legend, tool] as const] : []))
+);
+
+/** Look up the tool bound to a home-rack key ("e" and "E" both match). */
+export function getToolByKey(key: string): ToolMeta | undefined {
+  return toolByLegend.get(key.toUpperCase());
 }
 
 /** Tools surfaced in the footer and the PWA manifest shortcuts. */

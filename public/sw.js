@@ -1,6 +1,6 @@
 /* global caches, clients, fetch, self, Request, Response, URL */
 
-const CACHE_NAME = 'sdt-v4';
+const CACHE_NAME = 'sdt-v5';
 
 const PRECACHE_ASSETS = [
   '/',
@@ -8,6 +8,7 @@ const PRECACHE_ASSETS = [
   '/favicon.ico',
   '/simple_dev_tools_logo_assets/site.webmanifest',
   '/simple_dev_tools_logo_assets/favicon.ico',
+  '/simple_dev_tools_logo_assets/icon.svg',
   '/simple_dev_tools_logo_assets/favicon-16x16.png',
   '/simple_dev_tools_logo_assets/favicon-32x32.png',
   '/simple_dev_tools_logo_assets/apple-touch-icon.png',

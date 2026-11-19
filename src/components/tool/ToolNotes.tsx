@@ -9,19 +9,20 @@ type ToolNotesProps = {
 };
 
 /**
- * The "notes" surface under a tool: limits, format details, privacy specifics.
- * Square card, monospace label, muted body. Accepts paragraphs or lists.
+ * The notes under a tool: limits, format details, privacy specifics. Set
+ * straight on the bench under a hairline, not boxed, so the tool panel stays
+ * the only raised thing on the page. Accepts paragraphs or lists.
  */
 export default function ToolNotes({ title = "Notes", children, className }: ToolNotesProps) {
   return (
     <section
       className={cn(
-        "border-2 border-border bg-card p-5 text-sm leading-7 text-muted-foreground",
+        "border-t border-border px-1 pt-5 text-sm leading-relaxed text-muted-foreground",
         className
       )}
     >
-      <h2 className="brutal-label mb-3 text-foreground">{title}</h2>
-      <div className="flex flex-col gap-3 text-pretty [&_code]:font-mono [&_code]:text-foreground [&_ul]:list-inside [&_ul]:list-disc [&_ul]:space-y-1">
+      <h2 className="mb-2 text-sm font-semibold text-foreground">{title}</h2>
+      <div className="flex max-w-[78ch] flex-col gap-2 text-pretty [&_code]:font-mono [&_code]:text-[0.92em] [&_code]:text-foreground [&_ul]:list-outside [&_ul]:list-disc [&_ul]:space-y-1 [&_ul]:pl-5 [&_ul]:marker:text-[var(--line-strong)]">
         {children}
       </div>
     </section>

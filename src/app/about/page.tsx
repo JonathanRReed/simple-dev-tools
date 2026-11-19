@@ -18,7 +18,7 @@ export default function AboutPage() {
   return (
     <ToolPage contentClassName="mx-auto max-w-3xl">
       <article className="flex flex-col gap-8">
-        <PageHeader eyebrow="About" title="Practical browser tools for everyday development work.">
+        <PageHeader title="Practical browser tools for everyday development work.">
           <p>
             {siteConfig.name} is built by {siteConfig.author.name} at {siteConfig.provider.name}.
             The toolkit focuses on small, reliable workflows that engineers need while debugging,

@@ -5,6 +5,7 @@ import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { Keyboard } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { formatKeys, useModKey } from "@/hooks/use-mod-key";
 
 export interface ToolShortcut {
   /** Key combo as displayed, e.g. "⌘ ↵" or "Shift ↵". */
@@ -23,6 +24,7 @@ export interface KeyboardShortcutsDialogProps {
  */
 export function KeyboardShortcutsDialog({ shortcuts }: KeyboardShortcutsDialogProps) {
   const [open, setOpen] = React.useState(false);
+  const mod = useModKey();
   return (
     <DialogPrimitive.Root open={open} onOpenChange={setOpen}>
       <DialogPrimitive.Trigger asChild>
@@ -38,11 +40,11 @@ export function KeyboardShortcutsDialog({ shortcuts }: KeyboardShortcutsDialogPr
         </Button>
       </DialogPrimitive.Trigger>
       <DialogPrimitive.Portal>
-        <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-background/70 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+        <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/45 backdrop-blur-[3px] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
         <DialogPrimitive.Content
-          className="fixed left-1/2 top-[18%] z-50 w-[92vw] max-w-md -translate-x-1/2 border-2 border-border bg-popover shadow-hard-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"
+          className="fixed left-1/2 top-[18%] z-50 w-[92vw] max-w-md -translate-x-1/2 overflow-hidden rounded-2xl border border-border bg-popover shadow-pop data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"
         >
-          <DialogPrimitive.Title className="brutal-label border-b-2 border-border px-4 py-2.5">
+          <DialogPrimitive.Title className="border-b border-border px-4 py-3 text-sm font-semibold text-foreground">
             Keyboard shortcuts
           </DialogPrimitive.Title>
           <DialogPrimitive.Description className="sr-only">
@@ -55,19 +57,19 @@ export function KeyboardShortcutsDialog({ shortcuts }: KeyboardShortcutsDialogPr
                 className="flex items-center justify-between gap-4 py-1.5 text-sm"
               >
                 <span className="text-muted-foreground">{shortcut.description}</span>
-                <kbd className="shrink-0 border border-border bg-background px-2 py-0.5 font-mono text-xs text-foreground">
-                  {shortcut.keys}
+                <kbd className="shrink-0 text-xs">
+                  {formatKeys(shortcut.keys, mod)}
                 </kbd>
               </li>
             ))}
             <li className="flex items-center justify-between gap-4 py-1.5 text-sm">
               <span className="text-muted-foreground">Open command palette</span>
-              <kbd className="shrink-0 border border-border bg-background px-2 py-0.5 font-mono text-xs text-foreground">
-                ⌘ K
+              <kbd className="shrink-0 text-xs">
+                {formatKeys("⌘ K", mod)}
               </kbd>
             </li>
           </ul>
-          <div className="flex justify-end border-t-2 border-border px-4 py-2.5">
+          <div className="flex justify-end border-t border-border px-4 py-3">
             <DialogPrimitive.Close asChild>
               <Button type="button" variant="secondary" size="sm">
                 Close

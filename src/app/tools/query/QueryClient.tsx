@@ -362,7 +362,6 @@ export default function QueryClient() {
 
   return (
     <ToolShell
-      eyebrow="Querystring Editor"
       toolbar={toolbar}
       shareParams={shareParams}
       shortcuts={shortcuts}
@@ -376,13 +375,13 @@ export default function QueryClient() {
               onChange={(e) => setInput(e.target.value)}
               spellCheck={false}
               placeholder="Paste a query string, full URL, or form body…"
-              className="min-h-[120px] w-full resize-y rounded-none border-2 border-input bg-background px-3 py-2 font-mono text-sm text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:outline-none"
+              className="min-h-[120px] w-full resize-y border border-input bg-background px-3 py-2 font-mono text-sm text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:outline-none rounded-lg"
             />
           </Field>
 
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-2">
-              <Label id={`${baseId}-mode-label`} className="brutal-label">
+              <Label id={`${baseId}-mode-label`} className="ui-label">
                 Mode
               </Label>
               <div
@@ -406,7 +405,7 @@ export default function QueryClient() {
             </div>
 
             <div className="flex items-center gap-2">
-              <Label id={`${baseId}-space-label`} className="brutal-label">
+              <Label id={`${baseId}-space-label`} className="ui-label">
                 Spaces
               </Label>
               <div
@@ -438,7 +437,7 @@ export default function QueryClient() {
             </div>
 
             <div className="flex items-center gap-2">
-              <Label id={`${baseId}-decode-label`} className="brutal-label">
+              <Label id={`${baseId}-decode-label`} className="ui-label">
                 Values
               </Label>
               <div
@@ -499,18 +498,18 @@ export default function QueryClient() {
             }
             className="min-w-0"
           >
-            <div className="border-2 border-border">
+            <div className="border border-border rounded-lg">
               <table className="w-full border-collapse">
                 <caption className="sr-only">Editable query parameters</caption>
                 <thead>
-                  <tr className="border-b-2 border-border bg-secondary text-left">
-                    <th scope="col" className="brutal-label px-3 py-2 text-foreground">
+                  <tr className="border-b border-border bg-secondary text-left">
+                    <th scope="col" className="ui-label px-3 py-2 text-foreground">
                       Key
                     </th>
-                    <th scope="col" className="brutal-label px-3 py-2 text-foreground">
+                    <th scope="col" className="ui-label px-3 py-2 text-foreground">
                       Value
                     </th>
-                    <th scope="col" className="brutal-label px-3 py-2">
+                    <th scope="col" className="ui-label px-3 py-2">
                       <span className="sr-only">Actions</span>
                     </th>
                   </tr>
@@ -522,7 +521,7 @@ export default function QueryClient() {
                     return (
                       <tr
                         key={row.id}
-                        className="border-b-2 border-border last:border-b-0"
+                        className="border-b border-border last:border-b-0"
                       >
                         <td className="p-2">
                           <label htmlFor={keyId} className="sr-only">
@@ -591,7 +590,7 @@ export default function QueryClient() {
 
         <div className="flex min-w-0 flex-col gap-4">
           <ResultPanel
-            title={`Output · ${MODES.find((m) => m.id === mode)?.label ?? mode}`}
+            title={`Output as ${(MODES.find((m) => m.id === mode)?.label ?? mode).toLowerCase()}`}
             copyValue={output}
             mono
           >

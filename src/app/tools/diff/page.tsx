@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import ToolPage from "@/components/layout/ToolPage";
 import ToolNotes from "@/components/tool/ToolNotes";
+import FamilyTools from "@/components/tool/FamilyTools";
 import ToolPageHeader from "@/components/tool/ToolPageHeader";
 import DiffClientOnly from "./ClientOnly";
 
@@ -37,11 +38,12 @@ export default function DiffPage() {
             original text.
           </li>
           <li>
-            Use <kbd className="font-mono">⌘ ↵</kbd> or <kbd className="font-mono">Ctrl ↵</kbd>{" "}
+            Use <kbd>⌘ ↵</kbd> or <kbd>Ctrl ↵</kbd>{" "}
             to recompute.
           </li>
         </ul>
       </ToolNotes>
+      <FamilyTools href="/tools/diff/" />
     </ToolPage>
   );
 }

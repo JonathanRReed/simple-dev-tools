@@ -1,10 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Check, Command, Gem, Monitor, Moon, Palette, Sun, Sunrise } from 'lucide-react';
+import { Check, Monitor, Palette } from 'lucide-react';
 import { useTheme } from 'next-themes';
 
-import { Badge } from '@/components/ui/badge';
+import ThemeSwatch from '@/components/ThemeSwatch';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -14,17 +14,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { appThemes, getAppTheme, resolveAppThemeId, type AppThemeId } from '@/lib/themes';
-import { cn } from '@/lib/utils';
+import { appThemes, getAppTheme, resolveAppThemeId } from '@/lib/themes';
 
-const THEME_ICONS = {
-  main: Palette,
-  moon: Moon,
-  dawn: Sunrise,
-  raycast: Command,
-  'art-deco': Gem,
-  paper: Sun,
-} as const satisfies Record<AppThemeId, typeof Palette>;
+const itemClass = 'flex items-center gap-3 px-2 py-1.5';
 
 export default function ThemeToggle() {
   const { setTheme, theme, resolvedTheme } = useTheme();
@@ -36,89 +28,69 @@ export default function ThemeToggle() {
 
   const isSystem = mounted ? theme === 'system' : false;
   const current = resolveAppThemeId(theme, resolvedTheme);
-  const currentTheme = getAppTheme(current) ?? appThemes[0];
+  const currentLabel = getAppTheme(current)?.label ?? current;
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="icon" className="size-9 border-2 border-border">
-          <Palette className="h-[1.2rem] w-[1.2rem]" />
+        <Button variant="ghost" size="icon" className="size-9">
+          <Palette />
           <span className="sr-only">Toggle theme</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" sideOffset={8} className="w-64">
-        <DropdownMenuLabel className="flex items-center justify-between">
+      <DropdownMenuContent align="end" sideOffset={8} className="w-72">
+        <DropdownMenuLabel className="px-2 text-xs font-semibold text-muted-foreground">
           Theme
-          {mounted && (
-            <Badge variant="secondary" className="bg-secondary/60 text-secondary-foreground">
-              {isSystem ? `System · ${currentTheme.label}` : currentTheme.label}
-            </Badge>
-          )}
         </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <div className="grid gap-1">
-          <DropdownMenuItem
-            role="menuitemradio"
-            aria-checked={isSystem}
-            onSelect={(event) => {
-              event.preventDefault();
-              setTheme('system');
-            }}
-            className="flex items-center gap-3 rounded-none border-2 border-transparent px-3 py-2 focus:border-border focus:bg-muted"
+        <DropdownMenuItem
+          role="menuitemradio"
+          aria-checked={isSystem}
+          onSelect={(event) => {
+            event.preventDefault();
+            setTheme('system');
+          }}
+          className={itemClass}
+        >
+          <span
+            aria-hidden="true"
+            className="flex size-7 shrink-0 items-center justify-center rounded-md border border-border text-muted-foreground"
           >
-            <div className="flex size-9 items-center justify-center rounded-none border-2 border-border bg-card text-primary">
-              <Monitor className="h-4 w-4" />
-            </div>
-            <div className="flex flex-1 flex-col items-start">
-              <span className="text-sm font-semibold leading-tight">System</span>
-              <span className="text-xs text-muted-foreground">Match your OS appearance</span>
-            </div>
-            {isSystem && <Check className="h-4 w-4 text-primary" />}
-          </DropdownMenuItem>
-          {appThemes.map((option) => {
-            const Icon = THEME_ICONS[option.id];
-            const active = mounted ? !isSystem && current === option.id : false;
-            return (
-              <DropdownMenuItem
-                key={option.id}
-                role="menuitemradio"
-                aria-checked={active}
-                onSelect={(event) => {
-                  event.preventDefault();
-                  setTheme(option.id);
-                }}
-                className="flex items-center gap-3 rounded-none border-2 border-transparent px-3 py-2 focus:border-border focus:bg-muted"
-              >
-                <div className="flex size-9 items-center justify-center rounded-none border-2 border-border bg-card text-primary">
-                  <Icon className="h-4 w-4" />
-                </div>
-                <div className="flex flex-1 flex-col items-start">
-                  <span className="flex w-full items-center justify-between gap-3 text-sm font-semibold leading-tight">
-                    {option.label}
-                    <span className="flex shrink-0 items-center gap-1" aria-hidden="true">
-                      {option.swatches.map((swatch) => (
-                        <span
-                          key={swatch}
-                          className={cn(
-                            'size-2.5 rounded-none border border-border',
-                            active && 'border-primary'
-                          )}
-                          style={{ backgroundColor: swatch }}
-                        />
-                      ))}
-                    </span>
-                  </span>
-                  <span className="text-xs text-muted-foreground">{option.description}</span>
-                </div>
-                {active && <Check className="h-4 w-4 text-primary" />}
-              </DropdownMenuItem>
-            );
-          })}
-        </div>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem className="text-xs text-muted-foreground">
-          Theme preference is saved locally
+            <Monitor className="size-4" />
+          </span>
+          <span className="flex min-w-0 flex-1 flex-col">
+            <span className="text-sm font-semibold leading-tight">System</span>
+            {/* While System is active, say which palette it resolved to. */}
+            <span className="truncate text-xs text-muted-foreground">
+              {isSystem ? `Following your device: ${currentLabel}` : 'Follows your device'}
+            </span>
+          </span>
+          {isSystem ? <Check className="size-4 text-primary" aria-hidden="true" /> : null}
         </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        {appThemes.map((option) => {
+          const active = mounted ? !isSystem && current === option.id : false;
+          return (
+            <DropdownMenuItem
+              key={option.id}
+              role="menuitemradio"
+              aria-checked={active}
+              onSelect={(event) => {
+                event.preventDefault();
+                setTheme(option.id);
+              }}
+              className={itemClass}
+            >
+              <ThemeSwatch colors={option.swatches} />
+              <span className="flex min-w-0 flex-1 flex-col">
+                <span className="text-sm font-semibold leading-tight">{option.label}</span>
+                <span className="truncate text-xs text-muted-foreground">{option.description}</span>
+              </span>
+              {active ? <Check className="size-4 text-primary" aria-hidden="true" /> : null}
+            </DropdownMenuItem>
+          );
+        })}
+        <DropdownMenuSeparator />
+        <p className="px-2 py-1 text-xs text-muted-foreground">Saved in this browser.</p>
       </DropdownMenuContent>
     </DropdownMenu>
   );

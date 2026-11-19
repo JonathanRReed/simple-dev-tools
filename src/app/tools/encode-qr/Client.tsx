@@ -98,7 +98,7 @@ function counts(s: string): string {
   // characters count as one "char".
   const chars = Array.from(s).length;
   const bytes = te.encode(s).length;
-  return `${chars.toLocaleString()} chars · ${bytes.toLocaleString()} bytes`;
+  return `${chars.toLocaleString()} chars, ${bytes.toLocaleString()} bytes`;
 }
 
 type EncodeMode = "encode" | "decode";
@@ -206,7 +206,7 @@ export default function EncodeQR() {
   const qrCapacity = QR_BYTE_CAPACITY[qrEcc];
   const qrOverBy = qrBytes - qrCapacity;
   const qrOverCapacity = qrOverBy > 0;
-  const qrCapacityHint = `${qrBytes.toLocaleString()} / ${qrCapacity.toLocaleString()} bytes · ${qrEcc}`;
+  const qrCapacityHint = `${qrBytes.toLocaleString()} of ${qrCapacity.toLocaleString()} bytes at level ${qrEcc}`;
 
   // Open-URL convenience: a valid http(s) destination for the current text.
   const qrUrl = useMemo(() => asHttpUrl(qrText), [qrText]);
@@ -357,13 +357,8 @@ export default function EncodeQR() {
     { allowInInput: true }
   );
 
-  const eyebrow = useMemo(
-    () => (tab === "url" ? "ENCODER / URL" : tab === "base64" ? "ENCODER / BASE64" : "ENCODER / QR"),
-    [tab]
-  );
-
   return (
-    <ToolShell eyebrow={eyebrow} shareParams={shareParams} shortcuts={shortcuts}>
+    <ToolShell shareParams={shareParams} shortcuts={shortcuts}>
       <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
         <TabsList>
           <TabsTrigger value="url">URL</TabsTrigger>
@@ -374,12 +369,12 @@ export default function EncodeQR() {
         {/* ── URL ────────────────────────────────────────────────────── */}
         <TabsContent value="url">
           <div className="mb-4 flex flex-wrap items-center gap-2">
-            <div className="flex border-2 border-border">
+            <div className="flex border border-border rounded-lg">
               <Button
                 type="button"
                 size="sm"
                 variant={urlMode === "encode" ? "default" : "ghost"}
-                className="rounded-none"
+                className=""
                 aria-pressed={urlMode === "encode"}
                 onClick={() => setUrlMode("encode")}
               >
@@ -389,7 +384,7 @@ export default function EncodeQR() {
                 type="button"
                 size="sm"
                 variant={urlMode === "decode" ? "default" : "ghost"}
-                className="rounded-none border-l-2 border-border"
+                className="border-l border-border"
                 aria-pressed={urlMode === "decode"}
                 onClick={() => setUrlMode("decode")}
               >
@@ -450,12 +445,12 @@ export default function EncodeQR() {
         {/* ── Base64 ─────────────────────────────────────────────────── */}
         <TabsContent value="base64">
           <div className="mb-4 flex flex-wrap items-center gap-2">
-            <div className="flex border-2 border-border">
+            <div className="flex border border-border rounded-lg">
               <Button
                 type="button"
                 size="sm"
                 variant={b64Mode === "encode" ? "default" : "ghost"}
-                className="rounded-none"
+                className=""
                 aria-pressed={b64Mode === "encode"}
                 onClick={() => setB64Mode("encode")}
               >
@@ -465,14 +460,14 @@ export default function EncodeQR() {
                 type="button"
                 size="sm"
                 variant={b64Mode === "decode" ? "default" : "ghost"}
-                className="rounded-none border-l-2 border-border"
+                className="border-l border-border"
                 aria-pressed={b64Mode === "decode"}
                 onClick={() => setB64Mode("decode")}
               >
                 Decode
               </Button>
             </div>
-            <label className="flex items-center gap-2 border-2 border-border px-3 py-1.5 font-mono text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <label className="flex items-center gap-2 border border-border px-3 py-1.5 text-xs font-semibold text-muted-foreground rounded-lg">
               <input
                 type="checkbox"
                 checked={b64UrlSafe}
@@ -646,7 +641,7 @@ export default function EncodeQR() {
                   />
                 )}
                 {!qrPngDataUrl && !qrSvg && !qrError && (
-                  <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+                  <p className="text-xs text-muted-foreground">
                     QR preview appears here
                   </p>
                 )}

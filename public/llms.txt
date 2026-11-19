@@ -46,7 +46,7 @@ The project is intentionally plain: open the tool, inspect or transform the inpu
 
 ## Optional
 
-- [Homepage](https://dev-tools.helloworldfirm.com/): Keyboard-first launcher with a searchable index of all tools (also reachable anywhere via the ⌘K command palette)
+- [Homepage](https://dev-tools.helloworldfirm.com/): Launcher for all tools. Paste content and it identifies it (JWT, JSON, timestamp, cron, color, URL, SQL, and more) and opens the matching tool; the same detection is in the ⌘K command palette
 - [About](https://dev-tools.helloworldfirm.com/about/): Builder and maintenance context
 - [Contact](https://dev-tools.helloworldfirm.com/contact/): Official contact paths
 - [Privacy](https://dev-tools.helloworldfirm.com/privacy/): Local-first privacy notes

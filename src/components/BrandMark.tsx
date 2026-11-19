@@ -1,5 +1,3 @@
-import { Code2, Database, QrCode, Slash } from 'lucide-react';
-
 import { cn } from '@/lib/utils';
 
 type BrandMarkProps = {
@@ -8,35 +6,28 @@ type BrandMarkProps = {
 };
 
 /**
- * The brand mark: a square, 2px-bordered tile holding the 2x2 tool-glyph grid
- * (code, database, slash, QR) — the same four marks as the favicon, but drawn
- * inline so it inherits theme tokens, stays crisp at any size, and carries no
- * glow/blur/gradient (brutalist: square corners, hard borders, no soft light).
- * Each glyph uses a per-theme accent token so the mark reads on every theme,
- * dark or light.
+ * The brand mark is the `/` key: the one that opens search from anywhere on
+ * the site. It is drawn as a keycap on its lip, in the active theme's primary
+ * color, so it stays crisp at any size and follows every theme. The favicon
+ * set in /public is the same drawing in the default palette.
  */
-const CELLS = [
-  { id: 'code', Icon: Code2, color: 'text-rp-foam' },
-  { id: 'database', Icon: Database, color: 'text-rp-love' },
-  { id: 'slash', Icon: Slash, color: 'text-rp-gold' },
-  { id: 'qr', Icon: QrCode, color: 'text-rp-iris' },
-] as const;
-
 export default function BrandMark({ className, label = 'Simple Dev Tools logo' }: BrandMarkProps) {
   return (
-    <span
+    <svg
       role="img"
       aria-label={label}
-      className={cn(
-        'grid aspect-square grid-cols-2 grid-rows-2 gap-px overflow-hidden border-2 border-border bg-border',
-        className
-      )}
+      viewBox="0 0 32 32"
+      className={cn('aspect-square shrink-0', className)}
     >
-      {CELLS.map(({ id, Icon, color }) => (
-        <span key={id} className={cn('flex items-center justify-center bg-card', color)}>
-          <Icon className="h-[62%] w-[62%]" strokeWidth={2.25} aria-hidden="true" />
-        </span>
-      ))}
-    </span>
+      <rect x="1" y="4" width="30" height="27" rx="7.5" fill="color-mix(in oklab, hsl(var(--primary)) 54%, black)" />
+      <rect x="1" y="1" width="30" height="26" rx="7.5" fill="hsl(var(--primary))" />
+      <path
+        d="M19.6 6.8 12.4 21.2"
+        fill="none"
+        stroke="hsl(var(--primary-foreground))"
+        strokeWidth="4.2"
+        strokeLinecap="round"
+      />
+    </svg>
   );
 }

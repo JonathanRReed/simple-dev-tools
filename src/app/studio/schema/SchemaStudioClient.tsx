@@ -907,7 +907,6 @@ export default function SchemaStudioClient() {
 
   return (
     <ToolShell
-      eyebrow="Schema Studio"
       toolbar={
         <>
           <Button type="button" variant="ghost" size="sm" onClick={handleLoadSample}>
@@ -1159,7 +1158,7 @@ export default function SchemaStudioClient() {
               <Badge variant={parsed.isOpenAPI ? "default" : "outline"}>
                 {parsed.isOpenAPI ? "OpenAPI source" : "JSON Schema source"}
               </Badge>
-              <span className="brutal-label">Output</span>
+              <span className="ui-label">Output</span>
               <div className="flex items-center gap-4">
                 <label className="flex items-center gap-2 font-mono text-sm">
                   <input

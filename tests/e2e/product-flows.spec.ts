@@ -7,14 +7,14 @@ test.beforeEach(async ({ page }) => {
 test('catalog, search, and theme controls work', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('heading', { level: 1 })).toContainText('Developer tools');
-  await expect(page.getByText('15 small, local tools')).toBeVisible();
+  await expect(page.getByText('15 tools for the small jobs')).toBeVisible();
 
   await page.getByRole('button', { name: 'Toggle theme' }).click();
-  await page.getByRole('menuitemradio', { name: /Paper/ }).click();
+  await page.getByRole('menuitemradio', { name: /^Paper / }).click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'paper');
   await page.keyboard.press('Escape');
 
-  await page.getByRole('button', { name: /Search tools by name or tag/ }).click();
+  await page.getByRole('button', { name: 'Search', exact: true }).click();
   await page.getByPlaceholder(/Search tools/).fill('security');
   await page.getByRole('option', { name: /Security & Tokens/ }).click();
   await expect(page).toHaveURL(/\/studio\/security\/$/);

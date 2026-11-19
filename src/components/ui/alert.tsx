@@ -7,16 +7,16 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const alertVariants = cva(
-  "flex items-start gap-2 border-2 px-3 py-2 text-sm [&>svg]:mt-0.5 [&>svg]:size-4 [&>svg]:shrink-0",
+  "flex items-start gap-2 rounded-lg border px-3 py-2 text-sm [&>svg]:mt-0.5 [&>svg]:size-4 [&>svg]:shrink-0",
   {
     variants: {
       variant: {
-        // Semantic color lives in the border + tint; text stays foreground so
-        // light themes (dawn/paper) keep WCAG AA contrast on tinted surfaces.
-        error: "border-destructive bg-destructive/10 text-foreground",
-        success: "border-rp-foam bg-rp-foam/10 text-foreground",
-        warning: "border-rp-gold bg-rp-gold/10 text-foreground",
-        info: "border-border bg-card text-foreground",
+        // Semantic color lives in the border, tint and icon; text stays
+        // foreground so light themes keep WCAG AA contrast on tinted surfaces.
+        error: "border-destructive/70 bg-destructive/10 text-foreground [&>svg]:text-destructive",
+        success: "border-rp-foam/55 bg-rp-foam/10 text-foreground [&>svg]:text-hue-web",
+        warning: "border-rp-gold/60 bg-rp-gold/10 text-foreground [&>svg]:text-hue-data",
+        info: "border-border bg-secondary/35 text-foreground [&>svg]:text-muted-foreground",
       },
     },
     defaultVariants: { variant: "info" },

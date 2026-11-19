@@ -6,13 +6,13 @@ test('line labels follow edits, samples, and repeated resets', async ({ page }) 
   const changed = page.locator('#diff-changed');
   const originalLabel = page.locator('label[for="diff-original"]').locator('..');
   const changedLabel = page.locator('label[for="diff-changed"]').locator('..');
-  await expect(originalLabel).toContainText('0 chars · 0 lines');
+  await expect(originalLabel).toContainText('0 chars, 0 lines');
   await original.fill('alpha\nbeta\n');
   await changed.fill('😀\n');
-  await expect(originalLabel).toContainText('11 chars · 3 lines');
-  await expect(changedLabel).toContainText('3 chars · 2 lines');
+  await expect(originalLabel).toContainText('11 chars, 3 lines');
+  await expect(changedLabel).toContainText('3 chars, 2 lines');
   await original.fill('single');
-  await expect(originalLabel).toContainText('6 chars · 1 lines');
+  await expect(originalLabel).toContainText('6 chars, 1 line');
   await page.getByRole('button', { name: 'Sample', exact: true }).click();
   await expect(originalLabel).toContainText('4 lines');
   await expect(changedLabel).toContainText('4 lines');
@@ -20,7 +20,7 @@ test('line labels follow edits, samples, and repeated resets', async ({ page }) 
     await page.getByRole('button', { name: 'Reset', exact: true }).click();
     await expect(original).toHaveValue('');
     await expect(changed).toHaveValue('');
-    await expect(originalLabel).toContainText('0 chars · 0 lines');
-    await expect(changedLabel).toContainText('0 chars · 0 lines');
+    await expect(originalLabel).toContainText('0 chars, 0 lines');
+    await expect(changedLabel).toContainText('0 chars, 0 lines');
   }
 });

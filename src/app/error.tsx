@@ -21,14 +21,14 @@ export default function Error({
 
   return (
     <ToolPage contentClassName="mx-auto max-w-3xl space-y-6">
-      <PageHeader eyebrow="Error" title="Something went wrong">
+      <PageHeader title="Something went wrong">
         <p>
-          This tool hit an unexpected error. Your data stays in the browser. Try again, or head
-          back home.
+          This tool hit an unexpected error. Nothing was sent anywhere, and your input is still
+          in this browser. Try again, or go back to the tool list.
         </p>
       </PageHeader>
 
-      <div className="border-2 border-destructive/60 bg-card p-4">
+      <div className="well border-destructive/60 p-4">
         <p className="font-mono text-sm text-muted-foreground">
           {error.message || 'Unknown error.'}
           {error.digest ? <span className="block text-xs text-muted-foreground/70">Digest: {error.digest}</span> : null}
@@ -45,7 +45,7 @@ export default function Error({
           {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
           <a href="/">
             <Home className="size-4" aria-hidden="true" />
-            Back to home
+            Back to all tools
           </a>
         </Button>
       </div>

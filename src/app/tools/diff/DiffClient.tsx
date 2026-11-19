@@ -84,6 +84,11 @@ function buildPatchOptions(
   return { ignoreWhitespace, ignoreCase, timeout: 150, maxEditLength: 4000 };
 }
 
+/** "11 chars, 3 lines", with singular forms where they apply. */
+function describeSize(chars: number, lines: number): string {
+  return `${chars} ${chars === 1 ? 'char' : 'chars'}, ${lines} ${lines === 1 ? 'line' : 'lines'}`;
+}
+
 export default function DiffClient() {
   const [original, setOriginal] = useState('');
   const [changed, setChanged] = useState('');
@@ -240,7 +245,6 @@ export default function DiffClient() {
 
   return (
     <ToolShell
-      eyebrow="Text Diff"
       toolbar={toolbar}
       shareParams={shareParams}
       shortcuts={[{ keys: '—', description: 'Diffs automatically as you type' }]}
@@ -252,7 +256,7 @@ export default function DiffClient() {
             htmlFor="diff-original"
             action={
               <span className="font-mono text-xs text-muted-foreground">
-                {countChars(original)} chars · {countLines(original)} lines
+                {describeSize(countChars(original), countLines(original))}
               </span>
             }
           >
@@ -268,7 +272,7 @@ export default function DiffClient() {
                 onChange={(e) => setOriginal(e.target.value)}
                 placeholder="Paste the original text…"
                 spellCheck={false}
-                className="min-h-[220px] w-full resize-y rounded-none border-2 border-input bg-background px-3 py-2 font-mono text-sm text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:outline-none"
+                className="min-h-[220px] w-full resize-y border border-input bg-background px-3 py-2 font-mono text-sm text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:outline-none rounded-lg"
               />
             </FileDrop>
           </Field>
@@ -278,7 +282,7 @@ export default function DiffClient() {
             htmlFor="diff-changed"
             action={
               <span className="font-mono text-xs text-muted-foreground">
-                {countChars(changed)} chars · {countLines(changed)} lines
+                {describeSize(countChars(changed), countLines(changed))}
               </span>
             }
           >
@@ -294,15 +298,15 @@ export default function DiffClient() {
                 onChange={(e) => setChanged(e.target.value)}
                 placeholder="Paste the changed text…"
                 spellCheck={false}
-                className="min-h-[220px] w-full resize-y rounded-none border-2 border-input bg-background px-3 py-2 font-mono text-sm text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:outline-none"
+                className="min-h-[220px] w-full resize-y border border-input bg-background px-3 py-2 font-mono text-sm text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:outline-none rounded-lg"
               />
             </FileDrop>
           </Field>
         </div>
 
-        <div className="flex flex-col gap-4 border-2 border-border bg-card p-3 sm:flex-row sm:items-start">
+        <div className="flex flex-col gap-4 well p-3 sm:flex-row sm:items-start">
           <div className="flex flex-col gap-2">
-            <span className="brutal-label">View</span>
+            <span className="ui-label">View</span>
             <div className="flex flex-wrap gap-2" role="group" aria-label="View mode">
               <Button
                 type="button"
@@ -328,7 +332,7 @@ export default function DiffClient() {
           </div>
 
           <div className="flex flex-col gap-2">
-            <span className="brutal-label">Granularity</span>
+            <span className="ui-label">Granularity</span>
             <div className="flex flex-wrap gap-2" role="group" aria-label="Diff granularity">
               <Button
                 type="button"
@@ -354,7 +358,7 @@ export default function DiffClient() {
           </div>
 
           <div className="flex flex-col gap-2">
-            <span className="brutal-label">Options</span>
+            <span className="ui-label">Options</span>
             <div className="flex flex-wrap items-center gap-4">
               <div className="flex items-center gap-2">
                 <input
@@ -362,7 +366,7 @@ export default function DiffClient() {
                   id="diff-ignore-whitespace"
                   checked={ignoreWhitespace}
                   onChange={(e) => setIgnoreWhitespace(e.target.checked)}
-                  className="h-4 w-4 rounded-none border-2 border-input bg-background"
+                  className="h-4 w-4 border border-input bg-background rounded-sm"
                 />
                 <Label htmlFor="diff-ignore-whitespace">{level === "line" ? "Ignore edge whitespace" : "Ignore whitespace"}</Label>
               </div>
@@ -372,7 +376,7 @@ export default function DiffClient() {
                   id="diff-ignore-case"
                   checked={ignoreCase}
                   onChange={(e) => setIgnoreCase(e.target.checked)}
-                  className="h-4 w-4 rounded-none border-2 border-input bg-background"
+                  className="h-4 w-4 border border-input bg-background rounded-sm"
                 />
                 <Label htmlFor="diff-ignore-case">Ignore case</Label>
               </div>
@@ -381,7 +385,7 @@ export default function DiffClient() {
         </div>
 
         <div
-          className="flex flex-wrap items-center gap-3 border-2 border-border bg-card px-3 py-2 font-mono text-xs text-muted-foreground"
+          className="flex flex-wrap items-center gap-3 well px-3 py-2 font-mono text-xs text-muted-foreground"
           aria-live="polite"
           aria-atomic="true"
         >
@@ -395,7 +399,7 @@ export default function DiffClient() {
             {hasInput && !computationLimited && !inputPending ? `${stats.unchanged} unchanged` : '—'}
           </Badge>
           <span className="ml-auto">
-            {level === 'word' ? 'Word-level' : 'Line-level'} · {mode === 'side' ? 'side by side' : 'unified'}
+            {level === 'word' ? 'Word-level' : 'Line-level'}, {mode === 'side' ? 'side by side' : 'unified'}
           </span>
         </div>
 
@@ -502,7 +506,7 @@ function LineUnified({ changes }: { changes: ChangeObject<string>[] }) {
         <div className="pb-1 pr-1">
           <div
             className={cn(
-              'grid grid-cols-[1.5rem_1fr] gap-3 border-2 px-2 py-1',
+              'grid grid-cols-[1.5rem_1fr] gap-3 border px-2 py-1 rounded-lg',
               row.colorClass
             )}
           >
@@ -532,9 +536,9 @@ function WordUnified({ changes }: { changes: ChangeObject<string>[] }) {
         // Semantic color stays in the border/tint; text uses foreground so
         // light themes keep WCAG AA contrast.
         const colorClass = c.added
-          ? 'border-2 border-rp-foam bg-rp-foam/20 text-foreground'
+          ? 'border border-rp-foam bg-rp-foam/20 text-foreground rounded-lg'
           : c.removed
-            ? 'border-2 border-rp-love bg-rp-love/20 text-foreground'
+            ? 'border border-rp-love bg-rp-love/20 text-foreground rounded-lg'
             : '';
         return (
           <span
@@ -604,9 +608,9 @@ function SideBySide({
   // the columns stay aligned, and a row is now a unit the windowing can measure
   // and mount on its own.
   return (
-    <div className="border-2 border-border bg-card" role="group" aria-label="Side by side diff">
-      <div className="flex border-b-2 border-border bg-rp-highlight-low font-mono text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-        <div className="w-1/2 border-r-2 border-border px-2 py-1">Original</div>
+    <div className="well" role="group" aria-label="Side by side diff">
+      <div className="flex border-b border-border bg-rp-highlight-low text-xs font-semibold text-muted-foreground">
+        <div className="w-1/2 border-r border-border px-2 py-1">Original</div>
         <div className="w-1/2 px-2 py-1">Changed</div>
       </div>
       <VirtualList items={rows} estimateSize={30} ariaLabel="Side by side diff rows">
@@ -614,10 +618,10 @@ function SideBySide({
           if (row.kind === 'common') {
             return (
               <div className="flex items-stretch">
-                <div className="min-h-[1.5rem] w-1/2 whitespace-pre-wrap break-words border-b-2 border-r-2 border-border px-2 py-1 font-mono text-sm text-foreground">
+                <div className="min-h-[1.5rem] w-1/2 whitespace-pre-wrap break-words border-b border-r border-border px-2 py-1 font-mono text-sm text-foreground">
                   {row.value}
                 </div>
-                <div className="min-h-[1.5rem] w-1/2 whitespace-pre-wrap break-words border-b-2 border-border px-2 py-1 font-mono text-sm text-foreground">
+                <div className="min-h-[1.5rem] w-1/2 whitespace-pre-wrap break-words border-b border-border px-2 py-1 font-mono text-sm text-foreground">
                   {row.value}
                 </div>
               </div>
@@ -631,10 +635,10 @@ function SideBySide({
             <div className="flex items-stretch">
               <div
                 className={cn(
-                  'min-h-[1.5rem] w-1/2 whitespace-pre-wrap break-words border-b-2 px-2 py-1 font-mono text-sm',
+                  'min-h-[1.5rem] w-1/2 whitespace-pre-wrap break-words border-b px-2 py-1 font-mono text-sm',
                   hasLeft
-                    ? 'border-rp-love border-r-2 bg-rp-love/10 text-foreground'
-                    : 'border-r-2 border-border text-muted-foreground'
+                    ? 'border-rp-love border-r bg-rp-love/10 text-foreground'
+                    : 'border-r border-border text-muted-foreground'
                 )}
               >
                 <span className="sr-only">{hasLeft ? 'removed: ' : ''}</span>
@@ -642,7 +646,7 @@ function SideBySide({
               </div>
               <div
                 className={cn(
-                  'min-h-[1.5rem] w-1/2 whitespace-pre-wrap break-words border-b-2 px-2 py-1 font-mono text-sm',
+                  'min-h-[1.5rem] w-1/2 whitespace-pre-wrap break-words border-b px-2 py-1 font-mono text-sm',
                   hasRight
                     ? 'border-rp-foam bg-rp-foam/10 text-foreground'
                     : 'border-border text-muted-foreground'

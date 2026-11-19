@@ -341,7 +341,6 @@ export default function MarkdownClient() {
 
   return (
     <ToolShell
-      eyebrow="Markdown"
       toolbar={toolbar}
       shareParams={() => (isEmpty ? null : { md: source, sync: syncScroll ? "1" : "0" })}
       shortcuts={shortcuts}
@@ -381,16 +380,16 @@ export default function MarkdownClient() {
                 onScroll={handleSourceScroll}
                 spellCheck={false}
                 placeholder="Paste or type Markdown here…"
-                className="min-h-[320px] w-full resize-y rounded-none border-2 border-input bg-background px-3 py-2 font-mono text-sm text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:outline-none"
+                className="min-h-[320px] w-full resize-y border border-input bg-background px-3 py-2 font-mono text-sm text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:outline-none rounded-lg"
               />
             </FileDrop>
           </Field>
 
           {parseError ? <Alert variant="error">{parseError}</Alert> : null}
 
-          <div className="flex flex-wrap items-center gap-2 border-2 border-border bg-card px-3 py-2 font-mono text-xs text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-2 well px-3 py-2 font-mono text-xs text-muted-foreground">
             <Badge variant={!isEmpty ? "default" : "outline"}>
-              {!isEmpty ? "ready" : "empty"}
+              {!isEmpty ? "Ready" : "Empty"}
             </Badge>
             <span>words: {stats.words}</span>
             <span>chars: {stats.chars}</span>

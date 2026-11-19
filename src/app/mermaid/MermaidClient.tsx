@@ -65,7 +65,7 @@ const TEMPLATES = [
 const CodeEditor = dynamic(() => import("@/components/tool/CodeEditor"), {
   ssr: false,
   loading: () => (
-    <div className="min-h-[260px] border-2 border-border bg-background animate-pulse" />
+    <div className="min-h-[260px] well animate-pulse" />
   ),
 });
 
@@ -285,7 +285,7 @@ export default function MermaidClient() {
     <>
       <select
         aria-label="Insert a diagram template"
-        className="h-8 border-2 border-input bg-background px-3 font-mono text-xs text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="h-8 border border-input bg-background px-3 font-mono text-xs text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg"
         onChange={handleTemplate}
         value=""
       >
@@ -332,7 +332,6 @@ export default function MermaidClient() {
 
   return (
     <ToolShell
-      eyebrow="Mermaid editor"
       toolbar={toolbar}
       shareParams={shareParams}
       shortcuts={shortcuts}
@@ -344,7 +343,7 @@ export default function MermaidClient() {
             onFileText={handleFileText}
             accept=".mmd,.mermaid,.txt,text/plain"
             label="Import diagram"
-            className="min-h-[260px] border-2 border-border bg-background font-mono text-sm text-foreground focus-within:ring-2 focus-within:ring-ring"
+            className="min-h-[260px] well font-mono text-sm text-foreground focus-within:ring-2 focus-within:ring-ring"
           >
             <CodeEditor
               value={code}
@@ -403,7 +402,7 @@ export default function MermaidClient() {
           <div
             className={cn(
               "flex w-full flex-1 overflow-auto",
-              hasDiagram ? "items-start justify-start bg-white p-3" : "items-center justify-center"
+              hasDiagram ? "items-start justify-start rounded-md bg-white p-3" : "items-center justify-center"
             )}
           >
             <div

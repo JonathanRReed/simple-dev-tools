@@ -15,6 +15,7 @@ import { FileDrop } from "@/components/FileDrop";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useStoredState, useDebounced } from "@/hooks/use-stored-state";
 import { toHex } from "@/lib/base64";
+import { readHandoff } from "@/lib/handoff";
 
 type Mode = "text" | "file";
 type Algorithm = "SHA-1" | "SHA-256" | "SHA-384" | "SHA-512";
@@ -73,6 +74,18 @@ export default function HashClient() {
   const [error, setError] = useState<string | null>(null);
   const [upperCase, setUpperCase] = useState(false);
   const [expected, setExpected] = useState("");
+
+  // Text or an expected digest pasted into the home slot arrives as a one-shot
+  // handoff. It never travels in a URL, so there is still no share link here.
+  useEffect(() => {
+    const handed = readHandoff();
+    if (!handed) return;
+    if (typeof handed.text === "string") {
+      setMode("text");
+      setText(handed.text);
+    }
+    if (typeof handed.expected === "string") setExpected(handed.expected);
+  }, [setText]);
 
   const genRef = useRef(0);
   const fileReadRef = useRef(0);
@@ -188,12 +201,12 @@ export default function HashClient() {
         <RotateCcw aria-hidden="true" />
         Reset
       </Button>
-      <div className="flex border-2 border-border">
+      <div className="flex border border-border rounded-lg">
         <Button
           type="button"
           size="sm"
           variant={!upperCase ? "default" : "ghost"}
-          className="rounded-none"
+          className=""
           aria-pressed={!upperCase}
           onClick={() => setUpperCase(false)}
       >
@@ -203,7 +216,7 @@ export default function HashClient() {
           type="button"
           size="sm"
           variant={upperCase ? "default" : "ghost"}
-          className="rounded-none border-l-2 border-border"
+          className="border-l border-border"
           aria-pressed={upperCase}
           onClick={() => setUpperCase(true)}
         >
@@ -214,8 +227,8 @@ export default function HashClient() {
   );
 
   return (
-    <ToolShell eyebrow="Hashing · Verification" toolbar={toolbar}>
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 items-start">
+    <ToolShell toolbar={toolbar}>
+      <div className="flex flex-col gap-5">
         <div className="flex min-w-0 flex-col gap-4">
           <Tabs value={mode} onValueChange={(v) => setMode(v as Mode)}>
             <TabsList>
@@ -235,7 +248,7 @@ export default function HashClient() {
                   onChange={(e) => setText(e.target.value)}
                   spellCheck={false}
                   placeholder="Paste or type text to hash…"
-                  className="min-h-[280px] w-full resize-y rounded-none border-2 border-input bg-background px-3 py-2 font-mono text-sm text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:outline-none"
+                  className="min-h-[150px] w-full resize-y border border-input bg-background px-3 py-2 font-mono text-sm text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:outline-none rounded-lg"
                 />
               </Field>
             </TabsContent>
@@ -247,10 +260,10 @@ export default function HashClient() {
                 skipTextRead
                 className="group"
               >
-                <div className="relative flex min-h-[280px] flex-col items-center justify-center gap-4 border-2 border-dashed border-border bg-card p-6 text-center">
+                <div className="well relative flex min-h-[150px] flex-col items-center justify-center gap-3 border-dashed p-6 text-center">
                   {file ? (
                     <div className="flex flex-col items-center gap-2">
-                      <span className="brutal-label">File</span>
+                      <span className="ui-label">File</span>
                       <span className="max-w-full break-words font-mono text-sm text-foreground">
                         {file.name}
                       </span>
@@ -271,7 +284,7 @@ export default function HashClient() {
                     </div>
                   ) : (
                     <>
-                      <span className="brutal-label text-rp-iris">
+                      <span className="text-sm font-semibold text-foreground">
                         Drop file here
                       </span>
                       <span className="text-sm text-muted-foreground">
@@ -290,7 +303,7 @@ export default function HashClient() {
         </div>
 
         <div className="flex min-w-0 flex-col gap-4">
-          <ResultPanel title="Digests" bodyClassName="space-y-2">
+          <ResultPanel title="Digests" bodyClassName="divide-y divide-border py-1">
             <div className="sr-only" role="status" aria-live="polite">
               {pending
                 ? "Computing digests"
@@ -306,19 +319,19 @@ export default function HashClient() {
               return (
                 <div
                   key={alg}
-                  className="flex items-center gap-2 border-2 border-border bg-card p-2"
+                  className="flex flex-wrap items-center gap-x-3 gap-y-1.5 py-2"
                 >
-                  <span className="brutal-label w-20 shrink-0">{alg}</span>
-                  <span className="min-w-0 grow break-all font-mono text-sm text-foreground">
+                  <span className="ui-label order-1 w-16 shrink-0">{alg}</span>
+                  <span className="order-3 min-w-0 basis-full break-all font-mono text-[0.8125rem] leading-relaxed text-foreground sm:order-2 sm:grow sm:basis-0">
                     {display}
                   </span>
-                  <CopyButton value={display} label="Copy" size="sm" />
+                  <CopyButton value={display} label="Copy" size="sm" className="order-2 ml-auto sm:order-3 sm:ml-0" />
                 </div>
               );
             })}
 
             {!hasAnyDigest ? (
-              <span className="text-sm text-muted-foreground">
+              <span className="block py-2 text-sm text-muted-foreground">
                 {pending ? "Computing digests…" : "Enter text or drop a file to compute digests."}
               </span>
             ) : null}

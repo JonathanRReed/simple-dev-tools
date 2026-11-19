@@ -18,7 +18,7 @@ export default function PrivacyPage() {
   return (
     <ToolPage contentClassName="mx-auto max-w-3xl">
       <article className="flex flex-col gap-8">
-        <PageHeader eyebrow="Privacy" title="Local-first tools with no account layer.">
+        <PageHeader title="Local-first tools with no account layer.">
           <p>
             {siteConfig.name} is a static browser application. It does not provide
             authentication, database-backed accounts, analytics tracking, or a server-side store
@@ -35,6 +35,12 @@ export default function PrivacyPage() {
           <p>
             A few tools remember your last input in this browser&apos;s local storage so it
             survives a reload. Use the tool&apos;s Reset action to clear it.
+          </p>
+          <p>
+            When you paste something on the home page or into search and open the suggested
+            tool, the content is passed to that tool through this tab&apos;s session storage. It
+            is deleted the moment the tool reads it, and it is never written into a link, the
+            address bar, or your browsing history.
           </p>
         </PageSection>
 

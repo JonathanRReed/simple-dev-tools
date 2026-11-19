@@ -2,21 +2,27 @@
 @import "tw-animate-css";
 
 /* ============================================
-   SIMPLE DEV TOOLS — BRUTALIST / INDUSTRIAL FOUNDATION
-   Square corners, 2px borders, hard offset shadows, monospace data,
-   near-zero motion. Structure lives in tokens so every theme inherits
-   the same language; only the palette changes per theme.
+   SIMPLE DEV TOOLS — BENCH FOUNDATION
 
-   Tailwind v4 is configured here (CSS-first). There is no
-   tailwind.config.js: the @theme block below maps the app's CSS
-   variables onto Tailwind's utility namespaces.
+   The interface is modelled on bench instruments. Three surfaces carry the
+   whole language, and every theme inherits them; only the palette changes.
+
+     bench  the page. A dotted mat, like a cutting board.
+     panel  an instrument body, raised off the bench.
+     well   a recess cut into a panel. Anything you type into, and every
+            readout, sits in a well.
+
+   Controls are keycaps: they sit proud of the panel on a visible lip and
+   travel down when pressed. A lit LED means "on" or "selected".
+
+   Tailwind v4 is configured here (CSS-first). There is no tailwind.config.js:
+   the @theme block maps the app's CSS variables onto utility namespaces.
    ============================================ */
 
 @theme inline {
   /* Fonts: next/font/local exposes the self-hosted faces on <html>. */
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-  --font-display: var(--font-space-grotesk), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-mono: var(--font-atkinson-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 
   /* Semantic palette (HSL triplets, set per theme below). */
   --color-background: hsl(var(--background));
@@ -35,9 +41,14 @@
   --color-accent-foreground: hsl(var(--accent-foreground));
   --color-destructive: hsl(var(--destructive));
   --color-destructive-foreground: hsl(var(--destructive-foreground));
-  --color-border: hsl(var(--border));
+  /* `border` is the quiet hairline that separates regions. It is decorative,
+     so it is derived from the ink color rather than tuned per theme.
+     `input` is the boundary of a control and keeps its 3:1 guarantee. */
+  --color-border: var(--line);
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
+  --color-led: var(--led);
+  --color-bench: var(--bench);
 
   /* Sidebar palette. */
   --color-sidebar: hsl(var(--sidebar-background));
@@ -46,10 +57,10 @@
   --color-sidebar-primary-foreground: hsl(var(--sidebar-primary-foreground));
   --color-sidebar-accent: hsl(var(--sidebar-accent));
   --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
-  --color-sidebar-border: hsl(var(--sidebar-border));
+  --color-sidebar-border: var(--line);
   --color-sidebar-ring: hsl(var(--sidebar-ring));
 
-  /* Rosé Pine-derived raw palette (hex, set per theme below). */
+  /* Raw palette (hex, set per theme below). */
   --color-rp-base: var(--rp-base);
   --color-rp-surface: var(--rp-surface);
   --color-rp-overlay: var(--rp-overlay);
@@ -66,34 +77,62 @@
   --color-rp-highlight-med: var(--rp-highlight-med);
   --color-rp-highlight-high: var(--rp-highlight-high);
 
-  /* Brutalist: every named radius collapses to the (zero) --radius token.
-     rounded-none / rounded-full stay available for the few real circles. */
-  --radius-xs: var(--radius);
-  --radius-sm: var(--radius);
-  --radius-md: var(--radius);
-  --radius-lg: var(--radius);
-  --radius-xl: var(--radius);
-  --radius-2xl: var(--radius);
-  --radius-3xl: var(--radius);
-  --radius-4xl: var(--radius);
+  /* Six category hues. They reuse the syntax tokens, which are already solved
+     for 4.5:1 on every surface in every theme. */
+  --color-hue-web: var(--code-string);
+  --color-hue-data: var(--code-number);
+  --color-hue-text: var(--code-keyword);
+  --color-hue-time: var(--code-operator);
+  --color-hue-security: var(--code-function);
+  --color-hue-visual: var(--code-tag);
 
-  /* Hard offset shadows (no blur) — shadow-hard, shadow-hard-sm, shadow-hard-lg. */
-  --shadow-hard: var(--brutal-shadow);
-  --shadow-hard-sm: var(--brutal-shadow-sm);
-  --shadow-hard-lg: var(--brutal-shadow-lg);
+  /* Radius follows size: chips are tight, controls a little softer, panels
+     softest. Nothing shares one radius regardless of scale. */
+  --radius-xs: 3px;
+  --radius-sm: 5px;
+  --radius-md: 7px;
+  --radius-lg: 10px;
+  --radius-xl: 14px;
+  --radius-2xl: 18px;
+  --radius-3xl: 24px;
+  --radius-4xl: 32px;
+
+  --shadow-panel: var(--elev-panel);
+  --shadow-pop: var(--elev-pop);
+  --shadow-well: var(--elev-well);
+
+  --ease-press: cubic-bezier(0.3, 0, 0.2, 1);
 }
 
 /* --- Structural tokens + neutral fallback palette --- */
 :root {
-  --radius: 0px;
-  --bw-2: 2px;
-  /* Structural ink for hard shadows. Themes override it with --rp-text so the
-     shadow always reads as the theme's high-contrast foreground. */
-  --brutal-ink: #141414;
-  --brutal-shadow: 4px 4px 0 0 var(--brutal-ink);
-  --brutal-shadow-sm: 2px 2px 0 0 var(--brutal-ink);
-  --brutal-shadow-lg: 6px 6px 0 0 var(--brutal-ink);
+  --radius: 10px;
+
+  /* Light falls from above: a glint on the top edge of anything raised, and a
+     shade underneath it. Light themes override both. */
+  --glint: rgb(255 255 255 / 0.07);
+  --shade: rgb(0 0 0 / 0.62);
+  --shade-soft: rgb(0 0 0 / 0.34);
+  --led: #5ddc92;
+
+  --line: color-mix(in oklab, var(--rp-text, #888) 15%, transparent);
+  --line-strong: color-mix(in oklab, var(--rp-text, #888) 28%, transparent);
+  --grid-dot: color-mix(in oklab, var(--rp-text, #888) 11%, transparent);
+
+  /* The bench is the page itself. It defaults to the well color, so a well
+     reads as a hole cut through a panel down to the bench. A theme may give
+     the bench its own color and its own mat pattern. */
+  --bench: var(--rp-base);
+  --bench-image: radial-gradient(circle at 1px 1px, var(--grid-dot) 1px, transparent 0);
+  --bench-size: 22px 22px;
+
+  --elev-panel: inset 0 1px 0 var(--glint), 0 1px 2px var(--shade-soft), 0 18px 40px -24px var(--shade);
+  --elev-pop: inset 0 1px 0 var(--glint), 0 2px 6px var(--shade-soft), 0 28px 64px -20px var(--shade);
+  --elev-well: inset 0 1px 2px var(--shade-soft), inset 0 0 0 1px rgb(0 0 0 / 0.04);
+
   /* Neutral palette, only visible before next-themes stamps data-theme. */
+  --rp-base: #ffffff;
+  --rp-text: #0a0a0a;
   --background: 0 0% 100%;
   --foreground: 0 0% 3.9%;
   --card: 0 0% 100%;
@@ -110,7 +149,6 @@
   --accent-foreground: 0 0% 9%;
   --destructive: 0 84.2% 60.2%;
   --destructive-foreground: 0 0% 98%;
-  --border: 0 0% 52%;
   --input: 0 0% 52%;
   --ring: 0 0% 3.9%;
   --sidebar-background: 0 0% 98%;
@@ -119,11 +157,10 @@
   --sidebar-primary-foreground: 0 0% 98%;
   --sidebar-accent: 240 4.8% 95.9%;
   --sidebar-accent-foreground: 240 5.9% 10%;
-  --sidebar-border: 220 13% 91%;
   --sidebar-ring: 217.2 91.2% 59.8%;
 }
 
-/* --- Themes: six palettes, all sharing the brutalist structure above --- */
+/* --- Themes: every palette shares the structure above --- */
 :root[data-theme="main"] {
   --rp-base: #191724;
   --rp-surface: #1f1d2e;
@@ -144,9 +181,8 @@
   --sidebar-foreground: 245 50% 91%;
   --sidebar-primary: 267 57% 78%;
   --sidebar-primary-foreground: 249 22% 12%;
-  --sidebar-accent: 248 13% 36%;
+  --sidebar-accent: 248 16% 22%;
   --sidebar-accent-foreground: 245 50% 91%;
-  --sidebar-border: 249 15% 47%;
   --sidebar-ring: 267 57% 78%;
   --background: 249 22% 12%;
   --foreground: 245 50% 91%;
@@ -156,7 +192,7 @@
   --popover-foreground: 245 50% 91%;
   --primary: 267 57% 78%;
   --primary-foreground: 249 22% 12%;
-  --secondary: 248 13% 36%;
+  --secondary: 248 16% 25%;
   --secondary-foreground: 245 50% 91%;
   --muted: 249 12% 47%;
   --muted-foreground: 248 18% 70%;
@@ -164,11 +200,10 @@
   --accent-foreground: 249 22% 12%;
   --destructive: 343 76% 68%;
   --destructive-foreground: 249 22% 12%;
-  --border: 249 15% 49%;
   --input: 248 13% 46%;
   --ring: 267 57% 78%;
 
-  /* Syntax tokens: solved for >=4.5:1 on this theme's --rp-base. */
+  /* Syntax tokens: solved for >=4.5:1 on every surface code can sit on. */
   --code-comment: #89859f;
   --code-punctuation: #908caa;
   --code-keyword: #c4a7e7;
@@ -199,9 +234,8 @@
   --sidebar-foreground: 245 50% 91%;
   --sidebar-primary: 267 57% 78%;
   --sidebar-primary-foreground: 246 24% 17%;
-  --sidebar-accent: 249 15% 38%;
+  --sidebar-accent: 249 16% 27%;
   --sidebar-accent-foreground: 245 50% 91%;
-  --sidebar-border: 247 16% 51%;
   --sidebar-ring: 267 57% 78%;
   --background: 246 24% 17%;
   --foreground: 245 50% 91%;
@@ -211,7 +245,7 @@
   --popover-foreground: 245 50% 91%;
   --primary: 267 57% 78%;
   --primary-foreground: 246 24% 17%;
-  --secondary: 249 15% 38%;
+  --secondary: 249 16% 30%;
   --secondary-foreground: 245 50% 91%;
   --muted: 249 12% 47%;
   --muted-foreground: 248 18% 70%;
@@ -219,11 +253,10 @@
   --accent-foreground: 246 24% 17%;
   --destructive: 343 70% 62.5%;
   --destructive-foreground: 246 24% 17%;
-  --border: 247 16% 56%;
   --input: 249 15% 50.5%;
   --ring: 267 57% 78%;
 
-  /* Syntax tokens: solved for >=4.5:1 on this theme's --rp-base. */
+  /* Syntax tokens: solved for >=4.5:1 on every surface code can sit on. */
   --code-comment: #9390a7;
   --code-punctuation: #938fac;
   --code-keyword: #c4a7e7;
@@ -256,7 +289,6 @@
   --sidebar-primary-foreground: 35 100% 98%;
   --sidebar-accent: 10 9% 86%;
   --sidebar-accent-foreground: 248 19% 32%;
-  --sidebar-border: 315 4% 58%;
   --sidebar-ring: 343 45% 42%;
   --background: 32 57% 95%;
   --foreground: 248 19% 32%;
@@ -277,11 +309,10 @@
   --accent-foreground: 35 100% 98%;
   --destructive: 3 60% 45%;
   --destructive-foreground: 35 100% 98%;
-  --border: 315 4% 54%;
   --input: 10 9% 56.5%;
   --ring: 343 45% 42%;
 
-  /* Syntax tokens: solved for >=4.5:1 on this theme's --rp-base. */
+  /* Syntax tokens: solved for >=4.5:1 on every surface code can sit on. */
   --code-comment: #726b81;
   --code-punctuation: #6f6b8a;
   --code-keyword: #7e649b;
@@ -314,7 +345,6 @@
   --sidebar-primary-foreground: 0 0% 6%;
   --sidebar-accent: 0 0% 16%;
   --sidebar-accent-foreground: 0 0% 99%;
-  --sidebar-border: 0 0% 38%;
   --sidebar-ring: 0 100% 69%;
   --background: 0 0% 6%;
   --foreground: 0 0% 99%;
@@ -332,11 +362,10 @@
   --accent-foreground: 0 0% 6%;
   --destructive: 0 100% 69%;
   --destructive-foreground: 0 0% 6%;
-  --border: 0 0% 42%;
   --input: 0 0% 39.5%;
   --ring: 0 100% 69%;
 
-  /* Syntax tokens: solved for >=4.5:1 on this theme's --rp-base. */
+  /* Syntax tokens: solved for >=4.5:1 on every surface code can sit on. */
   --code-comment: #818181;
   --code-punctuation: #a3a3a3;
   --code-keyword: #b28ffc;
@@ -369,7 +398,6 @@
   --sidebar-primary-foreground: 204 60% 2%;
   --sidebar-accent: 211 43% 15%;
   --sidebar-accent-foreground: 37 46% 94%;
-  --sidebar-border: 210 40% 38%;
   --sidebar-ring: 206 54% 69%;
   --background: 204 60% 2%;
   --foreground: 37 46% 94%;
@@ -387,19 +415,18 @@
   --accent-foreground: 204 60% 2%;
   --destructive: 37 50% 52%;
   --destructive-foreground: 204 60% 2%;
-  --border: 210 40% 40%;
   --input: 211 43% 39%;
   --ring: 206 54% 69%;
 
-  /* Syntax tokens: solved for >=4.5:1 on this theme's --rp-base. */
+  /* Syntax tokens: solved for >=4.5:1 on every surface code can sit on. */
   --code-comment: #8f826f;
   --code-punctuation: #c8b89e;
-  --code-keyword: #88b0d8;
-  --code-string: #6aa3cf;
+  --code-keyword: #b3adf2;
+  --code-string: #7fd4bd;
   --code-number: #e1bb62;
   --code-operator: #f0dbb0;
-  --code-function: #c89a42;
-  --code-tag: #5f96b5;
+  --code-function: #f0957f;
+  --code-tag: #6aa3cf;
 }
 
 :root[data-theme="paper"] {
@@ -424,7 +451,6 @@
   --sidebar-primary-foreground: 36 100% 99%;
   --sidebar-accent: 38 28% 84%;
   --sidebar-accent-foreground: 213 22% 15%;
-  --sidebar-border: 36 19% 55%;
   --sidebar-ring: 210 49% 37%;
   --background: 39 45% 94%;
   --foreground: 213 22% 15%;
@@ -442,11 +468,10 @@
   --accent-foreground: 36 100% 99%;
   --destructive: 354 45% 44%;
   --destructive-foreground: 36 100% 99%;
-  --border: 36 19% 48.5%;
   --input: 38 28% 49.5%;
   --ring: 210 49% 37%;
 
-  /* Syntax tokens: solved for >=4.5:1 on this theme's --rp-base. */
+  /* Syntax tokens: solved for >=4.5:1 on every surface code can sit on. */
   --code-comment: #726d62;
   --code-punctuation: #5f6b73;
   --code-keyword: #6e5f9b;
@@ -457,8 +482,143 @@
   --code-tag: #2f5d8c;
 }
 
+/* Blueprint: a drafting table. Cyanotype blue, chalk-white ink, and a
+   pencil-yellow primary. Its bench is ruled like graph paper. */
+:root[data-theme="blueprint"] {
+  --rp-base: #0c2a52;
+  --rp-surface: #123767;
+  --rp-overlay: #184480;
+  --rp-muted: #6f8fbd;
+  --rp-subtle: #a9c1e0;
+  --rp-text: #eef3fa;
+  --rp-love: #ff9aa2;
+  --rp-gold: #ffd166;
+  --rp-rose: #ffbcae;
+  --rp-pine: #8fdcd3;
+  --rp-foam: #9fe3ff;
+  --rp-iris: #c9b8ff;
+  --rp-highlight-low: #153d72;
+  --rp-highlight-med: #2a5699;
+  --rp-highlight-high: #7fa3d4;
+  --sidebar-background: 215 73% 21.8%;
+  --sidebar-foreground: 215 55% 95.7%;
+  --sidebar-primary: 42 100% 70%;
+  --sidebar-primary-foreground: 214 74% 18.4%;
+  --sidebar-accent: 215 65% 33.3%;
+  --sidebar-accent-foreground: 215 55% 95.7%;
+  --sidebar-ring: 42 100% 70%;
+  --background: 214 74% 18.4%;
+  --foreground: 215 55% 95.7%;
+  --card: 214 70% 23.7%;
+  --card-foreground: 215 55% 95.7%;
+  --popover: 215 68% 29.8%;
+  --popover-foreground: 215 55% 95.7%;
+  --primary: 42 100% 70%;
+  --primary-foreground: 214 74% 18.4%;
+  --secondary: 215 65% 33.3%;
+  --secondary-foreground: 215 55% 95.7%;
+  --muted: 217 42% 42.4%;
+  --muted-foreground: 214 47% 77.1%;
+  --accent: 198 100% 81.2%;
+  --accent-foreground: 214 74% 18.4%;
+  --destructive: 355 100% 80.2%;
+  --destructive-foreground: 214 74% 18.4%;
+  --input: 215 50% 66.5%;
+  --ring: 42 100% 70%;
+
+  /* Syntax tokens: solved for >=4.5:1 on every surface code can sit on. */
+  --code-comment: #9db8dc;
+  --code-punctuation: #b6c8e2;
+  --code-keyword: #d0c2ff;
+  --code-string: #a6e6ff;
+  --code-number: #ffd978;
+  --code-operator: #ffbcae;
+  --code-function: #ffa3ab;
+  --code-tag: #8fdcd3;
+
+  --bench-image:
+    linear-gradient(var(--grid-dot) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-dot) 1px, transparent 1px);
+  --bench-size: 24px 24px;
+}
+
+/* Hi-Vis: site-safety yellow. The bench is the yellow; panels and wells are
+   pale so long text stays comfortable, and the primary key is black. */
+:root[data-theme="hi-vis"] {
+  --bench: #f7d417;
+  --rp-base: #fffdf0;
+  --rp-surface: #fff9d6;
+  --rp-overlay: #fff4b8;
+  --rp-muted: #8f7f2a;
+  --rp-subtle: #574a00;
+  --rp-text: #17140a;
+  --rp-love: #b3261e;
+  --rp-gold: #7a4f00;
+  --rp-rose: #963c10;
+  --rp-pine: #085f53;
+  --rp-foam: #0b5cad;
+  --rp-iris: #0a4f96;
+  --rp-highlight-low: #fff4b8;
+  --rp-highlight-med: #d9c04a;
+  --rp-highlight-high: #806a00;
+  --sidebar-background: 51 100% 92%;
+  --sidebar-foreground: 46 39% 6.5%;
+  --sidebar-primary: 46 39% 6.5%;
+  --sidebar-primary-foreground: 51 93% 52.9%;
+  --sidebar-accent: 50 100% 81.4%;
+  --sidebar-accent-foreground: 46 39% 6.5%;
+  --sidebar-ring: 210 88% 31.4%;
+  --background: 52 100% 97.1%;
+  --foreground: 46 39% 6.5%;
+  --card: 51 100% 92%;
+  --card-foreground: 46 39% 6.5%;
+  --popover: 51 100% 86.1%;
+  --popover-foreground: 46 39% 6.5%;
+  --primary: 46 39% 6.5%;
+  --primary-foreground: 51 93% 52.9%;
+  --secondary: 54 100% 98%;
+  --secondary-foreground: 46 39% 6.5%;
+  --muted: 50 52% 47.5%;
+  --muted-foreground: 51 100% 17.1%;
+  --accent: 210 88% 36.1%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 3 71% 41%;
+  --destructive-foreground: 52 100% 97.1%;
+  --input: 50 100% 25.1%;
+  --ring: 210 88% 31.4%;
+
+  /* Syntax tokens: solved for >=4.5:1 on every surface code can sit on. */
+  --code-comment: #655800;
+  --code-punctuation: #5c5320;
+  --code-keyword: #5b3fb0;
+  --code-string: #0a56a3;
+  --code-number: #7a4f00;
+  --code-operator: #963c10;
+  --code-function: #a5201a;
+  --code-tag: #085f53;
+
+  --grid-dot: rgb(23 20 10 / 0.16);
+}
+
+/* Native controls and scrollbars follow the palette. Dark unless a light
+   theme says otherwise just below. */
 :root[data-theme] {
-  --brutal-ink: var(--rp-text);
+  color-scheme: dark;
+}
+
+/* Light themes: the glint is brighter and the shade much softer, because a
+   pale surface shows a hard shadow as dirt. */
+:root[data-theme="dawn"],
+:root[data-theme="paper"],
+:root[data-theme="hi-vis"] {
+  color-scheme: light;
+  --glint: rgb(255 255 255 / 0.85);
+  --shade: rgb(58 44 20 / 0.3);
+  --shade-soft: rgb(58 44 20 / 0.13);
+  --led: #14804a;
+}
+:root[data-theme="hi-vis"] {
+  --led: #0f6b3d;
 }
 
 /* --- Base --- */
@@ -468,32 +628,66 @@
   }
 
   html {
-    background: var(--rp-base);
+    background: var(--bench);
     font-family: var(--font-sans);
     scroll-behavior: smooth;
-    transition: background-color 0.3s ease, color 0.3s ease;
+    -webkit-text-size-adjust: 100%;
   }
 
   body {
     @apply bg-background text-foreground;
-    transition: background-color 0.3s ease, border-color 0.3s ease;
+    letter-spacing: 0.004em;
   }
 
-  /* Hard, flat, high-contrast focus signal (no soft glow). */
+  /* One focus signal everywhere: a ring that hugs the control's own shape. */
   :focus-visible {
-    outline: 3px solid var(--rp-iris);
-    outline-offset: 0;
-    box-shadow: none;
+    outline: 2px solid var(--rp-iris);
+    outline-offset: 2px;
   }
 
-  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
+  /* Fields are wells: recessed, with a boundary that clears 3:1. */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]),
   select,
   textarea {
-    @apply rounded-none border-2 border-rp-highlight-high bg-rp-surface text-rp-text transition-colors placeholder:text-muted-foreground focus:outline-none focus:border-rp-iris disabled:cursor-not-allowed disabled:opacity-60;
+    border: 1px solid hsl(var(--input));
+    border-radius: var(--radius-md);
+    background-color: var(--rp-base);
+    color: var(--rp-text);
+    box-shadow: var(--elev-well);
+    transition: border-color 120ms var(--ease-press), box-shadow 120ms var(--ease-press);
+  }
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]):focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: none;
+    border-color: hsl(var(--ring));
+    box-shadow: var(--elev-well), 0 0 0 3px hsl(var(--ring) / 0.28);
+  }
+  input::placeholder,
+  textarea::placeholder {
+    color: hsl(var(--muted-foreground));
+    opacity: 1;
+  }
+  input:disabled,
+  select:disabled,
+  textarea:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
   }
 
   textarea {
     @apply resize-y font-mono;
+    border-radius: var(--radius-lg);
+  }
+
+  /* Atkinson Hyperlegible Mono is set a little wide. Pulling it in slightly
+     keeps digests and tables dense without touching its letterforms. */
+  code,
+  kbd,
+  pre,
+  samp,
+  textarea {
+    letter-spacing: -0.012em;
   }
 
   select option,
@@ -506,32 +700,40 @@
   input[type="radio"] {
     accent-color: hsl(var(--primary));
   }
+
+  /* A <kbd> is a miniature keycap. */
+  kbd {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 0.75em;
+    font-weight: 600;
+    line-height: 1.5;
+    padding: 0 0.42em;
+    border: 1px solid var(--line-strong);
+    border-bottom-width: 2px;
+    border-radius: var(--radius-sm);
+    background-color: hsl(var(--secondary));
+    color: hsl(var(--secondary-foreground));
+    white-space: nowrap;
+  }
+
+  ::selection {
+    background-color: hsl(var(--primary) / 0.32);
+  }
 }
 
-/* --- Theme transitions on the big surfaces only --- */
-.bg-background,
-.bg-card,
-.bg-popover {
-  transition: background-color 0.3s ease, border-color 0.3s ease;
-}
-.text-foreground,
-.text-muted-foreground,
-.text-primary {
-  transition: color 0.3s ease;
-}
-
-/* --- Scrollbars (themed to the palette, square) --- */
+/* --- Scrollbars --- */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
   background: var(--rp-highlight-med);
-  border-radius: 0;
-  border: 2px solid transparent;
+  border-radius: 999px;
+  border: 3px solid transparent;
   background-clip: content-box;
 }
 ::-webkit-scrollbar-thumb:hover {
@@ -543,15 +745,131 @@
   scrollbar-color: var(--rp-highlight-med) transparent;
 }
 
-/* --- Brutalist building blocks --- */
-/* Uppercase, tracked, monospace label — the section/field marker. */
-.brutal-label {
-  font-family: var(--font-mono);
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  font-size: 0.7rem;
+/* --- Surfaces ------------------------------------------------------------ */
+
+/* The bench: a dotted mat behind everything. */
+@utility bench {
+  background-color: var(--bench);
+  background-image: var(--bench-image);
+  background-size: var(--bench-size);
+}
+
+/* An instrument body. */
+@utility panel {
+  background-color: hsl(var(--card));
+  color: hsl(var(--card-foreground));
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--elev-panel);
+}
+
+/* A recess cut into a panel: readouts, editors, anything typed into. */
+@utility well {
+  background-color: var(--rp-base);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--elev-well);
+}
+
+/* --- Keycaps -------------------------------------------------------------
+   --key-face is the top of the cap, --key-lip the side you see beneath it.
+   Pressing collapses the lip and moves the face down by the same distance,
+   so the control travels instead of just changing color. */
+@utility key {
+  --key-face: hsl(var(--secondary));
+  --key-lip: color-mix(in oklab, hsl(var(--secondary)) 58%, black);
+  --key-travel: 2px;
+  position: relative;
+  background-color: var(--key-face);
+  border: 1px solid color-mix(in oklab, var(--key-lip) 70%, transparent);
+  box-shadow:
+    inset 0 1px 0 var(--glint),
+    0 var(--key-travel) 0 var(--key-lip),
+    0 calc(var(--key-travel) + 2px) 5px -1px var(--shade-soft);
+  transition:
+    transform 70ms var(--ease-press),
+    box-shadow 70ms var(--ease-press),
+    background-color 120ms var(--ease-press),
+    filter 120ms var(--ease-press);
+
+  &:hover:not(:disabled):not([aria-disabled="true"]) {
+    filter: brightness(1.07);
+  }
+  &:active:not(:disabled):not([aria-disabled="true"]),
+  &[data-pressed="true"] {
+    transform: translateY(var(--key-travel));
+    filter: brightness(0.97);
+    box-shadow:
+      inset 0 1px 0 var(--glint),
+      0 0 0 var(--key-lip),
+      0 1px 2px -1px var(--shade-soft);
+  }
+}
+@utility key-primary {
+  --key-face: hsl(var(--primary));
+  --key-lip: color-mix(in oklab, hsl(var(--primary)) 56%, black);
+}
+@utility key-danger {
+  --key-face: hsl(var(--destructive));
+  --key-lip: color-mix(in oklab, hsl(var(--destructive)) 56%, black);
+}
+@utility key-tall {
+  --key-travel: 4px;
+}
+
+/* --- Indicator LED -------------------------------------------------------- */
+@utility led {
+  display: inline-block;
+  flex: none;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  background-color: var(--led);
+  box-shadow:
+    0 0 0 1px color-mix(in oklab, var(--led) 45%, black),
+    0 0 7px 1px color-mix(in oklab, var(--led) 60%, transparent);
+}
+@utility led-off {
+  display: inline-block;
+  flex: none;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  background-color: color-mix(in oklab, var(--rp-text) 16%, transparent);
+  box-shadow: inset 0 1px 1px var(--shade-soft);
+}
+
+/* --- Type ------------------------------------------------------------------
+   One family, two voices. Archivo at normal width is the interface; its
+   expanded extra-bold cut is the display face (a separate, static file). */
+@utility font-display {
+  font-family: var(--font-archivo-display), var(--font-sans);
+  font-weight: 800;
+  letter-spacing: -0.022em;
+  line-height: 1.04;
+}
+
+/* A field or section label: sentence case, never tracked-out capitals. */
+@utility ui-label {
+  font-family: var(--font-sans);
+  font-size: 0.8125rem;
   font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: 0.004em;
   color: hsl(var(--muted-foreground));
+}
+
+/* Tabular data in the mono face: counts, sizes, digests. */
+@utility readout {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.012em;
+}
+
+/* Same tightening wherever the mono face is applied by utility. */
+@utility font-mono {
+  font-family: var(--font-mono);
+  letter-spacing: -0.012em;
 }
 
 /* Route-change progress bar (NavigationProgressBar). */
@@ -570,24 +888,37 @@
   }
 }
 
+/* The one orchestrated moment: keys on the home rack seat themselves once. */
+@keyframes key-seat {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Every link here is a full page load (each route carries its own CSP), so
+   pages cross-fade instead of flashing. Browsers without cross-document view
+   transitions simply navigate as before. */
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition {
+    navigation: auto;
+  }
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 140ms;
+    animation-timing-function: var(--ease-press);
+  }
+}
+
 /* --- Reduced motion --- */
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
   }
-  html,
-  body,
-  .bg-background,
-  .bg-card,
-  .bg-popover,
-  .text-foreground,
-  .text-muted-foreground,
-  .text-primary {
-    transition: none;
-  }
-  /* Neutralize all keyframe motion — the Radix/tw-animate enter-exit
-     animations and the loading spinner use raw animate-* utilities that
-     motion-safe: wouldn't cover. */
   *,
   *::before,
   *::after {
@@ -596,63 +927,4 @@
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
-}
-
-/* --- Syntax highlighting -----------------------------------------------
-   Replaces prismjs/themes/prism-tomorrow.css, which was a fixed dark theme
-   loaded on every theme: on the two light palettes its tokens measured
-   1.4-2.8:1 and were effectively unreadable. These rules are driven by the
-   per-theme --code-* variables above, so highlighting follows the active
-   theme and every token clears 4.5:1 (asserted in theme-contrast.test.ts).
-   ---------------------------------------------------------------------- */
-.token.comment,
-.token.prolog,
-.token.doctype,
-.token.cdata {
-  color: var(--code-comment);
-}
-.token.punctuation {
-  color: var(--code-punctuation);
-}
-.token.property,
-.token.tag,
-.token.constant,
-.token.symbol,
-.token.deleted {
-  color: var(--code-tag);
-}
-.token.boolean,
-.token.number,
-.token.regex {
-  color: var(--code-number);
-}
-.token.selector,
-.token.attr-name,
-.token.string,
-.token.char,
-.token.builtin,
-.token.inserted {
-  color: var(--code-string);
-}
-.token.operator,
-.token.entity,
-.token.url,
-.token.variable {
-  color: var(--code-operator);
-}
-.token.atrule,
-.token.attr-value,
-.token.function,
-.token.class-name {
-  color: var(--code-function);
-}
-.token.keyword {
-  color: var(--code-keyword);
-}
-.token.important,
-.token.bold {
-  font-weight: 700;
-}
-.token.italic {
-  font-style: italic;
 }

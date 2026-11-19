@@ -24,7 +24,7 @@ export default function ContactPage() {
   return (
     <ToolPage contentClassName="mx-auto max-w-3xl">
       <article className="flex flex-col gap-8">
-        <PageHeader eyebrow="Contact" title="Send feedback or start a tooling conversation.">
+        <PageHeader title="Send feedback or start a tooling conversation.">
           <p>
             For consulting, product questions, or feedback about Simple Dev Tools, use the
             official Hello.World Consulting site or Jonathan R. Reed&apos;s project profile.
@@ -49,11 +49,11 @@ export default function ContactPage() {
               href={card.href}
               target="_blank"
               rel="noopener noreferrer"
-              className="group flex items-start justify-between gap-3 border-2 border-border bg-card p-5 transition-colors hover:border-primary hover:bg-primary/10 focus-visible:border-primary focus-visible:outline-none"
+              className="group flex items-start justify-between gap-3 border border-border bg-card p-5 transition-colors hover:border-primary hover:bg-primary/10 focus-visible:border-primary focus-visible:outline-none rounded-lg"
             >
               <span className="flex min-w-0 flex-col gap-2">
-                <span className="brutal-label">{card.label}</span>
-                <span className="font-display text-lg font-bold tracking-tight text-foreground">
+                <span className="ui-label">{card.label}</span>
+                <span className="font-display text-lg text-foreground">
                   {card.name}
                 </span>
               </span>

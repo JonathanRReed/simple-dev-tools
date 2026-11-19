@@ -48,7 +48,7 @@ const SQL_STORAGE_KEY = "sdt:sqlite:sql";
 const CodeEditor = dynamic(() => import("@/components/tool/CodeEditor"), {
   ssr: false,
   loading: () => (
-    <div className="min-h-[200px] border-2 border-border bg-background animate-pulse" />
+    <div className="min-h-[200px] well animate-pulse" />
   ),
 });
 
@@ -167,12 +167,12 @@ function ResultTable({ result }: { result: ResultSet }) {
           {result.values.length} rows by {result.columns.length} columns
         </caption>
         <thead className="sticky top-0 z-10 bg-card">
-          <tr className="border-b-2 border-border">
+          <tr className="border-b border-border">
             {result.columns.map((col, i) => (
               <th
                 key={`${col}-${i}`}
                 scope="col"
-                className="bg-card px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+                className="bg-card px-3 py-2 text-left text-xs font-semibold text-muted-foreground"
               >
                 {col}
               </th>
@@ -370,7 +370,6 @@ export default function SQLiteClient() {
 
   return (
     <ToolShell
-      eyebrow="SQLite · WASM"
       toolbar={toolbar}
       shareParams={shareParams}
       shortcuts={shortcuts}
@@ -382,7 +381,7 @@ export default function SQLiteClient() {
             onFileText={handleFileText}
             accept=".sql,.txt,text/plain"
             label="Import SQL"
-            className="border-2 border-border bg-background focus-within:ring-2 focus-within:ring-ring"
+            className="well focus-within:ring-2 focus-within:ring-ring"
           >
             <CodeEditor
               value={sql}
@@ -401,7 +400,7 @@ export default function SQLiteClient() {
             </Button>
             {loading && <Button variant="outline" onClick={cancelQuery}>Cancel and discard database</Button>}
             <span className="font-mono text-xs text-muted-foreground">
-              {dbReady ? "Press ⌘/Ctrl + Enter to run" : "Loading SQLite WASM…"}
+              {dbReady ? "Press ⌘ or Ctrl + Enter to run" : "Loading SQLite WASM…"}
             </span>
           </div>
           {error ? <Alert variant="error">{error}</Alert> : null}
@@ -428,10 +427,10 @@ export default function SQLiteClient() {
                     rows to reach it. */}
                 <div>
                   {results.map((result, idx) => (
-                    <div key={idx} className="border-b-2 border-border last:border-b-0">
+                    <div key={idx} className="border-b border-border last:border-b-0">
                       {results.length > 1 ? (
-                        <p className="brutal-label px-3 pt-2">
-                          {`#${idx + 1} · ${result.values.length} row${
+                        <p className="ui-label px-3 pt-2">
+                          {`Result ${idx + 1}, ${result.values.length} row${
                             result.values.length === 1 ? "" : "s"
                           } × ${result.columns.length} col${
                             result.columns.length === 1 ? "" : "s"

@@ -11,6 +11,7 @@ import {
   toHex,
 } from "@/lib/base64";
 import ToolShell from "@/components/tool/ToolShell";
+import { readHandoff } from "@/lib/handoff";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
@@ -323,6 +324,16 @@ export default function SecurityTokensClient() {
   const [publicKey, setPublicKey] = useState<string>("");
   const [verifyState, setVerifyState] = useState<VerifyState>({ checked: false });
   const [verifying, setVerifying] = useState(false);
+
+  // A token pasted into the home slot arrives as a one-shot handoff. This tool
+  // has no share links on purpose: a token must never end up in a URL.
+  useEffect(() => {
+    const handed = readHandoff();
+    if (handed && typeof handed.jwt === "string") {
+      setJwt(handed.jwt);
+      setTab("jwt");
+    }
+  }, []);
 
   // Auto-decode header/payload live as the token changes.
   const decoded = useMemo(() => {
@@ -696,9 +707,9 @@ export default function SecurityTokensClient() {
   }
 
   const taClass =
-    "flex w-full rounded-none border-2 border-input bg-background px-3 py-2 font-mono text-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-ring disabled:cursor-not-allowed disabled:opacity-50";
+    "flex w-full border border-input bg-background px-3 py-2 font-mono text-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-ring disabled:cursor-not-allowed disabled:opacity-50 rounded-lg";
   const selectClass =
-    "h-9 rounded-none border-2 border-input bg-background px-3 py-1 font-mono text-sm transition-colors focus-visible:outline-none focus-visible:border-ring";
+    "h-9 border border-input bg-background px-3 py-1 font-mono text-sm transition-colors focus-visible:outline-none focus-visible:border-ring rounded-lg";
 
   return (
     <div className="flex flex-col gap-6 text-foreground">
@@ -718,7 +729,7 @@ export default function SecurityTokensClient() {
         {/* JWT */}
         <TabsContent value="jwt">
           <ToolShell
-            eyebrow="JWT decode / verify"
+            label="Decode and verify a token"
             toolbar={
               <>
                 <Button variant="default" size="sm" onClick={onVerify} disabled={verifying}>
@@ -830,9 +841,9 @@ export default function SecurityTokensClient() {
                 </ResultPanel>
 
                 {payload ? (
-                  <div className="border-2 border-border bg-card p-3 text-xs">
+                  <div className="well p-3 text-xs">
                     <div className="mb-2 flex items-center justify-between gap-2">
-                      <span className="brutal-label">Claims</span>
+                      <span className="ui-label">Claims</span>
                       {(() => {
                         // Derive status purely from the already-decoded claims.
                         const nowSec = currentEpochSeconds;
@@ -845,15 +856,15 @@ export default function SecurityTokensClient() {
                         // forged/unsigned token can't read as "good" — green is
                         // reserved for a verified signature.
                         const { label, cls } = expired
-                          ? { label: "EXPIRED", cls: "text-destructive" }
+                          ? { label: "Expired", cls: "text-destructive" }
                           : notYet
-                            ? { label: "NOT YET VALID", cls: "text-rp-gold" }
+                            ? { label: "Not yet valid", cls: "text-hue-data" }
                             : nowSec === null
-                              ? { label: "TIME CHECK PENDING", cls: "text-muted-foreground" }
-                              : { label: "WITHIN VALIDITY WINDOW", cls: "text-muted-foreground" };
+                              ? { label: "Time check pending", cls: "text-muted-foreground" }
+                              : { label: "Within validity window", cls: "text-muted-foreground" };
                         return (
                           <span
-                            className={`border-2 border-border px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wide ${cls}`}
+                            className={`rounded-sm border border-border px-1.5 py-0.5 text-xs font-semibold ${cls}`}
                           >
                             {label}
                           </span>
@@ -911,7 +922,7 @@ export default function SecurityTokensClient() {
         {/* Sign & build */}
         <TabsContent value="sign">
           <ToolShell
-            eyebrow="JWT sign / build"
+            label="Build and sign a token"
             toolbar={
               <>
                 <Button variant="default" size="sm" onClick={onSign} disabled={signing}>
@@ -965,7 +976,7 @@ export default function SecurityTokensClient() {
                 </Field>
 
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="brutal-label text-[10px]">Claims</span>
+                  <span className="ui-label text-[10px]">Claims</span>
                   <Button
                     type="button"
                     variant="outline"
@@ -1072,9 +1083,9 @@ export default function SecurityTokensClient() {
                     >
                       {signResult}
                     </ResultPanel>
-                    <div className="border-2 border-border bg-card p-3 text-xs">
+                    <div className="well p-3 text-xs">
                       <div className="mb-2 flex items-center justify-between gap-2">
-                        <span className="brutal-label">Signature</span>
+                        <span className="ui-label">Signature</span>
                         <span className="font-mono">{signMeta?.signatureSize ?? 0} bytes</span>
                       </div>
                       {signAlg === "HS256" ? (
@@ -1098,7 +1109,7 @@ export default function SecurityTokensClient() {
         {/* Hash */}
         <TabsContent value="hash">
           <ToolShell
-            eyebrow="Digest"
+            label="Digest"
             toolbar={
               <>
                 <Button variant="default" size="sm" onClick={onHash}>
@@ -1160,7 +1171,7 @@ export default function SecurityTokensClient() {
         {/* HMAC */}
         <TabsContent value="hmac">
           <ToolShell
-            eyebrow="HMAC"
+            label="HMAC"
             toolbar={
               <>
                 <Button variant="default" size="sm" onClick={onHmac}>

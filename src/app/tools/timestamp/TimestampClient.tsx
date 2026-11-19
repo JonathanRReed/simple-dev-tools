@@ -141,8 +141,8 @@ function formatInZone(date: Date, timeZone: string): string {
 }
 
 const DETECTION_LABEL: Record<Detection, string> = {
-  seconds: "Unix · seconds",
-  milliseconds: "Unix · milliseconds",
+  seconds: "Unix seconds",
+  milliseconds: "Unix milliseconds",
   string: "Date string",
 };
 
@@ -279,14 +279,13 @@ export default function TimestampClient() {
 
   return (
     <ToolShell
-      eyebrow="Timestamp · local"
       toolbar={toolbar}
       shareParams={shareParams}
       shortcuts={shortcuts}
     >
       <div className="flex flex-col gap-6">
         <Field label="Input unit" htmlFor="timestamp-unit">
-          <select id="timestamp-unit" value={unit} onChange={event => setUnit(event.target.value)} className="h-10 w-full border-2 border-input bg-background px-3 text-sm">
+          <select id="timestamp-unit" value={unit} onChange={event => setUnit(event.target.value)} className="h-10 w-full border border-input bg-background px-3 text-sm rounded-lg">
             <option value="auto">Auto-detect / date string</option>
             <option value="seconds">Unix seconds</option>
             <option value="milliseconds">Unix milliseconds</option>
@@ -312,7 +311,7 @@ export default function TimestampClient() {
             id="timestamp-input"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="1700000000  ·  2024-03-14T15:09:26Z  ·  Mar 14 2024"
+            placeholder="1700000000, 2024-03-14T15:09:26Z, or Mar 14 2024"
             spellCheck={false}
             autoComplete="off"
             autoCapitalize="off"
@@ -334,22 +333,22 @@ export default function TimestampClient() {
 
         {fields ? (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <ResultPanel title="Unix · seconds" copyValue={fields.seconds}>
+            <ResultPanel title="Unix seconds" copyValue={fields.seconds}>
               <span className="font-mono text-sm break-all">{fields.seconds}</span>
             </ResultPanel>
-            <ResultPanel title="Unix · milliseconds" copyValue={fields.milliseconds}>
+            <ResultPanel title="Unix milliseconds" copyValue={fields.milliseconds}>
               <span className="font-mono text-sm break-all">
                 {fields.milliseconds}
               </span>
             </ResultPanel>
-            <ResultPanel title="ISO 8601 · UTC" copyValue={fields.iso}>
+            <ResultPanel title="ISO 8601, UTC" copyValue={fields.iso}>
               <span className="font-mono text-sm break-all">{fields.iso}</span>
             </ResultPanel>
             <ResultPanel title="UTC string" copyValue={fields.utc}>
               <span className="font-mono text-sm break-all">{fields.utc}</span>
             </ResultPanel>
             <ResultPanel
-              title={`Local · ${localZone}`}
+              title={`Local time, ${localZone}`}
               copyValue={fields.local}
             >
               <span className="font-mono text-sm break-all">{fields.local}</span>
@@ -368,14 +367,14 @@ export default function TimestampClient() {
         ) : null}
 
         {fields ? (
-          <div className="flex flex-col gap-3 border-t-2 border-border pt-6">
+          <div className="flex flex-col gap-3 border-t border-border pt-6">
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="timestamp-zone">Convert to time zone</Label>
               <select
                 id="timestamp-zone"
                 value={zone}
                 onChange={(e) => handleZoneChange(e.target.value)}
-                className="flex h-9 w-full rounded-none border-2 border-input bg-background px-3 py-1 font-mono text-sm transition-colors focus-visible:border-ring focus-visible:outline-none"
+                className="flex h-9 w-full border border-input bg-background px-3 py-1 font-mono text-sm transition-colors focus-visible:border-ring focus-visible:outline-none rounded-lg"
               >
                 {zoneOptions}
               </select>

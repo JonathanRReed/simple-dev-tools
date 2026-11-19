@@ -1,12 +1,18 @@
 Simple Dev Tools logo assets
 
-Backgrounds removed. PNG files use transparency.
+The mark is the "/" key: the shortcut that opens search anywhere on the site.
 
-Recommended use:
-- Normal/header logo: simple-dev-tools-logo-normal-1600w.png or simple-dev-tools-logo-normal-transparent.png
-- Footer logo: simple-dev-tools-logo-footer-1600w.png or simple-dev-tools-logo-footer-1200x400.png
-- Favicon: favicon.ico, favicon-32x32.png, favicon-16x16.png
-- Apple touch icon: apple-touch-icon.png
+Every image here, plus /favicon.ico and /og-image.png, is generated from one
+drawing by scripts/brand-assets.mjs. Do not edit them by hand; change the
+script and run:
+
+    bun run assets:brand
+
+- Browser tab: favicon.ico (16, 32, 48, 64), favicon-32x32.png, favicon-16x16.png, icon.svg
+  The bare keycap on a transparent background.
+- Home screen: apple-touch-icon.png, android-chrome-192x192.png, simple-dev-tools-favicon-512x512.png
+  The keycap on the dark bench color, with margin for launcher masks.
 - Web manifest: site.webmanifest
 
-Assumption: the light-background horizontal logo is the normal/header logo, the dark-background horizontal logo is the footer logo, and the square app icon is the favicon.
+In the app itself the mark is an inline SVG (src/components/BrandMark.tsx) so it
+follows the active theme. These files are fixed to the default Art Deco palette.

@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 export default function OfflinePage() {
   return (
     <ToolPage contentClassName="mx-auto max-w-3xl space-y-6">
-      <PageHeader eyebrow="No connection" title="You are offline">
+      <PageHeader title="You are offline">
         <p>
           Your connection dropped. Tools you&apos;ve already opened are usually cached and should
           keep working without a network.
@@ -29,10 +29,10 @@ export default function OfflinePage() {
       {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
       <a
         href="/"
-        className="inline-flex items-center gap-2 border-2 border-border bg-card px-4 py-2 text-sm font-semibold transition-colors hover:border-primary hover:bg-primary/10"
+        className="key inline-flex h-10 w-fit items-center gap-2 rounded-md px-4 text-sm font-semibold text-secondary-foreground sm:h-9"
       >
         <Home className="size-4" aria-hidden="true" />
-        Back to home
+        Back to all tools
       </a>
     </ToolPage>
   );

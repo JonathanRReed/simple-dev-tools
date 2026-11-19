@@ -83,9 +83,9 @@ test('every diagram template renders and system theme describes the displayed pa
     await expect(page.getByRole('img', { name: 'Rendered Mermaid diagram' })).toContainText(text, { timeout: 20000 });
   }
   await page.getByRole('button', { name: 'Toggle theme', exact: true }).click();
-  await page.getByRole('menuitemradio', { name: /System Match/ }).click();
-  await expect(page.getByRole('menu', { name: 'Toggle theme', exact: true })).toContainText('System · Paper');
-  for (const [label, id] of [['Art Deco', 'art-deco'], ['Rose Pine', 'main'], ['Moon', 'moon'], ['Dawn', 'dawn'], ['Raycast', 'raycast'], ['Paper', 'paper']]) {
+  await page.getByRole('menuitemradio', { name: /^System / }).click();
+  await expect(page.getByRole('menu', { name: 'Toggle theme', exact: true })).toContainText('Following your device: Paper');
+  for (const [label, id] of [['Art Deco', 'art-deco'], ['Blueprint', 'blueprint'], ['Rose Pine', 'main'], ['Moon', 'moon'], ['Graphite', 'raycast'], ['Paper', 'paper'], ['Dawn', 'dawn'], ['Hi-Vis', 'hi-vis']]) {
     await page.getByRole('menuitemradio', { name: new RegExp(`^${label} `) }).click();
     await expect(page.locator('html')).toHaveAttribute('data-theme', id);
   }

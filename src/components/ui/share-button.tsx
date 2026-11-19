@@ -72,9 +72,9 @@ const ShareButton = React.forwardRef<HTMLButtonElement, ShareButtonProps>(
 
     const badge =
       state === "copied"
-        ? "border-rp-foam text-foreground"
+        ? "[&_svg]:text-led"
         : state === "error" || state === "too-large"
-          ? "border-destructive text-foreground"
+          ? "[&_svg]:text-destructive"
           : "";
 
     const text =

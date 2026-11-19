@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import ToolPage from "@/components/layout/ToolPage";
 import ToolNotes from "@/components/tool/ToolNotes";
+import FamilyTools from "@/components/tool/FamilyTools";
 import ToolPageHeader from "@/components/tool/ToolPageHeader";
 import QueryClientOnly from "./ClientOnly";
 
@@ -42,6 +43,7 @@ export default function QueryPage() {
           </li>
         </ul>
       </ToolNotes>
+      <FamilyTools href="/tools/query/" />
     </ToolPage>
   );
 }

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import ToolPage from "@/components/layout/ToolPage";
 import ToolNotes from "@/components/tool/ToolNotes";
+import FamilyTools from "@/components/tool/FamilyTools";
 import ToolPageHeader from "@/components/tool/ToolPageHeader";
 import ColorClientOnly from "./ClientOnly";
 
@@ -37,6 +38,7 @@ export default function ColorPage() {
           formula. No accounts, no network, no surprises.
         </p>
       </ToolNotes>
+      <FamilyTools href="/tools/color/" />
     </ToolPage>
   );
 }

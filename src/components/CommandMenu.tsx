@@ -1,31 +1,16 @@
 "use client";
 
 import * as React from "react";
+import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
-import { useTheme } from "next-themes";
-import { Home, Palette } from "lucide-react";
 
-import {
-  CommandDialog,
-  CommandInput,
-  CommandList,
-  CommandEmpty,
-  CommandGroup,
-  CommandItem,
-  CommandSeparator,
-  CommandShortcut,
-} from "@/components/ui/command";
-import { getToolIcon } from "@/components/ToolIcon";
-import { useRecentTools } from "@/hooks/use-recent-tools";
-import { appThemes } from "@/lib/themes";
-import { getToolPage, normalizeHref, siteConfig, toolPages, trustPages, type ToolPageInfo } from "@/lib/site";
+import { isTypingTarget, useSingleKeyShortcuts } from "@/hooks/use-single-key-shortcuts";
+import { normalizeHref, toolPages } from "@/lib/site";
 
-// Keyword aliases so typing "data", "feedback", etc. finds the right page.
-const PAGE_KEYWORDS: Record<string, string[]> = {
-  "/about/": ["team", "author", "who", "maintainer"],
-  "/contact/": ["email", "support", "feedback", "bug"],
-  "/privacy/": ["data", "local", "tracking", "cookies"],
-};
+// The dialog (search library, Radix dialog, content detector) is not needed
+// to paint or hydrate a page, so it is a separate chunk.
+const loadPalette = () => import("@/components/CommandPalette");
+const CommandPalette = dynamic(loadPalette, { ssr: false });
 
 type CommandMenuValue = { open: boolean; setOpen: (open: boolean) => void; toggle: () => void };
 const CommandMenuContext = React.createContext<CommandMenuValue | null>(null);
@@ -36,33 +21,34 @@ export function useCommandMenu(): CommandMenuValue {
   return ctx;
 }
 
-function isTypingTarget(el: EventTarget | null): boolean {
-  if (!(el instanceof HTMLElement)) return false;
-  const tag = el.tagName;
-  return (
-    tag === "INPUT" ||
-    tag === "TEXTAREA" ||
-    tag === "SELECT" ||
-    el.isContentEditable
-  );
-}
-
+/**
+ * Owns the command palette's open state and the global shortcuts (⌘K, `/`,
+ * `[` and `]`). The palette UI itself is loaded on demand; see CommandPalette.
+ */
 export function CommandMenuProvider({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = React.useState(false);
-  const [query, setQuery] = React.useState("");
+  // Mount the dialog only once it has been asked for, then keep it mounted so
+  // its close animation can run.
+  const [requested, setRequested] = React.useState(false);
   const pathname = usePathname();
-  const { setTheme } = useTheme();
-  const { recent, pinned } = useRecentTools();
+  const [shortcutsOn] = useSingleKeyShortcuts();
 
   const toggle = React.useCallback(() => setOpen((o) => !o), []);
 
-  const go = React.useCallback(
-    (href: string) => {
-      setOpen(false);
-      window.location.assign(href);
-    },
-    []
-  );
+  React.useEffect(() => {
+    if (open) setRequested(true);
+  }, [open]);
+
+  // Fetch the chunk when the browser is idle, so the first ⌘K is instant
+  // without the download competing with the page's own work.
+  React.useEffect(() => {
+    if (typeof window.requestIdleCallback === "function") {
+      const id = window.requestIdleCallback(() => void loadPalette(), { timeout: 4000 });
+      return () => window.cancelIdleCallback(id);
+    }
+    const timer = window.setTimeout(() => void loadPalette(), 1500);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   // Move to prev/next tool in the flat toolPages order.
   const step = React.useCallback(
@@ -83,6 +69,8 @@ export function CommandMenuProvider({ children }: { children: React.ReactNode })
         toggle();
         return;
       }
+      // The rest are single-character shortcuts, which can be switched off.
+      if (!shortcutsOn) return;
       if (isTypingTarget(e.target) || e.metaKey || e.ctrlKey || e.altKey) return;
       if (e.key === "/" || e.key === "?") {
         e.preventDefault();
@@ -97,139 +85,14 @@ export function CommandMenuProvider({ children }: { children: React.ReactNode })
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [toggle, step]);
-
-  // Reset the query each time the palette opens.
-  React.useEffect(() => {
-    if (open) setQuery("");
-  }, [open]);
-
-  // Performance optimization: Memoize pinned and recent tool derivations to avoid
-  // instantiating Sets, array mappings, and catalog lookups on every single
-  // keystroke as the user types into the search input.
-  const { pinnedTools, recentTools } = React.useMemo(() => {
-    const pinnedSet = new Set(pinned);
-    const pinnedToolsList = pinned
-      .map((h) => getToolPage(h))
-      .filter((t): t is ToolPageInfo => t != null);
-    const recentToolsList = recent
-      .filter((h) => !pinnedSet.has(h))
-      .map((h) => getToolPage(h))
-      .filter((t): t is ToolPageInfo => t != null);
-    return { pinnedTools: pinnedToolsList, recentTools: recentToolsList };
-  }, [pinned, recent]);
-
-  const showQuickGroups = query.trim() === "";
+  }, [toggle, step, shortcutsOn]);
 
   const value = React.useMemo<CommandMenuValue>(() => ({ open, setOpen, toggle }), [open, toggle]);
 
   return (
     <CommandMenuContext.Provider value={value}>
       {children}
-      <CommandDialog open={open} onOpenChange={setOpen}>
-        <CommandInput
-          aria-label="Search tools, pages, and themes"
-          placeholder="Search tools, pages, themes…"
-          value={query}
-          onValueChange={setQuery}
-        />
-        <CommandList>
-          <CommandEmpty>No matches.</CommandEmpty>
-
-          {showQuickGroups && pinnedTools.length > 0 ? (
-            <CommandGroup heading="Pinned">
-              {pinnedTools.map((tool) => {
-                const Icon = getToolIcon(tool.icon);
-                return (
-                  <CommandItem key={`pin-${tool.href}`} value={`pinned ${tool.title}`} onSelect={() => go(tool.href)}>
-                    <Icon />
-                    <span>{tool.title}</span>
-                  </CommandItem>
-                );
-              })}
-            </CommandGroup>
-          ) : null}
-
-          {showQuickGroups && recentTools.length > 0 ? (
-            <CommandGroup heading="Recent">
-              {recentTools.map((tool) => {
-                const Icon = getToolIcon(tool.icon);
-                return (
-                  <CommandItem key={`recent-${tool.href}`} value={`recent ${tool.title}`} onSelect={() => go(tool.href)}>
-                    <Icon />
-                    <span>{tool.title}</span>
-                  </CommandItem>
-                );
-              })}
-            </CommandGroup>
-          ) : null}
-
-          <CommandGroup heading="Navigation">
-            <CommandItem value="home overview" keywords={["start", "catalog"]} onSelect={() => go("/")}>
-              <Home />
-              <span>Home</span>
-            </CommandItem>
-          </CommandGroup>
-
-          <CommandGroup heading="Tools">
-            {toolPages.map((tool) => {
-              const Icon = getToolIcon(tool.icon);
-              return (
-                <CommandItem
-                  key={tool.href}
-                  value={tool.title}
-                  keywords={[...tool.tags]}
-                  onSelect={() => go(tool.href)}
-                >
-                  <Icon />
-                  <span>{tool.title}</span>
-                  <CommandShortcut>{tool.tags[0]}</CommandShortcut>
-                </CommandItem>
-              );
-            })}
-          </CommandGroup>
-
-          <CommandSeparator />
-
-          <CommandGroup heading="Pages">
-            {trustPages.map((page) => (
-              <CommandItem
-                key={page.href}
-                value={page.title}
-                keywords={PAGE_KEYWORDS[page.href] ?? []}
-                onSelect={() => go(page.href)}
-              >
-                <span>{page.title}</span>
-              </CommandItem>
-            ))}
-          </CommandGroup>
-
-          <CommandSeparator />
-
-          <CommandGroup heading="Theme">
-            {appThemes.map((theme) => (
-              <CommandItem
-                key={theme.id}
-                value={`theme ${theme.label}`}
-                onSelect={() => {
-                  setTheme(theme.id);
-                  setOpen(false);
-                }}
-              >
-                <Palette />
-                <span>{theme.label}</span>
-                <CommandShortcut>{theme.description}</CommandShortcut>
-              </CommandItem>
-            ))}
-          </CommandGroup>
-        </CommandList>
-        <div className="flex items-center gap-4 border-t-2 border-border px-3 py-2 font-mono text-[0.65rem] uppercase tracking-wider text-muted-foreground">
-          <span>↑↓ move</span>
-          <span>↵ open</span>
-          <span>[ ] prev/next</span>
-          <span className="ml-auto truncate">{siteConfig.shortName}</span>
-        </div>
-      </CommandDialog>
+      {requested ? <CommandPalette open={open} setOpen={setOpen} /> : null}
     </CommandMenuContext.Provider>
   );
 }

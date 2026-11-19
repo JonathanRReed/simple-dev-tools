@@ -184,10 +184,10 @@ export function NavigationProgressBar() {
   const { isNavigating } = useNavigationProgress();
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 top-0 z-50 h-1">
+    <div className="pointer-events-none fixed inset-x-0 top-0 z-50 h-0.5">
       <div
         className={cn(
-          'h-full origin-left rounded-none bg-primary transform transition-opacity duration-200 will-change-transform',
+          'h-full origin-left bg-primary transform transition-opacity duration-200 will-change-transform',
           isNavigating
             ? 'opacity-100 motion-safe:animate-[nav-progress_1.2s_cubic-bezier(0.4,0,0.2,1)_forwards]'
             : 'opacity-0'

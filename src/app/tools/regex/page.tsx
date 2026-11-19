@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import ToolPage from "@/components/layout/ToolPage";
 import ToolNotes from "@/components/tool/ToolNotes";
+import FamilyTools from "@/components/tool/FamilyTools";
 import ToolPageHeader from "@/components/tool/ToolPageHeader";
 import RegexClientOnly from "./ClientOnly";
 
@@ -22,7 +23,7 @@ export default function RegexPage() {
           Test, visualize, and share regular expressions with live matches, replacements, and
           shareable URLs. Everything runs client-side.
         </p>
-        <p className="text-sm">
+        <p>
           Use Regex Lab when you need to debug a pattern before it goes into an API route,
           validation rule, parser, log filter, or data cleanup script. Live matches make it
           easier to catch greedy groups, missing anchors, accidental case sensitivity, and
@@ -43,6 +44,7 @@ export default function RegexPage() {
           and patterns do not need to be sent to a remote formatter.
         </p>
       </ToolNotes>
+      <FamilyTools href="/tools/regex/" />
     </ToolPage>
   );
 }

@@ -288,7 +288,7 @@ export default function IDsCronTool() {
   );
 
   return (
-    <ToolShell eyebrow="IDs & Scheduling" shareParams={shareParams} shortcuts={shortcuts}>
+    <ToolShell shareParams={shareParams} shortcuts={shortcuts}>
       <Tabs value={tab} onValueChange={(v) => setTab(v)}>
         <TabsList>
           <TabsTrigger value="ids">IDs</TabsTrigger>
@@ -393,12 +393,12 @@ export default function IDsCronTool() {
             </div>
 
             {/* Bulk generation */}
-            <div className="flex flex-col gap-3 border-t-2 border-border pt-6">
+            <div className="flex flex-col gap-3 border-t border-border pt-6">
               <div className="flex flex-wrap items-end gap-3">
                 <Field label="Bulk type" htmlFor="bulk-kind" className="w-40">
                   <select
                     id="bulk-kind"
-                    className="flex h-9 w-full rounded-none border-2 border-input bg-background px-3 py-1 font-mono text-sm transition-colors focus-visible:border-ring focus-visible:outline-none"
+                    className="flex h-9 w-full border border-input bg-background px-3 py-1 font-mono text-sm transition-colors focus-visible:border-ring focus-visible:outline-none rounded-lg"
                     value={bulkKind}
                     onChange={(e) => setBulkKind(e.target.value as GenKind)}
                   >

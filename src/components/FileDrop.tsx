@@ -134,11 +134,11 @@ const FileDrop = React.forwardRef<HTMLDivElement, FileDropProps>(
         />
         {dragging || readError ? (
           <div
-            className="pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-center gap-1 border-2 border-dashed border-rp-iris bg-background/80"
+            className="pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-rp-iris bg-background/85"
             role="status"
             aria-live="polite"
           >
-            <span className="brutal-label flex items-center gap-2 text-foreground">
+            <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
               <Upload className="size-4" aria-hidden="true" />
               {dragging ? "Drop file to import" : readError}
             </span>
@@ -147,7 +147,7 @@ const FileDrop = React.forwardRef<HTMLDivElement, FileDropProps>(
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
-          className="absolute right-2 top-2 z-0 inline-flex items-center gap-1 border border-border bg-background px-1.5 py-0.5 font-mono text-[0.65rem] uppercase tracking-wide text-muted-foreground opacity-0 transition-opacity hover:border-primary hover:text-foreground focus-visible:opacity-100 focus-visible:outline-none focus-visible:border-primary group-hover:opacity-100"
+          className="absolute right-2 top-2 z-0 inline-flex items-center gap-1 rounded-sm border border-border bg-secondary px-1.5 py-0.5 text-xs font-medium text-secondary-foreground opacity-0 transition-opacity focus-visible:opacity-100 group-hover:opacity-100 [@media(hover:none)]:opacity-100"
         >
           <Upload className="size-3" aria-hidden="true" />
           {label}

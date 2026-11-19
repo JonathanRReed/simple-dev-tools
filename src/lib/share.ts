@@ -1,5 +1,6 @@
 import { compressSync, decompressSync } from "fflate";
 
+import { readHandoff } from "@/lib/handoff";
 import {
   bytesToBase64url,
   base64urlToBytes,
@@ -106,12 +107,15 @@ export function decodeShareState(encoded: string): ShareParams | null {
   return null;
 }
 
-/** Read share params from the current location hash (`#s=…`), if any. Synchronous. */
+/**
+ * Read state addressed to this page: a share link in the location hash
+ * (`#s=…`) if there is one, otherwise a pending handoff. Synchronous.
+ */
 export function readShareParams(): ShareParams | null {
   if (typeof window === "undefined") return null;
   const hash = window.location.hash;
-  if (!hash.startsWith("#s=")) return null;
-  return decodeShareState(hash.slice(3));
+  if (hash.startsWith("#s=")) return decodeShareState(hash.slice(3));
+  return readHandoff();
 }
 
 /** Build the full shareable URL for the current page with these params. */
