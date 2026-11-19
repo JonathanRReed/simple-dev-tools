@@ -19,7 +19,7 @@ import { ResultPanel } from "@/components/ui/result-panel";
 import { Alert } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { toHex } from "@/lib/base64";
+import { HEX_TABLE } from "@/lib/base64";
 import { decodeUlidTimestamp } from "@/lib/ulid";
 
 const UUID_RE =
@@ -36,23 +36,33 @@ function randomUUIDv4() {
     return c.randomUUID();
   if (c && "getRandomValues" in c) {
     // Fallback (RFC4122 v4) using getRandomValues.
-    // Uses precomputed lookup table via toHex to avoid 16 string method calls
-    // and intermediate array slice/join allocations per UUID.
+    // Performance optimization: Uses direct precomputed HEX_TABLE indexing at each UUID segment
+    // to avoid intermediate 32-character hex string allocation and 5 subsequent .slice() substring allocations.
     const bytes = new Uint8Array(16);
     c.getRandomValues(bytes);
     bytes[6] = (bytes[6] & 0x0f) | 0x40; // version 4
     bytes[8] = (bytes[8] & 0x3f) | 0x80; // variant 10
-    const h = toHex(bytes);
     return (
-      h.slice(0, 8) +
+      HEX_TABLE[bytes[0]] +
+      HEX_TABLE[bytes[1]] +
+      HEX_TABLE[bytes[2]] +
+      HEX_TABLE[bytes[3]] +
       "-" +
-      h.slice(8, 12) +
+      HEX_TABLE[bytes[4]] +
+      HEX_TABLE[bytes[5]] +
       "-" +
-      h.slice(12, 16) +
+      HEX_TABLE[bytes[6]] +
+      HEX_TABLE[bytes[7]] +
       "-" +
-      h.slice(16, 20) +
+      HEX_TABLE[bytes[8]] +
+      HEX_TABLE[bytes[9]] +
       "-" +
-      h.slice(20, 32)
+      HEX_TABLE[bytes[10]] +
+      HEX_TABLE[bytes[11]] +
+      HEX_TABLE[bytes[12]] +
+      HEX_TABLE[bytes[13]] +
+      HEX_TABLE[bytes[14]] +
+      HEX_TABLE[bytes[15]]
     );
   }
   // Non-crypto fallback (not secure). For environments without Web Crypto.
