@@ -108,7 +108,8 @@ export default function KeyRack() {
               <a
                 href={tool.href}
                 data-pressed={pressed === tool.href ? 'true' : undefined}
-                className="key key-tall flex h-full min-h-[8.25rem] flex-col gap-2 rounded-xl p-3 text-left text-secondary-foreground sm:min-h-[9rem] sm:p-3.5"
+                title={tool.description}
+                className="key key-tall flex h-full flex-col gap-3 rounded-xl p-3 text-left text-secondary-foreground sm:p-3.5"
               >
                 <span className="flex items-start justify-between gap-2">
                   <ToolTile icon={tool.icon} hue={tool.hue} className="bg-background" />
@@ -127,9 +128,6 @@ export default function KeyRack() {
                   </span>
                 </span>
                 <span className="text-[0.95rem] font-semibold leading-tight">{tool.title}</span>
-                <span className="line-clamp-3 text-xs leading-snug opacity-75">
-                  {tool.description}
-                </span>
               </a>
             </li>
           );

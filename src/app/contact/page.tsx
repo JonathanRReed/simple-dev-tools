@@ -24,21 +24,10 @@ export default function ContactPage() {
   return (
     <ToolPage contentClassName="mx-auto max-w-3xl">
       <article className="flex flex-col gap-8">
-        <PageHeader title="Send feedback or start a tooling conversation.">
+        <PageHeader title="Contact">
           <p>
             For consulting, product questions, or feedback about Simple Dev Tools, use the
             official Hello.World Consulting site or Jonathan R. Reed&apos;s project profile.
-          </p>
-          <p>
-            Useful reports include the tool name, browser, input type, expected output, and
-            whether the issue affects copying, exporting, validation, or rendering. Please avoid
-            sending private tokens, production secrets, or customer data in a first message.
-          </p>
-          <p>
-            Reports about the Mermaid diagram generator, regex debugger, API snippet generator,
-            SQLite playground, schema studio, or token tools are easiest to act on when they
-            include a small reproducible sample. A short example usually works better than a
-            screenshot alone.
           </p>
         </PageHeader>
 
@@ -67,14 +56,12 @@ export default function ContactPage() {
 
         <PageSection title="What to send">
           <p>
-            For consulting, describe the current workflow, the system you are trying to build,
-            and the risk or delivery problem you want solved. For product feedback, describe the
-            browser-only tool you used and the exact output that felt wrong or incomplete.
+            For a bug, include the tool name, your browser, the kind of input, and the output you
+            expected. A small sample that reproduces it works better than a screenshot.
           </p>
           <p>
-            If the request is about a private codebase, send the shape of the problem first
-            instead of pasting confidential source code. The first pass only needs the goal, the
-            failing workflow, and the kind of output you expected from the tool.
+            Please don&apos;t send private tokens, production secrets, customer data, or
+            confidential source code. Describe the shape of the problem first.
           </p>
         </PageSection>
       </article>

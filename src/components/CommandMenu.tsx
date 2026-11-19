@@ -1,16 +1,17 @@
 "use client";
 
 import * as React from "react";
-import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 
+import { useLatch } from "@/hooks/use-latch";
 import { isTypingTarget, useSingleKeyShortcuts } from "@/hooks/use-single-key-shortcuts";
+import { deferComponent } from "@/lib/deferred-component";
+import { whenIdle } from "@/lib/idle";
 import { normalizeHref, toolPages } from "@/lib/site";
 
 // The dialog (search library, Radix dialog, content detector) is not needed
 // to paint or hydrate a page, so it is a separate chunk.
-const loadPalette = () => import("@/components/CommandPalette");
-const CommandPalette = dynamic(loadPalette, { ssr: false });
+const palette = deferComponent(() => import("@/components/CommandPalette"));
 
 type CommandMenuValue = { open: boolean; setOpen: (open: boolean) => void; toggle: () => void };
 const CommandMenuContext = React.createContext<CommandMenuValue | null>(null);
@@ -27,28 +28,21 @@ export function useCommandMenu(): CommandMenuValue {
  */
 export function CommandMenuProvider({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = React.useState(false);
-  // Mount the dialog only once it has been asked for, then keep it mounted so
-  // its close animation can run.
-  const [requested, setRequested] = React.useState(false);
+  const requested = useLatch(open);
   const pathname = usePathname();
   const [shortcutsOn] = useSingleKeyShortcuts();
 
   const toggle = React.useCallback(() => setOpen((o) => !o), []);
 
+  // Normally already loaded by the idle fetch below; this covers ⌘K pressed
+  // before that happened.
   React.useEffect(() => {
-    if (open) setRequested(true);
+    if (open) void palette.load();
   }, [open]);
 
   // Fetch the chunk when the browser is idle, so the first ⌘K is instant
   // without the download competing with the page's own work.
-  React.useEffect(() => {
-    if (typeof window.requestIdleCallback === "function") {
-      const id = window.requestIdleCallback(() => void loadPalette(), { timeout: 4000 });
-      return () => window.cancelIdleCallback(id);
-    }
-    const timer = window.setTimeout(() => void loadPalette(), 1500);
-    return () => window.clearTimeout(timer);
-  }, []);
+  React.useEffect(() => whenIdle(() => void palette.load()), []);
 
   // Move to prev/next tool in the flat toolPages order.
   const step = React.useCallback(
@@ -92,7 +86,7 @@ export function CommandMenuProvider({ children }: { children: React.ReactNode })
   return (
     <CommandMenuContext.Provider value={value}>
       {children}
-      {requested ? <CommandPalette open={open} setOpen={setOpen} /> : null}
+      {requested ? <palette.Component open={open} setOpen={setOpen} /> : null}
     </CommandMenuContext.Provider>
   );
 }

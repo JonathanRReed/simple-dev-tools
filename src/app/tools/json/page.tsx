@@ -18,16 +18,7 @@ export const metadata: Metadata = {
 export default function JsonPage() {
   return (
     <ToolPage contentClassName="mx-auto max-w-5xl space-y-6">
-      <ToolPageHeader href="/tools/json/">
-        <p>
-          Paste JSON, YAML, or CSV and validate it on the spot. Format, minify, or sort keys, then
-          convert between all three formats and query nested values by path.
-        </p>
-        <p>
-          Every byte stays on this page. Parsing, conversion, and queries all run client-side, so
-          nothing is ever uploaded.
-        </p>
-      </ToolPageHeader>
+      <ToolPageHeader href="/tools/json/" />
       <JsonClientOnly />
       <ToolNotes>
         <ul>

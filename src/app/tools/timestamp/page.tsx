@@ -18,17 +18,7 @@ export const metadata: Metadata = {
 export default function TimestampPage() {
   return (
     <ToolPage contentClassName="mx-auto max-w-5xl space-y-6">
-      <ToolPageHeader href="/tools/timestamp/">
-        <p>
-          Paste a Unix epoch or any parseable date string and read it back as seconds,
-          milliseconds, ISO 8601, UTC, your local zone, and relative time. Seconds vs.
-          milliseconds is auto-detected, or you can choose the unit.
-        </p>
-        <p>
-          Everything is computed locally. Nothing leaves your browser, and your last input is
-          remembered between visits.
-        </p>
-      </ToolPageHeader>
+      <ToolPageHeader href="/tools/timestamp/" />
       <TimestampClientOnly />
       <ToolNotes title="How detection works">
         <p>
@@ -38,6 +28,7 @@ export default function TimestampPage() {
           Date strings are accepted in Auto-detect mode; include a time zone to avoid
           differences between browsers and locations.
         </p>
+        <p>Your last input is saved in this browser. Reset clears it.</p>
       </ToolNotes>
       <FamilyTools href="/tools/timestamp/" />
     </ToolPage>

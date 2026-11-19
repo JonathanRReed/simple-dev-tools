@@ -1,7 +1,7 @@
 import { ArrowUpRight } from 'lucide-react';
 
 import BrandMark from '@/components/BrandMark';
-import { featuredToolHrefs, getToolPage, siteConfig, toolPages, trustPages } from '@/lib/site';
+import { featuredToolHrefs, getToolPage, siteConfig, trustPages } from '@/lib/site';
 import packageJson from '../../package.json';
 
 const featuredTools = featuredToolHrefs
@@ -21,8 +21,8 @@ const elsewhereLinks = [
 ] as const;
 
 /**
- * Site footer: brand and the local-first promise on the left, three link
- * columns on the right, and one meta line. It sits on the bench under a
+ * Site footer: the wordmark on the left, three link columns on the right, and
+ * one meta line. It sits on the bench under a
  * hairline, not in a card.
  */
 export default function Footer() {
@@ -37,10 +37,6 @@ export default function Footer() {
               <BrandMark className="size-9" label="" />
               <span className="font-display text-lg text-foreground">{siteConfig.name}</span>
             </a>
-            <p className="max-w-xs text-pretty text-sm leading-6 text-muted-foreground">
-              {toolPages.length} developer tools that run in this tab. No account, no server, and
-              nothing you paste is uploaded.
-            </p>
           </div>
 
           <FooterColumn label="Site">

@@ -18,14 +18,7 @@ export const metadata: Metadata = {
 export default function DiffPage() {
   return (
     <ToolPage contentClassName="mx-auto max-w-6xl space-y-6">
-      <ToolPageHeader href="/tools/diff/">
-        <p>
-          Paste two versions of a text and see the difference instantly. Switch between
-          side-by-side and unified views, highlight words or whole lines, and copy or download
-          the patch.
-        </p>
-        <p>Every byte stays on this page. Diffing, rendering, and exports all run client-side.</p>
-      </ToolPageHeader>
+      <ToolPageHeader href="/tools/diff/" />
       <DiffClientOnly />
       <ToolNotes>
         <ul>

@@ -179,29 +179,23 @@ export default function PasteSlot() {
           ) : null}
         </div>
 
-        <div id={resultsId} role="group" aria-label="Suggestions" aria-live="polite" className="min-h-[4.25rem]">
+        <div id={resultsId} role="group" aria-label="Suggestions" aria-live="polite" className="min-h-8">
           {!hasValue ? (
-            <div className="flex flex-col gap-2.5">
-              <p className="max-w-[52ch] text-sm leading-relaxed text-muted-foreground">
-                It works out what you pasted and opens the right tool with it loaded. Typing a
-                tool&rsquo;s name works too.
-              </p>
-              <div className="flex flex-wrap items-center gap-x-1.5 gap-y-2 text-sm text-muted-foreground">
-                <span>Try</span>
-                {SAMPLES.map((sample) => (
-                  <button
-                    key={sample.label}
-                    type="button"
-                    onClick={() => {
-                      setValue(sample.value);
-                      inputRef.current?.focus();
-                    }}
-                    className="rounded-md border border-border px-2 py-0.5 font-medium text-foreground transition-colors hover:border-[var(--line-strong)] hover:bg-secondary"
-                  >
-                    {sample.label}
-                  </button>
-                ))}
-              </div>
+            <div className="flex flex-wrap items-center gap-x-1.5 gap-y-2 text-sm text-muted-foreground">
+              <span>Try</span>
+              {SAMPLES.map((sample) => (
+                <button
+                  key={sample.label}
+                  type="button"
+                  onClick={() => {
+                    setValue(sample.value);
+                    inputRef.current?.focus();
+                  }}
+                  className="rounded-md border border-border px-2 py-0.5 font-medium text-foreground transition-colors hover:border-[var(--line-strong)] hover:bg-secondary"
+                >
+                  {sample.label}
+                </button>
+              ))}
             </div>
           ) : rows.length === 0 ? (
             <p className="text-sm text-muted-foreground">
@@ -242,9 +236,11 @@ export default function PasteSlot() {
                             <span className="readout truncate text-xs text-muted-foreground">{row.detail}</span>
                           ) : null}
                         </span>
-                        <span className="truncate text-xs text-muted-foreground">
-                          {row.title === row.tool.title ? row.tool.description : `Open in ${row.tool.title}`}
-                        </span>
+                        {row.title !== row.tool.title ? (
+                          <span className="truncate text-xs text-muted-foreground">
+                            Open in {row.tool.title}
+                          </span>
+                        ) : null}
                       </span>
                       {index === 0 ? (
                         <kbd className="hidden shrink-0 sm:inline-flex sm:items-center" aria-label="Press Enter">

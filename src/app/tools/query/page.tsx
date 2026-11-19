@@ -18,13 +18,7 @@ export const metadata: Metadata = {
 export default function QueryPage() {
   return (
     <ToolPage contentClassName="mx-auto max-w-5xl space-y-6">
-      <ToolPageHeader href="/tools/query/">
-        <p>
-          Paste a URL query string, a full URL, or an application/x-www-form-urlencoded body. Edit
-          parameters in a table, toggle between + and %20 spacing, and copy the re-encoded result.
-        </p>
-        <p>Everything is parsed locally in your browser. Your last source input is remembered.</p>
-      </ToolPageHeader>
+      <ToolPageHeader href="/tools/query/" />
       <QueryClientOnly />
       <ToolNotes>
         <ul>
@@ -41,6 +35,7 @@ export default function QueryPage() {
             The <strong>Decoded</strong>/<strong>Raw</strong> value toggle only changes how table
             cells are displayed; raw cells are decoded on every edit so the output stays valid.
           </li>
+          <li>Your last input is saved in this browser. Reset clears it.</li>
         </ul>
       </ToolNotes>
       <FamilyTools href="/tools/query/" />

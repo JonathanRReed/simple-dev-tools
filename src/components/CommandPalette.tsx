@@ -39,7 +39,6 @@ function ToolItem({ tool, prefix, onOpen }: { tool: ToolMeta; prefix?: string; o
     >
       <ToolTile icon={tool.icon} hue={tool.hue} className="size-7 rounded-md" />
       <span>{tool.title}</span>
-      {!prefix ? <CommandShortcut>{tool.family}</CommandShortcut> : null}
     </CommandItem>
   );
 }
@@ -199,7 +198,6 @@ export default function CommandPalette({ open, setOpen }: CommandPaletteProps) {
             >
               <ThemeSwatch colors={theme.swatches} />
               <span>{theme.label}</span>
-              <CommandShortcut>{theme.description}</CommandShortcut>
             </CommandItem>
           ))}
         </CommandGroup>

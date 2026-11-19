@@ -18,16 +18,7 @@ export const metadata: Metadata = {
 export default function HashPage() {
   return (
     <ToolPage contentClassName="mx-auto max-w-5xl space-y-6">
-      <ToolPageHeader href="/tools/hash/">
-        <p>
-          Paste text or drop a file to compute SHA-1, SHA-256, SHA-384, and SHA-512 digests
-          locally. Then paste an expected hash to verify it.
-        </p>
-        <p>
-          Everything happens in your browser with the Web Crypto API. No file contents or hashes
-          are uploaded.
-        </p>
-      </ToolPageHeader>
+      <ToolPageHeader href="/tools/hash/" />
       <HashClientOnly />
       <ToolNotes title="Privacy &amp; notes">
         <ul>

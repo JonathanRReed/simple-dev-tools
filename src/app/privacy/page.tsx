@@ -18,7 +18,7 @@ export default function PrivacyPage() {
   return (
     <ToolPage contentClassName="mx-auto max-w-3xl">
       <article className="flex flex-col gap-8">
-        <PageHeader title="Local-first tools with no account layer.">
+        <PageHeader title="Privacy">
           <p>
             {siteConfig.name} is a static browser application. It does not provide
             authentication, database-backed accounts, analytics tracking, or a server-side store

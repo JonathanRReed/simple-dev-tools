@@ -18,12 +18,7 @@ export const metadata: Metadata = {
 export default function SecurityTokensPage() {
   return (
     <ToolPage contentClassName="mx-auto max-w-5xl space-y-6">
-      <ToolPageHeader href="/studio/security/">
-        <p>
-          Decode and verify JWTs (HS256/RS256/ES256), compute hashes, and generate HMACs using
-          Web Crypto. No secrets leave the browser.
-        </p>
-      </ToolPageHeader>
+      <ToolPageHeader href="/studio/security/" />
       <SecurityTokensClientOnly />
       <ToolNotes title="Privacy &amp; notes">
         <ul>

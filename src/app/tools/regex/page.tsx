@@ -18,31 +18,20 @@ export const metadata: Metadata = {
 export default function RegexPage() {
   return (
     <ToolPage contentClassName="mx-auto max-w-5xl space-y-6">
-      <ToolPageHeader href="/tools/regex/">
-        <p>
-          Test, visualize, and share regular expressions with live matches, replacements, and
-          shareable URLs. Everything runs client-side.
-        </p>
-        <p>
-          Use Regex Lab when you need to debug a pattern before it goes into an API route,
-          validation rule, parser, log filter, or data cleanup script. Live matches make it
-          easier to catch greedy groups, missing anchors, accidental case sensitivity, and
-          replacement output that looks correct until it touches real text.
-        </p>
-      </ToolPageHeader>
+      <ToolPageHeader href="/tools/regex/" />
       <RegexClientOnly />
-      <ToolNotes title="Practical regex debugging">
-        <p>
-          A useful regular expression helper should make the input, pattern, matches, and
-          replacement result visible at the same time. That is the fastest way to see whether a
-          pattern is matching the intended text or only passing on a small happy-path sample.
-        </p>
-        <p>
-          The tool is built for short implementation checks: validating a slug, extracting IDs
-          from logs, cleaning copied data, checking a route matcher, or confirming a replacement
-          before it is moved into code. Because the workspace runs in the browser, sample text
-          and patterns do not need to be sent to a remote formatter.
-        </p>
+      <ToolNotes>
+        <ul>
+          <li>
+            Patterns use your browser&apos;s JavaScript regular expression engine, so results
+            match what <code>RegExp</code> does in your own code.
+          </li>
+          <li>
+            Matching runs in a background worker and stops after 1.5 seconds. A runaway pattern
+            reports an error instead of freezing the page.
+          </li>
+          <li>Replacement output is capped at 1,000,000 characters.</li>
+        </ul>
       </ToolNotes>
       <FamilyTools href="/tools/regex/" />
     </ToolPage>

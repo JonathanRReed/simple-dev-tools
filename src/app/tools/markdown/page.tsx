@@ -18,13 +18,7 @@ export const metadata: Metadata = {
 export default function MarkdownPage() {
   return (
     <ToolPage contentClassName="mx-auto max-w-5xl space-y-6">
-      <ToolPageHeader href="/tools/markdown/">
-        <p>
-          Type or paste Markdown on the left and get a live, DOMPurify-sanitized preview on the
-          right. Copy the HTML or download a complete page.
-        </p>
-        <p>Parsing and sanitization happen entirely in your browser. Nothing is uploaded.</p>
-      </ToolPageHeader>
+      <ToolPageHeader href="/tools/markdown/" />
       <MarkdownClientOnly />
       <ToolNotes>
         <ul>
@@ -32,7 +26,6 @@ export default function MarkdownPage() {
             Raw HTML in Markdown is parsed by <code>marked</code> and then filtered by DOMPurify
             before rendering.
           </li>
-          <li>The preview updates after a 200 ms debounce and is rendered client-side only.</li>
           <li>
             Use <kbd>⌘ ↵</kbd> or <kbd>Ctrl ↵</kbd> while editing to
             copy the sanitized HTML.

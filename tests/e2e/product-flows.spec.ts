@@ -7,10 +7,10 @@ test.beforeEach(async ({ page }) => {
 test('catalog, search, and theme controls work', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('heading', { level: 1 })).toContainText('Developer tools');
-  await expect(page.getByText('15 tools for the small jobs')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'All 15 tools' })).toBeVisible();
 
   await page.getByRole('button', { name: 'Toggle theme' }).click();
-  await page.getByRole('menuitemradio', { name: /^Paper / }).click();
+  await page.getByRole('menuitemradio', { name: 'Paper', exact: true }).click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'paper');
   await page.keyboard.press('Escape');
 
@@ -114,7 +114,8 @@ test('mobile navigation reaches a tool without horizontal overflow', async ({ pa
 
   await page.goto('/');
   await page.getByRole('button', { name: 'Toggle Sidebar' }).click();
-  await page.getByRole('link', { name: 'Regex Lab' }).click();
+  // The drawer is a modal dialog; target the link inside it, not the page behind.
+  await page.getByRole('dialog').getByRole('link', { name: 'Regex Lab' }).click();
   await expect(page).toHaveURL(/\/tools\/regex\/$/);
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Regex Lab');
 

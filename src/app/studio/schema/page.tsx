@@ -18,12 +18,7 @@ export const metadata: Metadata = {
 export default function SchemaStudioPage() {
   return (
     <ToolPage contentClassName="mx-auto max-w-5xl space-y-6">
-      <ToolPageHeader href="/studio/schema/">
-        <p>
-          Paste JSON/YAML or OpenAPI to parse, preview documentation, validate data, and generate
-          TypeScript or Zod types entirely in-browser.
-        </p>
-      </ToolPageHeader>
+      <ToolPageHeader href="/studio/schema/" />
       <SchemaStudioClientOnly />
       <ToolNotes>
         <ul>

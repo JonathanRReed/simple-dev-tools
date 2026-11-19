@@ -18,12 +18,7 @@ export const metadata: Metadata = {
 export default function SQLitePage() {
   return (
     <ToolPage contentClassName="mx-auto max-w-5xl space-y-6">
-      <ToolPageHeader href="/sqlite/">
-        <p>
-          Run SQL experiments locally in your browser using SQLite WASM. Edit queries, execute,
-          and inspect results without any backend.
-        </p>
-      </ToolPageHeader>
+      <ToolPageHeader href="/sqlite/" />
       <SQLiteClientOnly />
       <ToolNotes>
         <ul>

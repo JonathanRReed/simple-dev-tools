@@ -1,4 +1,4 @@
-import { ToolTile } from "@/components/ToolIcon";
+import ToolChip from "@/components/tool/ToolChip";
 import { getToolPage, toolCatalog } from "@/lib/site";
 
 type FamilyToolsProps = {
@@ -21,19 +21,10 @@ export default function FamilyTools({ href }: FamilyToolsProps) {
   return (
     <nav aria-label={`More ${current.family} tools`} className="border-t border-border px-1 pt-5">
       <h2 className="mb-3 text-sm font-semibold text-foreground">More in {current.family}</h2>
-      <ul className="grid gap-3 sm:grid-cols-2">
+      <ul className="flex flex-wrap gap-3">
         {siblings.map((tool) => (
           <li key={tool.href}>
-            <a
-              href={tool.href}
-              className="key flex h-full items-center gap-3 rounded-lg p-3 text-secondary-foreground"
-            >
-              <ToolTile icon={tool.icon} hue={tool.hue} className="bg-background" />
-              <span className="flex min-w-0 flex-col">
-                <span className="text-sm font-semibold">{tool.title}</span>
-                <span className="truncate text-xs opacity-75">{tool.description}</span>
-              </span>
-            </a>
+            <ToolChip tool={tool} />
           </li>
         ))}
       </ul>

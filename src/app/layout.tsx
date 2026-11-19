@@ -2,11 +2,11 @@ import './globals.css';
 import type { Metadata, Viewport } from 'next';
 import localFont from 'next/font/local';
 import type { ReactNode } from 'react';
-import type { Organization, Person, WebPage, WebSite, WithContext } from 'schema-dts';
 
 import AppHeader from '@/components/AppHeader';
 import { CommandMenuProvider } from '@/components/CommandMenu';
 import Footer from '@/components/Footer';
+import JsonLd from '@/components/JsonLd';
 import AppSidebar, { AppSidebarProvider } from '@/components/Sidebar';
 import { BackToTop } from '@/components/layout/BackToTop';
 import {
@@ -18,7 +18,8 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { RecentToolsProvider } from '@/hooks/use-recent-tools';
 import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration';
 import { SidebarInset } from '@/components/ui/sidebar';
-import { siteConfig, toolPages } from '@/lib/site';
+import { siteConfig } from '@/lib/site';
+import { siteJsonLd } from '@/lib/structured-data';
 
 // Self-hosted (vendored) fonts — no build-time network fetch, so the static
 // export builds reliably in any CI sandbox (e.g. Cloudflare Pages) and the
@@ -119,56 +120,6 @@ export const viewport: Viewport = {
   colorScheme: 'dark light',
 };
 
-// Structured data, typed against schema.org via schema-dts so a renamed
-// property or wrong enum fails typecheck instead of silently going stale.
-const authorProfile: Person = {
-  '@type': 'Person',
-  name: siteConfig.author.name,
-  alternateName: 'Jonathan Reed',
-  url: siteConfig.author.url,
-  sameAs: ['https://jonathanrreed.com/', 'https://github.com/JonathanRReed'],
-};
-
-const providerProfile: Organization = {
-  '@type': 'Organization',
-  name: siteConfig.provider.name,
-  url: siteConfig.provider.url,
-};
-
-const toolWebPages: WebPage[] = toolPages.map((toolPage) => {
-  const url = `${siteConfig.url}${toolPage.href}`;
-  return {
-    '@type': 'WebPage',
-    name: toolPage.title,
-    description: toolPage.description,
-    url,
-    mainEntity: {
-      '@type': 'CreativeWork',
-      name: toolPage.title,
-      description: toolPage.description,
-      url,
-      creator: authorProfile,
-      publisher: providerProfile,
-      isAccessibleForFree: true,
-    },
-  };
-});
-
-const jsonLd: WithContext<WebSite> = {
-  '@context': 'https://schema.org',
-  '@type': 'WebSite',
-  name: siteConfig.name,
-  description: siteConfig.description,
-  url: siteConfig.url,
-  publisher: providerProfile,
-  creator: authorProfile,
-  inLanguage: 'en',
-  hasPart: toolWebPages,
-};
-
-// Escape "<" so the JSON can never close the <script> element early.
-const jsonLdHtml = JSON.stringify(jsonLd).replace(/</g, '\\u003c');
-
 // Navigation is by full page loads, so let the browser fetch a page's HTML
 // while the pointer is still on its link. Prefetch only, never prerender: a
 // prerendered tool would run and record itself as "recently opened" without
@@ -196,7 +147,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       className={`${fontArchivo.variable} ${fontArchivoDisplay.variable} ${fontAtkinsonMono.variable}`}
     >
       <head>
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdHtml }} />
+        <JsonLd data={siteJsonLd} />
         <script type="speculationrules" dangerouslySetInnerHTML={{ __html: speculationRules }} />
       </head>
       <body className="bg-background text-foreground font-sans antialiased">

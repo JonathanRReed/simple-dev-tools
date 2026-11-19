@@ -60,7 +60,6 @@ export const toolGroups = [
   {
     title: "Web",
     hue: "web",
-    description: "Requests, URLs, and encodings.",
     tools: [
       {
         title: "API Snippet Generator",
@@ -88,7 +87,6 @@ export const toolGroups = [
   {
     title: "Data",
     hue: "data",
-    description: "Documents, tables, and schemas.",
     tools: [
       {
         title: "JSON Workbench",
@@ -116,7 +114,6 @@ export const toolGroups = [
   {
     title: "Text",
     hue: "text",
-    description: "Patterns, comparisons, and prose.",
     tools: [
       {
         title: "Regex Lab",
@@ -144,7 +141,6 @@ export const toolGroups = [
   {
     title: "Time & IDs",
     hue: "time",
-    description: "Clocks, schedules, and identifiers.",
     tools: [
       {
         title: "Timestamp Converter",
@@ -165,7 +161,6 @@ export const toolGroups = [
   {
     title: "Security",
     hue: "security",
-    description: "Tokens, digests, and signatures.",
     tools: [
       {
         title: "Security & Tokens",
@@ -186,7 +181,6 @@ export const toolGroups = [
   {
     title: "Visual",
     hue: "visual",
-    description: "Diagrams and color.",
     tools: [
       {
         title: "Mermaid Editor",
@@ -207,7 +201,6 @@ export const toolGroups = [
 ] as const satisfies readonly {
   title: string;
   hue: ToolHue;
-  description: string;
   tools: readonly ToolPageInfo[];
 }[];
 

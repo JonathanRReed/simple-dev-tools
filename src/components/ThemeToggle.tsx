@@ -1,97 +1,46 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Check, Monitor, Palette } from 'lucide-react';
-import { useTheme } from 'next-themes';
+import * as React from 'react';
+import { Palette } from 'lucide-react';
 
-import ThemeSwatch from '@/components/ThemeSwatch';
-import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { appThemes, getAppTheme, resolveAppThemeId } from '@/lib/themes';
+import { Button, type ButtonProps } from '@/components/ui/button';
+import { deferComponent } from '@/lib/deferred-component';
+import { whenIdle } from '@/lib/idle';
 
-const itemClass = 'flex items-center gap-3 px-2 py-1.5';
+const themeMenu = deferComponent(() => import('@/components/ThemeMenu'));
 
+const TriggerButton = React.forwardRef<HTMLButtonElement, ButtonProps>((props, ref) => (
+  <Button ref={ref} variant="ghost" size="icon" className="size-9" {...props}>
+    <Palette />
+    <span className="sr-only">Toggle theme</span>
+  </Button>
+));
+TriggerButton.displayName = 'ThemeToggleButton';
+
+/**
+ * The theme button in the header. The menu behind it (dropdown, positioning,
+ * the theme list) is a separate chunk: it is fetched when the browser is
+ * idle, and mounted the first time the button is pressed.
+ */
 export default function ThemeToggle() {
-  const { setTheme, theme, resolvedTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
+  const [requested, setRequested] = React.useState(false);
+  const menuLoaded = themeMenu.useLoaded();
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  React.useEffect(() => whenIdle(() => void themeMenu.load()), []);
 
-  const isSystem = mounted ? theme === 'system' : false;
-  const current = resolveAppThemeId(theme, resolvedTheme);
-  const currentLabel = getAppTheme(current)?.label ?? current;
-
+  if (requested && menuLoaded) {
+    return <themeMenu.Component trigger={<TriggerButton />} />;
+  }
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="size-9">
-          <Palette />
-          <span className="sr-only">Toggle theme</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" sideOffset={8} className="w-72">
-        <DropdownMenuLabel className="px-2 text-xs font-semibold text-muted-foreground">
-          Theme
-        </DropdownMenuLabel>
-        <DropdownMenuItem
-          role="menuitemradio"
-          aria-checked={isSystem}
-          onSelect={(event) => {
-            event.preventDefault();
-            setTheme('system');
-          }}
-          className={itemClass}
-        >
-          <span
-            aria-hidden="true"
-            className="flex size-7 shrink-0 items-center justify-center rounded-md border border-border text-muted-foreground"
-          >
-            <Monitor className="size-4" />
-          </span>
-          <span className="flex min-w-0 flex-1 flex-col">
-            <span className="text-sm font-semibold leading-tight">System</span>
-            {/* While System is active, say which palette it resolved to. */}
-            <span className="truncate text-xs text-muted-foreground">
-              {isSystem ? `Following your device: ${currentLabel}` : 'Follows your device'}
-            </span>
-          </span>
-          {isSystem ? <Check className="size-4 text-primary" aria-hidden="true" /> : null}
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        {appThemes.map((option) => {
-          const active = mounted ? !isSystem && current === option.id : false;
-          return (
-            <DropdownMenuItem
-              key={option.id}
-              role="menuitemradio"
-              aria-checked={active}
-              onSelect={(event) => {
-                event.preventDefault();
-                setTheme(option.id);
-              }}
-              className={itemClass}
-            >
-              <ThemeSwatch colors={option.swatches} />
-              <span className="flex min-w-0 flex-1 flex-col">
-                <span className="text-sm font-semibold leading-tight">{option.label}</span>
-                <span className="truncate text-xs text-muted-foreground">{option.description}</span>
-              </span>
-              {active ? <Check className="size-4 text-primary" aria-hidden="true" /> : null}
-            </DropdownMenuItem>
-          );
-        })}
-        <DropdownMenuSeparator />
-        <p className="px-2 py-1 text-xs text-muted-foreground">Saved in this browser.</p>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <TriggerButton
+      aria-haspopup="menu"
+      aria-expanded="false"
+      aria-busy={requested || undefined}
+      onClick={() => {
+        setRequested(true);
+        // Normally already loaded by the idle fetch; this covers an early press.
+        void themeMenu.load();
+      }}
+    />
   );
 }

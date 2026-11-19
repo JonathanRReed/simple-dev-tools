@@ -20,7 +20,6 @@ import {
   SidebarRail,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import BrandMark from '@/components/BrandMark';
 import { getToolIcon, hueTextClass } from '@/components/ToolIcon';
 import { useQuickTools, useRecentTools } from '@/hooks/use-recent-tools';
@@ -128,7 +127,7 @@ export default function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent className="px-2 group-data-[collapsible=icon]:px-1">
-        <ScrollArea className="h-full min-h-0 flex-1 pr-1 group-data-[collapsible=icon]:pr-0">
+        <div className="h-full min-h-0 flex-1 overflow-y-auto overflow-x-hidden pr-1 group-data-[collapsible=icon]:pr-0">
           <SidebarGroup className="pb-0 pt-3">
             <SidebarGroupContent>
               <SidebarMenu>
@@ -187,7 +186,7 @@ export default function AppSidebar() {
             </SidebarGroup>
           ))}
           <div className="h-3" />
-        </ScrollArea>
+        </div>
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border px-4 py-3 group-data-[collapsible=icon]:hidden">
