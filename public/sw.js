@@ -67,22 +67,22 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (request.mode === 'navigate') {
-    event.respondWith(handleNavigation(request));
+    event.respondWith(handleNavigation(request, event));
     return;
   }
 
   if (url.pathname.startsWith('/_next/static/')) {
-    event.respondWith(handleNextStatic(request));
+    event.respondWith(handleNextStatic(request, event));
     return;
   }
 
   if (url.origin === self.location.origin) {
     const versionSensitive = ['script', 'worker', 'sharedworker'].includes(request.destination) || request.headers.get('RSC') === '1' || url.pathname.endsWith('.txt');
-    event.respondWith(versionSensitive ? handleFreshAsset(request) : handleStaticAsset(request));
+    event.respondWith(versionSensitive ? handleFreshAsset(request, event) : handleStaticAsset(request, event));
   }
 });
 
-async function handleNavigation(request) {
+async function handleNavigation(request, event) {
   // Network-first for HTML: a stale shell can reference _next/static chunks
   // that no longer exist after a deploy, so fresh HTML always wins when the
   // network is available. The cache is the offline fallback.
@@ -90,7 +90,7 @@ async function handleNavigation(request) {
     const networkResponse = await fetch(request);
     if (networkResponse.ok) {
       // Storage exhaustion must never turn a successful request into an offline page.
-      await putInCache(request, networkResponse).catch(() => {});
+      cacheInBackground(event, request, networkResponse);
     }
     // HTTP errors are real responses, not evidence that the browser is offline.
     return networkResponse;
@@ -116,7 +116,7 @@ async function handleNavigation(request) {
   });
 }
 
-async function handleNextStatic(request) {
+async function handleNextStatic(request, event) {
   // Cache-first for immutable hashed Next.js assets.
   const cached = await caches.match(request);
   if (cached) {
@@ -126,7 +126,7 @@ async function handleNextStatic(request) {
   try {
     const networkResponse = await fetch(request);
     if (networkResponse && networkResponse.ok) {
-      await putInCache(request, networkResponse);
+      cacheInBackground(event, request, networkResponse);
     }
     return networkResponse;
   } catch (error) {
@@ -135,29 +135,29 @@ async function handleNextStatic(request) {
   }
 }
 
-async function handleFreshAsset(request) {
+async function handleFreshAsset(request, event) {
   // Unhashed worker scripts and App Router payloads must agree with the current deployment.
   try {
     const response = await fetch(request);
-    if (response.ok) await putInCache(request, response).catch(() => {});
+    if (response.ok) cacheInBackground(event, request, response);
     return response;
   } catch {
     return await caches.match(request) || new Response('Network unavailable', { status: 503 });
   }
 }
 
-async function handleStaticAsset(request) {
+async function handleStaticAsset(request, event) {
   // Stale-while-revalidate for same-origin fonts, images, etc.
   const cached = await caches.match(request);
   if (cached) {
-    fetchAndCache(request).catch(() => {});
+    keepAlive(event, fetchAndCache(request).catch(() => {}));
     return cached;
   }
 
   try {
     const networkResponse = await fetch(request);
     if (networkResponse && networkResponse.ok) {
-      await putInCache(request, networkResponse);
+      cacheInBackground(event, request, networkResponse);
     }
     return networkResponse;
   } catch (error) {
@@ -177,8 +177,34 @@ async function fetchAndCache(request) {
   }
 }
 
+// Let the worker stay alive until `work` settles, without making the page wait for it.
+function keepAlive(event, work) {
+  if (event && typeof event.waitUntil === 'function') {
+    event.waitUntil(work);
+  }
+}
+
+// Store a copy of `response` without holding the response back.
+//
+// The copy is taken now, before the page starts reading the body, and written
+// while the page is already using the original. Awaiting the write instead
+// (as this worker used to) meant a document or script was only handed to the
+// page once it had been downloaded in full and saved, which defeats streaming
+// and measured 100-200 ms slower per navigation. A failed write (quota, an
+// aborted download) is ignored: the page already has its response.
+function cacheInBackground(event, request, response) {
+  let copy;
+  try {
+    copy = response.clone();
+  } catch {
+    return;
+  }
+  keepAlive(event, putInCache(request, copy).catch(() => {}));
+}
+
 async function putInCache(request, response) {
   if (new URL(typeof request === 'string' ? request : request.url, self.location.origin).search) return;
   const cache = await caches.open(CACHE_NAME);
-  await cache.put(request, response.clone());
+  // The caller hands over a response it is not going to read itself.
+  await cache.put(request, response);
 }

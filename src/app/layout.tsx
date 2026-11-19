@@ -13,6 +13,7 @@ import {
   NavigationProgressBar,
   NavigationProgressProvider,
 } from '@/components/layout/NavigationProgress';
+import { LinkWarmer } from '@/components/layout/LinkWarmer';
 import { RouteFocus } from '@/components/layout/RouteFocus';
 import { ThemeProvider } from '@/components/theme-provider';
 import { RecentToolsProvider } from '@/hooks/use-recent-tools';
@@ -120,24 +121,18 @@ export const viewport: Viewport = {
   colorScheme: 'dark light',
 };
 
-// Navigation is by full page loads, so let the browser fetch a page's HTML
-// while the pointer is still on its link. Prefetch only, never prerender: a
-// prerendered tool would run and record itself as "recently opened" without
-// ever being seen. Browsers that do not know speculation rules ignore this.
-const speculationRules = JSON.stringify({
-  prefetch: [
-    {
-      where: {
-        and: [
-          { href_matches: '/*' },
-          { not: { href_matches: '/sqljs/*' } },
-          { not: { href_matches: '/*.*' } },
-        ],
-      },
-      eagerness: 'moderate',
-    },
-  ],
-});
+// Cross-document view transitions are opted into from here instead of from the
+// stylesheet, because the opt-in has to be conditional. A page that was loaded
+// before the service worker took control (a first visit) has its next
+// navigation's transition aborted by Chromium, which reports an uncaught
+// InvalidStateError that page code cannot intercept. A page loaded under the
+// worker never does. So only those pages opt in: a first visit navigates
+// without the cross-fade, and everything after it gets one. It runs in <head>
+// so the rule exists before the incoming page first renders.
+const viewTransitionOptIn =
+  "if(navigator.serviceWorker&&navigator.serviceWorker.controller){var s=document.createElement('style');" +
+  "s.textContent='@media (prefers-reduced-motion:no-preference){@view-transition{navigation:auto}}';" +
+  "document.head.appendChild(s)}";
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
@@ -148,7 +143,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     >
       <head>
         <JsonLd data={siteJsonLd} />
-        <script type="speculationrules" dangerouslySetInnerHTML={{ __html: speculationRules }} />
+        <script dangerouslySetInnerHTML={{ __html: viewTransitionOptIn }} />
       </head>
       <body className="bg-background text-foreground font-sans antialiased">
         <ServiceWorkerRegistration />
@@ -173,6 +168,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                         <Footer />
                       </div>
                       <RouteFocus />
+                      <LinkWarmer />
                       <BackToTop />
                     </SidebarInset>
                   </div>

@@ -901,12 +901,11 @@
 }
 
 /* Every link here is a full page load (each route carries its own CSP), so
-   pages cross-fade instead of flashing. Browsers without cross-document view
-   transitions simply navigate as before. */
+   pages cross-fade instead of flashing. The opt-in rule itself
+   (`@view-transition { navigation: auto }`) is added by a script in the root
+   layout rather than here, because it must be conditional; see the note
+   there. Browsers without cross-document view transitions navigate as before. */
 @media (prefers-reduced-motion: no-preference) {
-  @view-transition {
-    navigation: auto;
-  }
   ::view-transition-old(root),
   ::view-transition-new(root) {
     animation-duration: 140ms;

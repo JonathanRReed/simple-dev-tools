@@ -42,6 +42,26 @@ describe('offline navigation', () => {
     finish(new Response('slow but online'));
     expect(await (await pending).text()).toBe('slow but online');
   });
+  test('hands the page its response without waiting for the cache write', async () => {
+    // A cache that never finishes writing must not hold the document back:
+    // awaiting the write is what used to delay every navigation.
+    const listeners: Record<string, (event: unknown) => void> = {};
+    const kept: Promise<unknown>[] = [];
+    const context = {
+      self: { location: { origin: 'https://example.com' }, addEventListener: (name: string, callback: (event: unknown) => void) => { listeners[name] = callback; } },
+      fetch: async () => new Response('fresh'),
+      caches: { match: async () => undefined, open: async () => ({ put: () => new Promise(() => {}) }) },
+      Request, Response, URL,
+    };
+    runInNewContext(script, context);
+    const request = new Request('https://example.com/tools/json/');
+    Object.defineProperty(request, 'mode', { value: 'navigate' });
+    let response!: Promise<Response>;
+    listeners.fetch({ request, respondWith: (result: Promise<Response>) => { response = result; }, waitUntil: (work: Promise<unknown>) => { kept.push(work); } });
+    expect(await (await response).text()).toBe('fresh');
+    // The write is still registered, so the worker is kept alive to finish it.
+    expect(kept.length).toBe(1);
+  });
   test('a true network failure uses the cached page', async () => {
     const sw = worker({ fetch: async () => { throw new Error('offline'); }, cached: new Response('saved page') });
     expect(await (await sw.navigate()).text()).toBe('saved page');
@@ -76,8 +96,11 @@ test('worker requests use the fresh path and query-bearing URLs are not cached',
   const request = new Request('https://example.com/regex-worker.js');
   Object.defineProperty(request, 'destination', { value: 'worker' });
   let response!: Promise<Response>;
-  callbacks.fetch({ request, respondWith: (result: Promise<Response>) => { response = result; } });
+  // The cache write runs in the background, kept alive through waitUntil.
+  const background: Promise<unknown>[] = [];
+  callbacks.fetch({ request, respondWith: (result: Promise<Response>) => { response = result; }, waitUntil: (work: Promise<unknown>) => { background.push(work); } });
   expect(await (await response).text()).toBe('new worker');
+  await Promise.all(background);
   expect(writes).toBe(1);
   await runInNewContext("putInCache(new Request('https://example.com/tools/regex/?t=private'), new Response('page'))", { ...context, putInCache: runInNewContext('putInCache', context) });
   expect(writes).toBe(1);

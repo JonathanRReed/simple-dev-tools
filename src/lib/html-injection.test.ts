@@ -45,8 +45,8 @@ test("every dangerouslySetInnerHTML sink is a reviewed one", () => {
   // Each entry is a sink that has been checked: markdown runs through
   // DOMPurify, the QR SVG is library-generated geometry with no user text in
   // it, the JSON-LD component only ever receives the site's own catalog data
-  // (lib/structured-data.ts) and escapes "<", and the layout's one remaining
-  // sink is the static speculation-rules JSON, which contains no user input.
+  // (lib/structured-data.ts) and escapes "<", and the layout's sink is a
+  // constant script (the view-transition opt-in) with no interpolation at all.
   const ALLOWED = new Set([
     "src/app/layout.tsx",
     "src/components/JsonLd.tsx",
