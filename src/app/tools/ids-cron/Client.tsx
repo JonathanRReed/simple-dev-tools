@@ -81,6 +81,22 @@ const LS_EXPR = "sdt:ids-cron:expr";
 const LS_TAB = "sdt:ids-cron:tab";
 const DEFAULT_CRON = "*/5 * * * *";
 
+// Performance optimization: Extracted preset objects outside the component scope
+// to eliminate redundant array and object allocations on every render pass.
+const CRON_PRESETS = [
+  { label: "Every minute", expr: "* * * * *" },
+  { label: "Every 5 min", expr: "*/5 * * * *" },
+  { label: "Every 15 min", expr: "*/15 * * * *" },
+  { label: "Every 30 min", expr: "*/30 * * * *" },
+  { label: "Hourly", expr: "0 * * * *" },
+  { label: "Daily at 09:00", expr: "0 9 * * *" },
+  { label: "Twice daily", expr: "0 0,12 * * *" },
+  { label: "Weekdays 09:00", expr: "0 9 * * 1-5" },
+  { label: "Mon 09:00", expr: "0 9 * * 1" },
+  { label: "Every Sunday", expr: "0 0 * * 0" },
+  { label: "First of month", expr: "0 0 1 * *" },
+];
+
 /** Resolved IANA timezone label for the browser (e.g. "America/New_York"). */
 function localTimeZone(): string {
   try {
@@ -234,20 +250,12 @@ export default function IDsCronTool() {
     ? (cronDesc as { error: string }).error
     : null;
 
-  const presets = [
-    { label: "Every minute", expr: "* * * * *" },
-    { label: "Every 5 min", expr: "*/5 * * * *" },
-    { label: "Every 15 min", expr: "*/15 * * * *" },
-    { label: "Every 30 min", expr: "*/30 * * * *" },
-    { label: "Hourly", expr: "0 * * * *" },
-    { label: "Daily at 09:00", expr: "0 9 * * *" },
-    { label: "Twice daily", expr: "0 0,12 * * *" },
-    { label: "Weekdays 09:00", expr: "0 9 * * 1-5" },
-    { label: "Mon 09:00", expr: "0 9 * * 1" },
-    { label: "Every Sunday", expr: "0 0 * * 0" },
-    { label: "First of month", expr: "0 0 1 * *" },
-  ];
-  const activePreset = presets.find((p) => p.expr === cron.trim());
+  // Performance optimization: Memoize activePreset matching to avoid array iterations
+  // and search overhead on unrelated component re-renders (e.g. keypresses in UUID/ULID/bulk inputs).
+  const activePreset = useMemo(
+    () => CRON_PRESETS.find((p) => p.expr === cron.trim()),
+    [cron]
+  );
 
   const shareParams = useCallback(() => {
     const currentTab = tab as "ids" | "cron";
@@ -463,7 +471,7 @@ export default function IDsCronTool() {
             <div className="flex flex-col gap-1.5">
               <Label>Presets</Label>
               <div className="flex flex-wrap gap-2">
-                {presets.map((p) => (
+                {CRON_PRESETS.map((p) => (
                   <Button
                     key={p.expr}
                     type="button"
