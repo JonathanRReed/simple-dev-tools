@@ -414,7 +414,7 @@ export default function MarkdownClient() {
                 </p>
               ) : (
                 <>
-                <p className="mb-3 text-xs text-muted-foreground">External images and embedded media are not loaded. Your preview stays local.</p>
+                <p className="mb-3 text-xs text-muted-foreground">External images and embedded media stay blocked so the preview stays local.</p>
                 <div dangerouslySetInnerHTML={{ __html: sanitizedHtml }} />
                 </>
               )}

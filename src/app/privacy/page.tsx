@@ -6,9 +6,9 @@ import ToolPage from "@/components/layout/ToolPage";
 import { siteConfig } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: "Privacy for Local Browser Tools",
+  title: "Privacy",
   description:
-    "Simple Dev Tools uses a local-first privacy model. Tool inputs run in the browser and are not stored by this static site.",
+    "How Simple Dev Tools handles your input, local storage, and network requests.",
   alternates: {
     canonical: "/privacy/",
   },
@@ -20,37 +20,35 @@ export default function PrivacyPage() {
       <article className="flex flex-col gap-8">
         <PageHeader title="Privacy">
           <p>
-            {siteConfig.name} is a static browser application. It does not provide
-            authentication, database-backed accounts, analytics tracking, or a server-side store
-            for tool input.
+            {siteConfig.name} is just a static site. There aren&apos;t any logins or user accounts,
+            and there is no backend saving what you paste in.
           </p>
         </PageHeader>
 
-        <PageSection title="Tool input">
+        <PageSection title="What you paste">
           <p>
-            Text, tokens, schemas, SQL, regex patterns, and QR payloads are handled in your
-            browser. Some tools use browser APIs such as Web Crypto, clipboard, file download, or
-            local runtime libraries to complete the selected action.
+            Everything you put into the tools stays in your browser. A few of them rely on normal
+            browser APIs like Web Crypto, clipboard copy, or file downloads, all on your own
+            device.
           </p>
           <p>
-            A few tools remember your last input in this browser&apos;s local storage so it
-            survives a reload. Use the tool&apos;s Reset action to clear it.
+            Some tools keep your last input in local storage so a page refresh doesn&apos;t wipe
+            your work. Hit Reset inside the tool to clear it out.
           </p>
           <p>
-            When you paste something on the home page or into search and open the suggested
-            tool, the content is passed to that tool through this tab&apos;s session storage. It
-            is deleted the moment the tool reads it, and it is never written into a link, the
-            address bar, or your browsing history.
+            Pasting into the home page box or search bar hands your text over using this tab&apos;s
+            session storage. The tool clears it right when it opens, so nothing gets put into a URL
+            or your browser history.
           </p>
         </PageSection>
 
-        <PageSection title="External resources">
+        <PageSection title="Network requests">
           <p>
-            The SQLite playground loads its SQL.js WebAssembly runtime from this site&apos;s own
-            origin (vendored, no third-party request). The schema studio can optionally fetch a
-            spec from a URL you paste, and the host may enable Cloudflare&apos;s privacy-preserving
-            Web Analytics for aggregate traffic totals. Do not paste production secrets, private
-            keys, or regulated data into any developer utility.
+            The SQLite playground loads its SQL.js WebAssembly file directly from this site instead
+            of a third party CDN. Schema &amp; Types Studio only fetches a remote file if you
+            actually paste a URL and tell it to. Cloudflare Web Analytics may run on the host for
+            basic visit counts. Even with everything running locally, I wouldn&apos;t paste real
+            production secrets or private keys into any web tool.
           </p>
         </PageSection>
       </article>

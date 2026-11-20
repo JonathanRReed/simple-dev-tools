@@ -714,7 +714,7 @@ export default function SecurityTokensClient() {
   return (
     <div className="flex flex-col gap-6 text-foreground">
       <Alert variant="warning">
-        All operations run locally in your browser. Do not paste production secrets or private
+        Everything here runs in your browser. Still, don&apos;t paste production secrets or private
         keys.
       </Alert>
 
@@ -755,7 +755,7 @@ export default function SecurityTokensClient() {
                 <Field
                   label="JWT token"
                   htmlFor="jwt-token"
-                  hint="Decoding happens live as you type; signature verification is an explicit action."
+                  hint="Decodes live as you type. Click Verify when you want to check the signature."
                 >
                   <textarea
                     id="jwt-token"
@@ -911,8 +911,8 @@ export default function SecurityTokensClient() {
                 ) : null}
 
                 <p className="text-xs text-muted-foreground">
-                  For RS256/ES256, paste the signer&apos;s public key (SPKI PEM or JWK) above, then
-                  Verify. HS256 uses the shared secret instead.
+                  For RS256 or ES256, paste the signer&apos;s public key above as SPKI PEM or JWK,
+                  then click Verify. HS256 uses the shared secret instead.
                 </p>
               </div>
             </div>
@@ -1012,7 +1012,7 @@ export default function SecurityTokensClient() {
                   <Field
                     label="Secret (HS256)"
                     htmlFor="sign-key"
-                    hint="A strong shared secret (at least 256 bits recommended)."
+                    hint="Use a strong shared secret, at least 256 bits."
                   >
                     <div className="flex gap-2">
                       <Input
@@ -1073,7 +1073,7 @@ export default function SecurityTokensClient() {
                 {signResult ? (
                   <>
                     <Alert variant="success">
-                      <span className="font-semibold">Signed</span> — JWT ready below.
+                      <span className="font-semibold">Signed</span>. Your JWT is below.
                     </Alert>
                     <ResultPanel
                       title="Signed JWT"
@@ -1090,15 +1090,15 @@ export default function SecurityTokensClient() {
                       </div>
                       {signAlg === "HS256" ? (
                         <p className="text-muted-foreground">
-                          HS256 secrets should be strong (at least 256 bits) and should never be
-                          stored or transmitted alongside the token.
+                          Use a strong HS256 secret, at least 256 bits, and don&apos;t store or
+                          send it alongside the token.
                         </p>
                       ) : null}
                     </div>
                   </>
                 ) : (
                   <p className="text-sm text-muted-foreground">
-                    Build a header and payload, choose a key, then Sign to produce a compact JWT.
+                    Set up a header and payload, pick a key, and click Sign to generate a JWT.
                   </p>
                 )}
               </div>

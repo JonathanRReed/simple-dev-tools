@@ -9,7 +9,7 @@ import SQLiteClientOnly from "./ClientOnly";
 export const metadata: Metadata = {
   title: "SQLite Playground",
   description:
-    "Run SQL experiments locally in your browser using SQLite WASM. Edit queries, execute, and inspect results without any backend.",
+    "Run SQLite queries locally with WebAssembly, view result tables, and export CSV or JSON with no server.",
   alternates: {
     canonical: "/sqlite/",
   },
@@ -23,14 +23,13 @@ export default function SQLitePage() {
       <ToolNotes>
         <ul>
           <li>
-            The database is in-memory and lives only for this tab. Export results as CSV or JSON
-            before you close it.
+            This database only lives in memory for the current tab. Export CSV or JSON before
+            closing it if you want to keep your results.
           </li>
           <li>
-            The SQL.js WebAssembly runtime is served from this site&apos;s own origin; no
-            third-party request is made.
+            The SQL.js WebAssembly file loads straight from this site with zero external requests.
           </li>
-          <li>Statements run in order; a failing statement stops the batch and reports its error.</li>
+          <li>Statements run top to bottom. If one errors out, the batch stops right there.</li>
         </ul>
       </ToolNotes>
       <FamilyTools href="/sqlite/" />

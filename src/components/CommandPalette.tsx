@@ -113,7 +113,7 @@ export default function CommandPalette({ open, setOpen }: CommandPaletteProps) {
         }}
       />
       <CommandList>
-        {detections.length === 0 ? <CommandEmpty>No tool, page, or theme matches that.</CommandEmpty> : null}
+        {detections.length === 0 ? <CommandEmpty>Nothing matches that.</CommandEmpty> : null}
 
         {detections.length > 0 ? (
           <CommandGroup heading="Open what you pasted" forceMount>

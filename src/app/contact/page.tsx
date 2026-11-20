@@ -7,9 +7,9 @@ import ToolPage from "@/components/layout/ToolPage";
 import { siteConfig } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: "Contact Simple Dev Tools Support",
+  title: "Contact",
   description:
-    "Contact Hello.World Consulting or Jonathan R. Reed about Simple Dev Tools, feedback, consulting, or related developer tooling.",
+    "Reach Jonathan R. Reed or Hello.World Consulting with bug reports, feedback, or questions about Simple Dev Tools.",
   alternates: {
     canonical: "/contact/",
   },
@@ -26,8 +26,8 @@ export default function ContactPage() {
       <article className="flex flex-col gap-8">
         <PageHeader title="Contact">
           <p>
-            For consulting, product questions, or feedback about Simple Dev Tools, use the
-            official Hello.World Consulting site or Jonathan R. Reed&apos;s project profile.
+            Need to report a bug, send feedback, or ask about consulting? Reach me through{" "}
+            {siteConfig.provider.name} or my personal site.
           </p>
         </PageHeader>
 
@@ -56,12 +56,13 @@ export default function ContactPage() {
 
         <PageSection title="What to send">
           <p>
-            For a bug, include the tool name, your browser, the kind of input, and the output you
-            expected. A small sample that reproduces it works better than a screenshot.
+            For bugs, send over the tool name, which browser you&apos;re on, what you pasted in,
+            and what you expected back. A tiny sample that breaks it helps way more than a
+            screenshot.
           </p>
           <p>
-            Please don&apos;t send private tokens, production secrets, customer data, or
-            confidential source code. Describe the shape of the problem first.
+            Don&apos;t send real tokens, production secrets, customer data, or private code. Just
+            describe what the input looks like first.
           </p>
         </PageSection>
       </article>

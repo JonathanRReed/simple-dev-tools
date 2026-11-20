@@ -199,7 +199,7 @@ export default function PasteSlot() {
             </div>
           ) : rows.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              {settled ? 'Nothing matches that yet. Keep typing, or paste the whole thing.' : ' '}
+              {settled ? 'Nothing matched that yet. Keep typing or paste the whole thing.' : ' '}
             </p>
           ) : (
             <div className="flex flex-col gap-1.5">

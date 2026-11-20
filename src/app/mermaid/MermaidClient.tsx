@@ -325,7 +325,7 @@ export default function MermaidClient() {
   );
 
   const shortcuts = [
-    { keys: "—", description: "Auto-renders as you type" },
+    { keys: "Auto", description: "Renders as you type" },
     { keys: "⌘ F", description: "Find in the editor" },
     { keys: "⌘ ]", description: "Indent selection" },
   ];

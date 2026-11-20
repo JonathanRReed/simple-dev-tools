@@ -9,7 +9,7 @@ import IdsCronClientOnly from "./ClientOnly";
 export const metadata: Metadata = {
   title: "IDs & Scheduling",
   description:
-    "Generate UUIDv4 and ULID identifiers, inspect ULID timestamps, copy values, and humanize cron expressions with practical presets.",
+    "Generate UUIDv4 and ULID IDs, pull timestamps out of ULIDs, and decode cron schedules.",
   alternates: {
     canonical: "/tools/ids-cron/",
   },
@@ -23,12 +23,12 @@ export default function IdsCronPage() {
       <ToolNotes>
         <ul>
           <li>
-            A ULID carries its creation time in the first ten characters. Use a UUID when that
-            time should not be visible.
+            The first ten characters of a ULID encode when it was created. Use a UUID instead if
+            you&apos;d rather not expose that timestamp.
           </li>
           <li>
-            Upcoming cron runs are listed in UTC and in your local time zone. Check which zone the
-            system that runs the schedule uses.
+            Next run times show in both UTC and your local zone. Check which time zone your actual
+            server runs on.
           </li>
         </ul>
       </ToolNotes>

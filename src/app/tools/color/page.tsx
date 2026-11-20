@@ -9,7 +9,7 @@ import ColorClientOnly from "./ClientOnly";
 export const metadata: Metadata = {
   title: "Color & Contrast",
   description:
-    "Convert any CSS color between HEX, RGB, HSL, and OKLCH, generate tints and shades, and check WCAG contrast ratios locally in your browser.",
+    "Convert CSS colors between HEX, RGB, HSL, and OKLCH, generate tints and shades, and test WCAG contrast.",
   alternates: {
     canonical: "/tools/color/",
   },
@@ -23,11 +23,11 @@ export default function ColorPage() {
       <ToolNotes>
         <ul>
           <li>
-            Parsing uses your browser&apos;s own CSS engine, so any color syntax it understands
-            works here.
+            Parsing runs through your browser&apos;s CSS engine, so whatever color syntax your
+            browser understands works here.
           </li>
-          <li>OKLCH is computed through the standard sRGB, linear light, LMS, OKLab pipeline.</li>
-          <li>Contrast ratios use the WCAG 2.x relative-luminance formula.</li>
+          <li>OKLCH converts through the standard sRGB, linear light, LMS, and OKLab math.</li>
+          <li>Contrast ratios use the WCAG 2.x relative luminance formula.</li>
         </ul>
       </ToolNotes>
       <FamilyTools href="/tools/color/" />

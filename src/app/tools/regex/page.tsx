@@ -7,9 +7,9 @@ import ToolPageHeader from "@/components/tool/ToolPageHeader";
 import RegexClientOnly from "./ClientOnly";
 
 export const metadata: Metadata = {
-  title: "Regex Lab Browser Regex Tester",
+  title: "Regex Lab",
   description:
-    "Debug regular expressions with live matches, replacements, sample text, and shareable URLs. This browser regex tester runs client-side.",
+    "Test JavaScript regular expressions with live matches, capture groups, replacements, and shareable links.",
   alternates: {
     canonical: "/tools/regex/",
   },
@@ -23,14 +23,14 @@ export default function RegexPage() {
       <ToolNotes>
         <ul>
           <li>
-            Patterns use your browser&apos;s JavaScript regular expression engine, so results
-            match what <code>RegExp</code> does in your own code.
+            Patterns run on your browser&apos;s own JavaScript engine, so they match what{" "}
+            <code>RegExp</code> does in your code.
           </li>
           <li>
-            Matching runs in a background worker and stops after 1.5 seconds. A runaway pattern
-            reports an error instead of freezing the page.
+            Matching runs in a web worker with a 1.5 second timeout, so a slow pattern errors out
+            instead of freezing your tab.
           </li>
-          <li>Replacement output is capped at 1,000,000 characters.</li>
+          <li>Replacement output caps out at 1,000,000 characters.</li>
         </ul>
       </ToolNotes>
       <FamilyTools href="/tools/regex/" />

@@ -9,7 +9,7 @@ import TimestampClientOnly from "./ClientOnly";
 export const metadata: Metadata = {
   title: "Timestamp Converter",
   description:
-    "Convert Unix epochs, ISO 8601, and time zones, with relative time. Auto-detects seconds vs. milliseconds and runs entirely in your browser.",
+    "Convert Unix epochs, ISO 8601 dates, and time zones with relative time, auto detecting seconds vs milliseconds.",
   alternates: {
     canonical: "/tools/timestamp/",
   },
@@ -22,13 +22,12 @@ export default function TimestampPage() {
       <TimestampClientOnly />
       <ToolNotes title="How detection works">
         <p>
-          Signed numbers and decimal values are accepted as Unix epochs. Auto-detect reads
-          13-digit values or magnitudes above <code>1e11</code> as milliseconds; other
-          numbers are seconds. Choose a unit explicitly for ambiguous values near 1970.
-          Date strings are accepted in Auto-detect mode; include a time zone to avoid
-          differences between browsers and locations.
+          Signed numbers and decimals both work as Unix epochs. Auto detect reads 13 digit numbers
+          or anything past <code>1e11</code> as milliseconds, and treats smaller numbers as
+          seconds. Pick a unit manually for dates right around 1970. Date strings work in Auto
+          detect too, just include a time zone so different browsers don&apos;t guess differently.
         </p>
-        <p>Your last input is saved in this browser. Reset clears it.</p>
+        <p>Your last input stays in this browser until you hit Reset.</p>
       </ToolNotes>
       <FamilyTools href="/tools/timestamp/" />
     </ToolPage>

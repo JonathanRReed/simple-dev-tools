@@ -9,7 +9,7 @@ import HashClientOnly from "./ClientOnly";
 export const metadata: Metadata = {
   title: "File Hash Checker",
   description:
-    "Hash text or files with SHA-1, SHA-256, SHA-384, and SHA-512 using the browser's Web Crypto API, and verify a digest against an expected value. Nothing is uploaded.",
+    "Compute SHA-1, SHA-256, SHA-384, and SHA-512 hashes for text or dropped files using Web Crypto and verify checksums.",
   alternates: {
     canonical: "/tools/hash/",
   },
@@ -23,14 +23,17 @@ export default function HashPage() {
       <ToolNotes title="Privacy &amp; notes">
         <ul>
           <li>
-            Hashing uses <code>crypto.subtle.digest</code> in your browser. Files and text stay on
-            this page.
+            Hashing runs through <code>crypto.subtle.digest</code> right in your browser, so your
+            files never leave your machine.
           </li>
           <li>
-            The verify field is case-insensitive and ignores spaces. It matches against any of the
-            four computed digests.
+            The verify box ignores spaces and capitalization, and checks against all four hashes at
+            once.
           </li>
-          <li>SHA-1 is provided for compatibility; prefer SHA-256 or higher for new work.</li>
+          <li>
+            SHA-1 is only here for checking older checksums. Pick SHA-256 or higher for anything
+            new.
+          </li>
         </ul>
       </ToolNotes>
       <FamilyTools href="/tools/hash/" />

@@ -454,7 +454,7 @@ export default function ApiSnippetClient() {
       shareParams={shareParams}
       shortcuts={shortcuts}
     >
-      <p className="mb-4 text-xs text-muted-foreground">Share links include request content. Common authentication fields are omitted; review the URL, headers and body before sharing.</p>
+      <p className="mb-4 text-xs text-muted-foreground">Share links carry your request details. Common auth fields get stripped out, but check the URL, headers, and body before sending a link.</p>
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Request definition */}
         <div className="flex flex-col gap-4">
@@ -488,7 +488,7 @@ export default function ApiSnippetClient() {
 
           <Field
             label="Query parameters"
-            hint="Appended to the endpoint URL. Keys and values are URL-encoded; rows without a name are ignored."
+            hint="Added to the endpoint URL. Keys and values get URL encoded, and blank names are skipped."
             action={
               <Button
                 type="button"
@@ -542,7 +542,7 @@ export default function ApiSnippetClient() {
 
           <Field
             label="Headers"
-            hint="Content-Type: application/json is added automatically when a body is present and you haven't set one."
+            hint="Adds Content-Type: application/json automatically when there is a body and you didn't set one."
             action={
               <Button
                 type="button"

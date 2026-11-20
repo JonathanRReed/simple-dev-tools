@@ -8,7 +8,7 @@ import ApiSnippetClientOnly from "./ClientOnly";
 export const metadata: Metadata = {
   title: "API Snippet Generator",
   description:
-    "Generate copy-paste-ready cURL, Python requests, and fetch snippets from a single endpoint definition. Works client-side, no API keys required.",
+    "Turn one API endpoint, headers, and JSON body into cURL, Python requests, and JavaScript fetch snippets.",
   alternates: {
     canonical: "/api-snippet/",
   },

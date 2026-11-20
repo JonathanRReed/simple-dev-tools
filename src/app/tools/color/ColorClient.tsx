@@ -586,8 +586,7 @@ export default function ColorClient() {
           <div className="space-y-1">
             <Label>WCAG contrast checker</Label>
             <p className="text-xs text-muted-foreground">
-              Relative-luminance ratio per WCAG 2.x. Alpha is composited before
-              measuring.
+              WCAG 2.x relative luminance ratio. Transparency is composited before measuring.
             </p>
           </div>
 

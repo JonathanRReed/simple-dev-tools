@@ -9,7 +9,7 @@ import SecurityTokensClientOnly from "./ClientOnly";
 export const metadata: Metadata = {
   title: "Security & Tokens",
   description:
-    "Decode and verify JWTs (HS256/RS256/ES256), sign new tokens, compute hashes, and generate HMACs with Web Crypto. No secrets leave the browser.",
+    "Decode and verify HS256, RS256, and ES256 JWTs, sign tokens, hash text, and run HMACs with Web Crypto.",
   alternates: {
     canonical: "/studio/security/",
   },
@@ -24,13 +24,13 @@ export default function SecurityTokensPage() {
         <ul>
           <li>
             Signing, verification, hashing, and HMAC all run through{" "}
-            <code>crypto.subtle</code> in your browser. Keys and tokens are never uploaded.
+            <code>crypto.subtle</code> in your browser.
           </li>
           <li>
-            Decoding a JWT does not prove it is valid. Verify the signature against the issuing
-            key before trusting any claim.
+            Decoding a JWT only reads the text inside it. Always verify the signature with the
+            right key before trusting any claims.
           </li>
-          <li>Prefer pasting test keys here; keep production secrets in your secret manager.</li>
+          <li>Use test keys here and keep real production secrets in your secret manager.</li>
         </ul>
       </ToolNotes>
       <FamilyTools href="/studio/security/" />

@@ -9,7 +9,7 @@ import DiffClientOnly from "./ClientOnly";
 export const metadata: Metadata = {
   title: "Text Diff",
   description:
-    "Compare two texts side by side or unified, with word- or line-level highlighting. Everything runs locally in your browser, and nothing is uploaded.",
+    "Compare two blocks of text side by side or inline with word or line highlights, right on your machine.",
   alternates: {
     canonical: "/tools/diff/",
   },
@@ -23,16 +23,16 @@ export default function DiffPage() {
       <ToolNotes>
         <ul>
           <li>
-            Word-level diff highlights individual changed words; line-level diff treats each line
-            as a unit.
+            Word diff marks the exact words that changed. Line diff compares one whole line at a
+            time.
           </li>
           <li>
-            Ignore whitespace and ignore case options normalize comparison without changing the
-            original text.
+            Ignore whitespace and ignore case only affect the diff view and leave your original
+            text alone.
           </li>
           <li>
-            Use <kbd>⌘ ↵</kbd> or <kbd>Ctrl ↵</kbd>{" "}
-            to recompute.
+            Hit <kbd>⌘ ↵</kbd> or <kbd>Ctrl ↵</kbd>{" "}
+            to run the diff again.
           </li>
         </ul>
       </ToolNotes>

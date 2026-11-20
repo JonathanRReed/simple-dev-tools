@@ -20,8 +20,8 @@ export default function OfflinePage() {
     <ToolPage contentClassName="mx-auto max-w-3xl space-y-6">
       <PageHeader title="You are offline">
         <p>
-          Your connection dropped. Tools you&apos;ve already opened are usually cached and should
-          keep working without a network.
+          Looks like your connection dropped. Tools you&apos;ve opened before are usually cached
+          and should still work.
         </p>
       </PageHeader>
 

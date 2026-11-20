@@ -9,7 +9,7 @@ export default function TrustBadge({ className }: { className?: string }) {
   return (
     <span
       className={cn("inline-flex items-center gap-2 text-xs font-medium text-muted-foreground", className)}
-      title="This tool runs entirely in your browser. Your input is never uploaded."
+      title="This tool runs in your browser. Nothing gets uploaded."
     >
       <span className="led" aria-hidden="true" />
       Runs locally

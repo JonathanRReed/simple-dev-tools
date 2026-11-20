@@ -14,7 +14,7 @@ export default function NotFound() {
   return (
     <ToolPage contentClassName="mx-auto max-w-3xl space-y-6">
       <PageHeader eyebrow="404" title="Page not found">
-        <p>That address doesn’t lead anywhere. Pick a tool below.</p>
+        <p>Can&apos;t find that page. Pick a tool below instead.</p>
       </PageHeader>
 
       <ul aria-label="Tools" className="grid gap-3 sm:grid-cols-2">

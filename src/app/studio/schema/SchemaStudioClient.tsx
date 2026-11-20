@@ -962,7 +962,7 @@ export default function SchemaStudioClient() {
                   label="Import from URL"
                   htmlFor={ids.importUrl}
                   className="min-w-[220px] flex-1"
-                  hint="Fetches a remote .yaml/.json spec (subject to CORS)."
+                  hint="Fetches a remote .yaml or .json spec if the server allows CORS."
                 >
                   <Input
                     id={ids.importUrl}

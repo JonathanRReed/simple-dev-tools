@@ -9,7 +9,7 @@ import MarkdownClientOnly from "./ClientOnly";
 export const metadata: Metadata = {
   title: "Markdown Preview",
   description:
-    "Paste Markdown and see a clean, sanitized rendered preview. Copy the sanitized HTML or download a standalone document. Everything runs in your browser.",
+    "Write or paste Markdown for a live sanitized preview, then copy the HTML or save a standalone file.",
   alternates: {
     canonical: "/tools/markdown/",
   },
@@ -23,12 +23,11 @@ export default function MarkdownPage() {
       <ToolNotes>
         <ul>
           <li>
-            Raw HTML in Markdown is parsed by <code>marked</code> and then filtered by DOMPurify
-            before rendering.
+            Raw HTML inside your Markdown goes through <code>marked</code> and gets cleaned by
+            DOMPurify before showing up.
           </li>
           <li>
-            Use <kbd>⌘ ↵</kbd> or <kbd>Ctrl ↵</kbd> while editing to
-            copy the sanitized HTML.
+            Hit <kbd>⌘ ↵</kbd> or <kbd>Ctrl ↵</kbd> while editing to copy the clean HTML.
           </li>
         </ul>
       </ToolNotes>

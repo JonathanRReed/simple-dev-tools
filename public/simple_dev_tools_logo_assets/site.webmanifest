@@ -21,7 +21,7 @@
     {
       "name": "Regex Lab",
       "short_name": "Regex",
-      "description": "Iterate on patterns with live matches, replacements, samples, and links.",
+      "description": "Test JavaScript regexes with live matches, replacements, and sample text.",
       "url": "/tools/regex/",
       "icons": [
         {
@@ -39,7 +39,7 @@
     {
       "name": "JSON Workbench",
       "short_name": "JSON",
-      "description": "Format, validate, and convert between JSON, YAML, and CSV, then query by path.",
+      "description": "Format, check, and convert JSON, YAML, and CSV, or pull out values with a path query.",
       "url": "/tools/json/",
       "icons": [
         {
@@ -57,7 +57,7 @@
     {
       "name": "Timestamp Converter",
       "short_name": "Timestamp",
-      "description": "Convert Unix epochs, ISO 8601, and time zones, with relative time.",
+      "description": "Convert Unix timestamps, ISO 8601 dates, and time zones.",
       "url": "/tools/timestamp/",
       "icons": [
         {
@@ -75,7 +75,7 @@
     {
       "name": "Security & Tokens",
       "short_name": "Security",
-      "description": "Decode, verify, and sign JWTs, compute hashes, and generate HMACs locally.",
+      "description": "Decode, verify, and sign JWTs, hash text, or run HMACs locally.",
       "url": "/studio/security/",
       "icons": [
         {

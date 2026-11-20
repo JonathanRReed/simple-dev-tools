@@ -406,8 +406,9 @@ export default function SQLiteClient() {
           {error ? <Alert variant="error">{error}</Alert> : null}
           {warning ? <Alert variant="warning">{warning}</Alert> : null}
           <p className="text-xs text-muted-foreground">
-            Runs entirely in your browser. Your data stays in your browser (the SQLite WASM module
-            is served from this site’s own origin). Queries run in a separate worker and stop after 5 seconds. Cancel, timeout, or Reset discards the in-memory database; the SQL editor text is kept unless you choose Reset.
+            Everything runs locally using a SQLite WASM file served from this site. Queries run in
+            a worker with a 5 second timeout. Cancelling, timing out, or hitting Reset wipes the
+            temporary database, while your SQL stays in the editor unless you hit Reset.
           </p>
         </div>
 

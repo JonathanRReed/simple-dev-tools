@@ -8,7 +8,7 @@ import MermaidClientOnly from "./ClientOnly";
 export const metadata: Metadata = {
   title: "Mermaid Editor",
   description:
-    "Use a browser-only Mermaid diagram generator to edit Mermaid syntax, preview diagrams instantly, start from templates, and export SVG or PNG files.",
+    "Write Mermaid diagrams with live preview, starter templates, and SVG or PNG export.",
   alternates: {
     canonical: "/mermaid/",
   },

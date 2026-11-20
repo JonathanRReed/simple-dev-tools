@@ -9,7 +9,7 @@ import SchemaStudioClientOnly from "./ClientOnly";
 export const metadata: Metadata = {
   title: "Schema & Types Studio",
   description:
-    "Parse JSON/YAML or OpenAPI specs, preview documentation, validate data, and generate TypeScript or Zod types entirely in-browser.",
+    "Parse JSON, YAML, or OpenAPI specs, read rendered docs, validate payloads, and generate TypeScript or Zod.",
   alternates: {
     canonical: "/studio/schema/",
   },
@@ -23,12 +23,12 @@ export default function SchemaStudioPage() {
       <ToolNotes>
         <ul>
           <li>
-            Validation uses Ajv with format support; the generated TypeScript and Zod are meant as
-            a starting point to review, not a drop-in contract.
+            Validation uses Ajv with format checks. Look over any generated TypeScript or Zod
+            before dropping it into a real codebase.
           </li>
           <li>
-            Fetching a spec from a URL is optional and only happens when you paste a URL and ask
-            for it. Everything else stays on this page.
+            This page only fetches a remote spec when you paste a URL and click fetch. Everything
+            else stays local.
           </li>
         </ul>
       </ToolNotes>

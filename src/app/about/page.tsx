@@ -6,9 +6,9 @@ import ToolPage from "@/components/layout/ToolPage";
 import { siteConfig, toolPages } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: "About Local Browser Developer Tools",
+  title: "About",
   description:
-    "Simple Dev Tools is a browser-only toolkit by Jonathan R. Reed and Hello.World Consulting for practical developer workflows.",
+    "Simple Dev Tools is a set of browser developer tools built by Jonathan R. Reed at Hello.World Consulting.",
   alternates: {
     canonical: "/about/",
   },
@@ -20,24 +20,25 @@ export default function AboutPage() {
       <article className="flex flex-col gap-8">
         <PageHeader title="About">
           <p>
-            {siteConfig.name} is built by {siteConfig.author.name} at {siteConfig.provider.name}.
+            I made {siteConfig.name} because I got tired of pasting JSON, tokens, and SQL into
+            random websites covered in ads just to format or decode something.
           </p>
         </PageHeader>
 
         <PageSection title="How it works">
           <p>
-            The {toolPages.length} tools run in the browser, with no account and no backend
-            storage. Regex samples, tokens, schema drafts, SQL, and diagram text often contain
-            implementation details, so they are handled on your machine instead of being sent to
-            a hosted service.
+            All {toolPages.length} tools run right in your browser. There aren&apos;t any accounts,
+            and nothing you type gets sent to a backend. Stuff like regex tests, tokens, schemas,
+            SQL, and diagrams usually has real project details in it. It makes way more sense for
+            all of that to stay on your own machine.
           </p>
         </PageSection>
 
-        <PageSection title="Who maintains it">
+        <PageSection title="Who makes it">
           <p>
-            Jonathan R. Reed builds AI, cybersecurity, and developer productivity products through
-            Hello.World Consulting. You can review related work on the{" "}
-            <a href={`${siteConfig.author.url}/projects/`}>project index</a>.
+            I&apos;m {siteConfig.author.name}. Most of my work at {siteConfig.provider.name} is
+            around AI, security, and developer tools. You can see my other stuff on the{" "}
+            <a href={`${siteConfig.author.url}/projects/`}>projects page</a>.
           </p>
         </PageSection>
       </article>

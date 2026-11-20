@@ -9,7 +9,7 @@ import JsonClientOnly from "./ClientOnly";
 export const metadata: Metadata = {
   title: "JSON Workbench",
   description:
-    "Format, validate, and convert between JSON, YAML, and CSV, then query by path. Everything runs locally in your browser, and nothing is uploaded.",
+    "Format, validate, and convert between JSON, YAML, and CSV, or query nested values by path.",
   alternates: {
     canonical: "/tools/json/",
   },
@@ -23,15 +23,15 @@ export default function JsonPage() {
       <ToolNotes>
         <ul>
           <li>
-            CSV parsing follows RFC 4180: quoted fields, embedded commas and newlines, and{" "}
-            <code>&quot;&quot;</code> escaped quotes.
+            CSV parsing follows RFC 4180, so quoted fields, commas or newlines inside quotes, and{" "}
+            <code>&quot;&quot;</code> escaped quotes all work.
           </li>
           <li>
-            Converting to CSV requires an array of objects; the header is the union of keys in
-            first-seen order.
+            Exporting to CSV needs an array of objects. Columns are built from every key in the
+            order they first appear.
           </li>
           <li>
-            Path queries accept dotted keys and bracket access, e.g. <code>users[0].name</code> or{" "}
+            Path queries handle dots and brackets, like <code>users[0].name</code> or{" "}
             <code>[&quot;weird key&quot;].value</code>.
           </li>
         </ul>

@@ -9,7 +9,7 @@ import EncodeQrClientOnly from "./ClientOnly";
 export const metadata: Metadata = {
   title: "Encoders & QR",
   description:
-    "Encode and decode URLs or Base64 text, generate QR codes, tune size and error correction, and export PNG or SVG assets from a local browser workflow.",
+    "Encode and decode URLs or Base64 text, or make PNG and SVG QR codes with custom size and error correction.",
   alternates: {
     canonical: "/tools/encode-qr/",
   },
@@ -22,10 +22,10 @@ export default function EncodeQrPage() {
       <EncodeQrClientOnly />
       <ToolNotes>
         <ul>
-          <li>Base64 is an encoding, not encryption. Anyone can decode it.</li>
+          <li>Base64 is just encoding. Anyone who has the string can decode it right back.</li>
           <li>
-            A QR code scans more reliably with a short payload. Raise the error correction level
-            for print or for codes that may be partly covered.
+            Shorter text gives you a simpler QR code that scans faster. Crank up the error
+            correction if you&apos;re printing it or sticking a logo over part of it.
           </li>
         </ul>
       </ToolNotes>

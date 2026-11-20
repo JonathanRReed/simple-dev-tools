@@ -23,8 +23,8 @@ export default function Error({
     <ToolPage contentClassName="mx-auto max-w-3xl space-y-6">
       <PageHeader title="Something went wrong">
         <p>
-          This tool hit an unexpected error. Nothing was sent anywhere, and your input is still
-          in this browser. Try again, or go back to the tool list.
+          Something broke in this tool. Nothing left your browser and your input is still here, so
+          you can try again or jump back to all tools.
         </p>
       </PageHeader>
 

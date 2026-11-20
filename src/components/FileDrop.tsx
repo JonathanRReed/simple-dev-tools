@@ -70,7 +70,7 @@ const FileDrop = React.forwardRef<HTMLDivElement, FileDropProps>(
         }
         if (file.size > maxBytes) {
           setReadError(
-            `That file is ${formatBytes(file.size)} — the limit is ${formatBytes(maxBytes)}`
+            `That file is ${formatBytes(file.size)}, and the limit is ${formatBytes(maxBytes)}.`
           );
           return;
         }

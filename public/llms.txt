@@ -1,54 +1,54 @@
 # Simple Dev Tools
 
-Simple Dev Tools is a local-first browser toolkit built by Jonathan R. Reed through Hello.World Consulting. It gives engineers small utilities for snippets, diagrams, SQLite, regex, schemas, security tokens, IDs, QR codes, timestamps, JSON, color checks, diffs, file hashes, markdown previews, and querystring editing without an account or hosted workspace.
+Simple Dev Tools is a set of browser dev tools I built at Hello.World Consulting. You can turn requests into API snippets, edit Mermaid diagrams, run SQLite queries, test regex, format JSON, check schemas and JWTs, convert timestamps, test color contrast, diff text, hash files, preview Markdown, edit query strings, and generate IDs or QR codes without logging in or sending data to a server.
 
-The project is intentionally plain: open the tool, inspect or transform the input, copy or export the result, and leave without sending private implementation details to a backend. It is part of Jonathan R. Reed's public project network around practical tools, private workflows, and inspectable systems.
+You open a tool, paste your stuff in, grab the result, and close the tab. None of it goes to a backend.
 
 ## Data Boundaries
 
-- Tool input is handled in the browser.
-- The site has no account layer and no database-backed workspace.
-- Some tools use browser APIs, local WebAssembly, or bundled client libraries.
-- Do not paste production secrets, private keys, customer records, or regulated data into any public utility unless your own policy allows that use.
+- Every tool runs directly in your browser.
+- There are no user accounts and no server database saving your inputs.
+- Some tools rely on built-in browser APIs, local WebAssembly, or bundled client libraries.
+- Even with everything running locally, keep real production secrets, private keys, customer records, and regulated data out of public web tools unless your own policy allows it.
 
-## Developer Accelerators
+## Tools
 
-- [API Snippet Generator](https://dev-tools.helloworldfirm.com/api-snippet/): Generate cURL, Python requests, and JavaScript fetch snippets from an endpoint, HTTP method, custom headers, bearer token, and JSON body.
-- [Mermaid Editor](https://dev-tools.helloworldfirm.com/mermaid/): Sketch sequence diagrams, flowcharts, and architecture visualizations quickly with live preview and export.
-- [SQLite Playground](https://dev-tools.helloworldfirm.com/sqlite/): Run SQL experiments against an in-memory SQLite database (sql.js WASM) with instant result tables and CSV/JSON export.
-- [Regex Lab](https://dev-tools.helloworldfirm.com/tools/regex/): Iterate on regular expression patterns with explainers, tests, and sharing capabilities.
-- [IDs & Scheduling](https://dev-tools.helloworldfirm.com/tools/ids-cron/): Generate ULIDs, UUIDs, and human-friendly CRON expression helpers with descriptions.
-- [Encoders & QR](https://dev-tools.helloworldfirm.com/tools/encode-qr/): Encode/decode payloads (Base64, URL encoding) and produce QR code assets (PNG/SVG).
-- [Timestamp Converter](https://dev-tools.helloworldfirm.com/tools/timestamp/): Convert between Unix epochs (seconds/milliseconds), ISO 8601, and time zones, with relative time and human-readable formats.
-- [JSON Workbench](https://dev-tools.helloworldfirm.com/tools/json/): Format, minify, validate, and convert between JSON, YAML, and CSV, sort keys, and query values by path.
-- [Color & Contrast](https://dev-tools.helloworldfirm.com/tools/color/): Convert colors between HEX, RGB, HSL, and OKLCH, build tints/shades, and check WCAG contrast ratios for accessibility.
-- [Text Diff](https://dev-tools.helloworldfirm.com/tools/diff/): Compare two texts side by side or unified, with word-level highlighting and copy/export.
-- [File Hash Checker](https://dev-tools.helloworldfirm.com/tools/hash/): Hash text or dropped files with SHA-256/384/512 and verify against an expected digest.
-- [Markdown Preview](https://dev-tools.helloworldfirm.com/tools/markdown/): Preview markdown with a sanitized live render, then copy or download the HTML.
-- [Querystring Editor](https://dev-tools.helloworldfirm.com/tools/query/): Parse, edit, and re-encode URL query strings and form bodies as an editable table.
+- [API Snippet Generator](https://dev-tools.helloworldfirm.com/api-snippet/): Turn one endpoint, method, headers, bearer token, and JSON body into cURL, Python requests, and JS fetch code.
+- [Mermaid Editor](https://dev-tools.helloworldfirm.com/mermaid/): Edit flowcharts, sequence diagrams, and architecture sketches with live preview and SVG or PNG export.
+- [SQLite Playground](https://dev-tools.helloworldfirm.com/sqlite/): Run SQL against a temporary in-memory SQLite database via sql.js WASM, inspect result tables, and export CSV or JSON.
+- [Regex Lab](https://dev-tools.helloworldfirm.com/tools/regex/): Test JavaScript regular expressions with live matches, replacements, sample text, and shareable links.
+- [IDs & Scheduling](https://dev-tools.helloworldfirm.com/tools/ids-cron/): Generate UUIDs and ULIDs, pull timestamps out of ULIDs, and decode cron lines into plain English.
+- [Encoders & QR](https://dev-tools.helloworldfirm.com/tools/encode-qr/): Encode or decode Base64 and URLs, or generate PNG and SVG QR codes.
+- [Timestamp Converter](https://dev-tools.helloworldfirm.com/tools/timestamp/): Convert Unix timestamps in seconds or milliseconds, ISO 8601 dates, and time zones with relative time.
+- [JSON Workbench](https://dev-tools.helloworldfirm.com/tools/json/): Format, minify, check, and convert JSON, YAML, and CSV, sort keys, and query values by path.
+- [Color & Contrast](https://dev-tools.helloworldfirm.com/tools/color/): Convert between HEX, RGB, HSL, and OKLCH, build tints and shades, and check WCAG contrast ratios.
+- [Text Diff](https://dev-tools.helloworldfirm.com/tools/diff/): Compare two blocks of text side by side or inline with word highlights and copy or export buttons.
+- [File Hash Checker](https://dev-tools.helloworldfirm.com/tools/hash/): Hash text or dropped files with SHA-1, SHA-256, SHA-384, or SHA-512 and check them against an expected digest.
+- [Markdown Preview](https://dev-tools.helloworldfirm.com/tools/markdown/): Write or paste Markdown for a sanitized live preview, then copy or download the clean HTML.
+- [Querystring Editor](https://dev-tools.helloworldfirm.com/tools/query/): Break URL query strings and form bodies into a table, edit them, and copy the encoded output back.
 
 ## Studios
 
-- [Schema & Types Studio](https://dev-tools.helloworldfirm.com/studio/schema/): Convert sources between JSON Schema, TypeScript interfaces, Zod schemas, and read rendered OpenAPI documentation.
-- [Security & Tokens](https://dev-tools.helloworldfirm.com/studio/security/): Inspect and decode JWTs, verify signatures, sign and build new JWTs, compute cryptographic hashes, and generate HMAC signatures using Web Crypto APIs.
+- [Schema & Types Studio](https://dev-tools.helloworldfirm.com/studio/schema/): Read JSON Schema, YAML, or OpenAPI specs, validate payloads, generate TypeScript interfaces or Zod schemas, and read rendered OpenAPI docs.
+- [Security & Tokens](https://dev-tools.helloworldfirm.com/studio/security/): Decode and verify JWTs, sign new tokens, hash text, and generate HMACs with Web Crypto.
 
-## Technical Documentation
+## Technical Docs
 
-- [README](https://github.com/JonathanRReed/simple-dev-tools/blob/main/README.md): Project overview, quality gate, deployment notes, and the Functional Source License (MIT after two years)
-- [Package Dependencies](https://github.com/JonathanRReed/simple-dev-tools/blob/main/package.json): Full list of dependencies including Next.js, React, Radix UI, CodeMirror, Mermaid, and more
+- [README](https://github.com/JonathanRReed/simple-dev-tools/blob/main/README.md): Project overview, test checks, deployment setup, and the Functional Source License, which turns into MIT after two years
+- [Package Dependencies](https://github.com/JonathanRReed/simple-dev-tools/blob/main/package.json): Full dependency list including Next.js, React, Radix UI, CodeMirror, and Mermaid
 
 ## Policies
 
-- [robots.txt](https://dev-tools.helloworldfirm.com/robots.txt): The machine-readable policy. The default signals are search=yes, ai-input=yes, ai-train=no, use=reference; Google-Extended has a specific exception. Where the two disagree, robots.txt governs.
-- **Search indexing: allowed.** Crawl and index this site, and return links and short excerpts in search results.
-- **AI answers and grounding: allowed.** Retrieve these pages at answer time and use them to ground AI-generated answers, summaries, or citations, provided the answer links back to the source page.
-- **AI training: Google-Extended exception.** Google may use this content for Gemini Apps and Vertex AI grounding and Gemini model training. Other crawlers may not train or fine-tune models on it or assemble a training corpus. That restriction is an express reservation of rights under Article 4 of EU Directive 2019/790.
+- [robots.txt](https://dev-tools.helloworldfirm.com/robots.txt): The machine-readable policy. Defaults are search=yes, ai-input=yes, ai-train=no, and use=reference, with an exception for Google-Extended. If anything here differs, robots.txt wins.
+- **Search indexing: allowed.** Crawlers can index this site and show links and short excerpts in search results.
+- **AI answers and grounding: allowed.** Pages can be fetched at answer time to ground AI answers, summaries, or citations as long as they link back to the source page.
+- **AI training: Google-Extended exception.** Google can use this content for Gemini Apps, Vertex AI grounding, and Gemini model training. Other crawlers may not train or fine-tune models on it or build a training corpus from it. This is an express reservation of rights under Article 4 of EU Directive 2019/790.
 
-## Optional
+## Other Pages
 
-- [Homepage](https://dev-tools.helloworldfirm.com/): Launcher for all tools. Paste content and it identifies it (JWT, JSON, timestamp, cron, color, URL, SQL, and more) and opens the matching tool; the same detection is in the ⌘K command palette
-- [About](https://dev-tools.helloworldfirm.com/about/): Builder and maintenance context
-- [Contact](https://dev-tools.helloworldfirm.com/contact/): Official contact paths
-- [Privacy](https://dev-tools.helloworldfirm.com/privacy/): Local-first privacy notes
-- [Sitemap](https://dev-tools.helloworldfirm.com/sitemap.xml): Machine-readable index of public routes
-- [Robots.txt](https://dev-tools.helloworldfirm.com/robots.txt): Current crawler directives
+- [Homepage](https://dev-tools.helloworldfirm.com/): Launcher for all 15 tools. Paste a JWT, JSON, timestamp, cron line, color, URL, or SQL and it spots what it is and opens the right tool. The ⌘K palette does the same thing.
+- [About](https://dev-tools.helloworldfirm.com/about/): Why I built this and how it works
+- [Contact](https://dev-tools.helloworldfirm.com/contact/): Where to reach me or report a bug
+- [Privacy](https://dev-tools.helloworldfirm.com/privacy/): What stays in your browser and what hits the network
+- [Sitemap](https://dev-tools.helloworldfirm.com/sitemap.xml): XML index of public routes
+- [Robots.txt](https://dev-tools.helloworldfirm.com/robots.txt): Current crawler rules

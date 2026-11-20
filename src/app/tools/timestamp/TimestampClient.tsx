@@ -290,7 +290,7 @@ export default function TimestampClient() {
             <option value="seconds">Unix seconds</option>
             <option value="milliseconds">Unix milliseconds</option>
           </select>
-          <p className="mt-2 text-xs text-muted-foreground">Choose a unit for dates near 1970, where the numeric value is ambiguous.</p>
+          <p className="mt-2 text-xs text-muted-foreground">Pick a unit for dates right around 1970, where the raw number could be seconds or milliseconds.</p>
         </Field>
         <Field
           label="Moment"

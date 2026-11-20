@@ -575,7 +575,7 @@ export default function QueryClient() {
               </table>
               {rows.length === 0 && (
                 <p className="px-3 py-4 text-sm font-mono text-muted-foreground">
-                  Paste a query above to populate rows, or add one manually.
+                  Paste a query above to fill in rows, or add one yourself.
                 </p>
               )}
             </div>

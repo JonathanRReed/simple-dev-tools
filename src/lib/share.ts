@@ -38,7 +38,7 @@ export class ShareUrlTooLargeError extends Error {
   readonly encodedLength: number;
   constructor(encodedLength: number) {
     super(
-      `Share link is too large (${encodedLength.toLocaleString()} characters). Copy the content instead — most tools can download it as a file.`
+      `That share link is too large (${encodedLength.toLocaleString()} characters). Copy the content instead, or download it as a file.`
     );
     this.name = "ShareUrlTooLargeError";
     this.encodedLength = encodedLength;
